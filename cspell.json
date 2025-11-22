@@ -8,9 +8,13 @@
     ".gitignore",
     ".vscode",
     ".pre-commit-config.yaml",
-    "pyproject.toml"
+    "pyproject.toml",
+    "sounds"
   ],
   "words": [
+    "afplay",
+    "alsa",
+    "aplay",
     "autobuild",
     "Autobuild",
     "autofix",
@@ -48,7 +52,9 @@
     "oidc",
     "OIDC",
     "ooyama",
+    "paplay",
     "pkgs",
+    "pulseaudio",
     "pyenv",
     "pyproject",
     "pytest",
@@ -56,6 +62,7 @@
     "rinchsan",
     "shellcheck",
     "shellenv",
+    "Sosumi",
     "SSIA",
     "Takeru",
     "textlint",
@@ -65,6 +72,7 @@
     "tfcmt",
     "tflint",
     "tfstate",
+    "Tink",
     "tqer",
     "vercel",
     "Vercel"
