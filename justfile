@@ -51,9 +51,26 @@ setup-deps:
 setup-db:
     @echo "→ Setting up local database..."
     @echo "  ℹ For local development, you have two options:"
-    @echo "    1. Use Docker Compose: docker compose up -d"
+    @echo "    1. Use Docker Compose: just db-start"
     @echo "    2. Use Neon database: Update DATABASE_URL in .env.local"
-    @echo "  After database is ready, run: npm run db:migrate"
+    @echo "  After database is ready, run: just db-migrate"
+
+# Setup direnv
+setup-direnv:
+    @echo "→ Setting up direnv..."
+    @if [ ! -f .envrc ]; then \
+        cp .envrc.example .envrc; \
+        echo "  ✓ Created .envrc from .envrc.example"; \
+        echo "  ⚠ Please edit .envrc and run: just direnv-allow"; \
+    else \
+        echo "  ✓ .envrc already exists"; \
+    fi
+
+# Allow direnv for this directory
+direnv-allow:
+    @echo "→ Allowing direnv for this directory..."
+    direnv allow
+    @echo "  ✓ direnv allowed"
 
 # Run pre-commit hooks on all files
 lint:
@@ -117,6 +134,37 @@ build:
 start:
     @echo "→ Starting production server..."
     npm start
+
+# AWS and infrastructure commands
+
+# Add AWS profile to aws-vault
+aws-add profile:
+    @echo "→ Adding AWS profile: {{profile}}"
+    aws-vault add {{profile}}
+
+# List AWS profiles in aws-vault
+aws-list:
+    @echo "→ Listing AWS profiles..."
+    aws-vault list
+
+# Execute command with aws-vault
+aws-exec profile *args:
+    @echo "→ Executing with AWS profile: {{profile}}"
+    aws-vault exec {{profile}} -- {{args}}
+
+# Terraform wrapper (forwards all arguments to aws-vault + terraform)
+# Usage:
+#   just tf -chdir=terraform/envs/dev/bootstrap init
+#   just tf -chdir=terraform/envs/dev/bootstrap plan
+#   just tf -chdir=terraform/envs/dev/bootstrap apply
+tf *args:
+    @echo "→ Running terraform with aws-vault..."
+    @if [ -z "${AWS_VAULT_PROFILE}" ]; then \
+        echo "⚠ AWS_VAULT_PROFILE not set. Please set it in .envrc or use:"; \
+        echo "  export AWS_VAULT_PROFILE=xtrade-dev"; \
+        exit 1; \
+    fi
+    aws-vault exec ${AWS_VAULT_PROFILE} -- terraform {{args}}
 
 # Database management commands
 
