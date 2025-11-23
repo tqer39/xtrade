@@ -14,11 +14,13 @@
     ".env.*",
     ".envrc",
     ".envrc.*",
-    "drizzle/**"
+    "drizzle/**",
+    "infra/terraform/config.yml"
   ],
   "words": [
     "afplay",
     "alsa",
+    "apne",
     "aplay",
     "autobuild",
     "Autobuild",
@@ -42,6 +44,7 @@
     "dyoshikawa",
     "elif",
     "envrc",
+    "esac",
     "fastapi",
     "FASTMCP",
     "getsentry",
