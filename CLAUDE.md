@@ -14,13 +14,34 @@
 
 ## プロジェクト構造とモジュール構成
 
-- ルート: 開発ツール、ドキュメント、Next.js アプリケーション `app/`。
-- `app/`: Next.js App Router ベースの xtrade 本体。API と UI を含む。
-- `.github/`: ワークフロー、`CODEOWNERS`、ラベル、PR テンプレート。
-- `docs/`: セットアップと使用方法の日本語ドキュメント。
-- `src/`: 共通ライブラリ、DB レイヤ、ドメインサービス、認証など。
-- `Makefile`、`justfile`、`Brewfile`: 環境構築とタスク実行。
-- 設定: `.editorconfig`、`.pre-commit-config.yaml`、`.prettierrc`、`.tool-versions`。
+xtrade はモノレポ構成で、フロントエンド・バックエンド・インフラをすべてこのリポジトリで管理する。
+
+### ディレクトリ構成
+
+```text
+xtrade/
+├── app/              # Next.js App Router（フロントエンド + API）
+├── src/              # 共通ライブラリ、DB、ドメインサービス、認証
+├── terraform/        # インフラ構成（IaC）
+│   ├── modules/      # 再利用可能な Terraform モジュール
+│   ├── environments/ # 環境ごとの設定（dev / prod）
+│   └── global/       # グローバルリソース（DNS など）
+├── docs/             # ドキュメント
+├── .github/          # GitHub Actions、CODEOWNERS、PR テンプレート
+├── .claude/          # Claude Code Agent 設定
+└── scripts/          # 開発用スクリプト
+```
+
+### 各ディレクトリの役割
+
+- **app/**: Next.js App Router ベースの xtrade 本体。API と UI を含む。
+- **src/**: 共通ライブラリ、DB レイヤ、ドメインサービス、認証など。
+- **terraform/**: Terraform による IaC。GCP DNS、Vercel プロジェクト、環境変数の管理。
+- **docs/**: セットアップと使用方法の日本語ドキュメント。
+- **.github/**: ワークフロー、`CODEOWNERS`、ラベル、PR テンプレート。
+- **.claude/**: Claude Code の Agent 設定ファイル。
+- **scripts/**: 開発用スクリプト（効果音再生など）。
+- **設定ファイル**: `.editorconfig`、`.pre-commit-config.yaml`、`.prettierrc`、`.tool-versions`。
 
 ## ビルド・テスト・開発コマンド
 
@@ -231,3 +252,214 @@ flowchart LR
 
 - テスト（Unit / API / E2E）や lint 周りを整えたい
   → **TestAgent**
+
+## 環境構成とドメイン設定
+
+xtrade は local / dev / prod の3環境で運用する。
+
+### 環境ごとの URL
+
+| 環境 | APP URL | 備考 |
+| --- | --- | --- |
+| local | `http://localhost:3000` | 開発用、X OAuth もここに向ける |
+| dev | `https://xtrade-dev.tqer39.dev` | ステージング・動作確認用 |
+| prod | `https://xtrade.tqer39.dev` | 本番 |
+
+**重要**: dev と prod でホスト名を分けることで、Cookie と OAuth のコールバックで事故を防ぐ。
+
+### BetterAuth / X OAuth の環境変数
+
+#### 1. BETTER_AUTH_URL / NEXT_PUBLIC_APP_URL
+
+**local**:
+
+```bash
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+**dev**:
+
+```bash
+BETTER_AUTH_URL=https://xtrade-dev.tqer39.dev
+NEXT_PUBLIC_APP_URL=https://xtrade-dev.tqer39.dev
+```
+
+**prod**:
+
+```bash
+BETTER_AUTH_URL=https://xtrade.tqer39.dev
+NEXT_PUBLIC_APP_URL=https://xtrade.tqer39.dev
+```
+
+#### 2. X OAuth コールバック URL
+
+Twitter（X）の Developer Portal で登録する callback URL：
+
+- **local**: `http://localhost:3000/api/auth/callback/twitter`
+- **dev**: `https://xtrade-dev.tqer39.dev/api/auth/callback/twitter`
+- **prod**: `https://xtrade.tqer39.dev/api/auth/callback/twitter`
+
+**運用方針**: MVP では 1 つの X アプリに複数 callback URL を登録する。
+
+### DNS / Vercel 構成
+
+```mermaid
+flowchart TD
+  subgraph DNS[tqer39.dev DNS]
+    A[xtrade.tqer39.dev] --> V[Vercel project xtrade]
+    B[xtrade-dev.tqer39.dev] --> V
+  end
+
+  subgraph Vercel[xtrade プロジェクト]
+    V1[Production env<br/>https://xtrade.tqer39.dev]
+    V2[Preview/Dev env<br/>https://xtrade-dev.tqer39.dev]
+  end
+
+  subgraph Local
+    L[localhost:3000<br/>next dev]
+  end
+```
+
+- **local**: `next dev` で `localhost:3000`
+- **dev**: Vercel の Preview/Dev 環境 + `xtrade-dev.tqer39.dev` を紐付け
+- **prod**: Vercel の Production 環境 + `xtrade.tqer39.dev` を紐付け
+
+### データベース（Neon）構成
+
+DB はドメインとは独立して環境ごとに分離：
+
+| 環境 | DATABASE_URL | 備考 |
+| --- | --- | --- |
+| local | `postgres://xtrade:xtrade@localhost:5432/xtrade` | Docker の Postgres |
+| dev | `postgres://...neon-dev-url...` | Neon の xtrade-dev ブランチ |
+| prod | `postgres://...neon-prod-url...` | Neon の xtrade-prod ブランチ |
+
+**運用方針**: `.env` ファイルで環境ごとに `DATABASE_URL` を切り替える。
+
+### 環境変数管理のベストプラクティス
+
+1. `.env.example` にすべての必要な環境変数を記載
+2. `.env.local` は Git 管理外（`.gitignore` に追加済み）
+3. Vercel 環境変数は Web UI で設定
+4. 環境ごとに異なる値は明確にコメント
+
+### セキュリティ考慮事項
+
+- `BETTER_AUTH_SECRET` は環境ごとに異なる値を使用
+- `TWITTER_CLIENT_SECRET` は絶対にコミットしない
+- `DATABASE_URL` に含まれる認証情報は `.env.local` のみに記載
+- Vercel の環境変数は暗号化されて保存される
+
+## インフラ構成（IaC）
+
+xtrade のインフラは Terraform で管理する。すべてのインフラ構成をコードで定義し、再現可能性を確保する。
+
+### Terraform ディレクトリ構成
+
+```text
+terraform/
+├── modules/           # 再利用可能なモジュール
+│   ├── dns/          # GCP Cloud DNS モジュール
+│   ├── vercel/       # Vercel プロジェクト・ドメインモジュール
+│   └── neon/         # Neon DB（将来的に API 対応したら）
+├── environments/      # 環境ごとの設定
+│   ├── dev/          # dev 環境（xtrade-dev.tqer39.dev）
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── terraform.tfvars
+│   └── prod/         # prod 環境（xtrade.tqer39.dev）
+│       ├── main.tf
+│       ├── variables.tf
+│       └── terraform.tfvars
+└── global/           # グローバルリソース
+    ├── dns.tf        # tqer39.dev の DNS ゾーン
+    └── backend.tf    # Terraform state 管理
+```
+
+### 管理対象リソース
+
+#### 1. GCP Cloud DNS
+
+- **リソース**: `tqer39.dev` の DNS ゾーン
+- **レコード**:
+  - `xtrade.tqer39.dev` → Vercel の prod 環境
+  - `xtrade-dev.tqer39.dev` → Vercel の dev 環境
+
+#### 2. Vercel
+
+- **プロジェクト**: `xtrade`
+- **カスタムドメイン**:
+  - Production: `xtrade.tqer39.dev`
+  - Preview/Dev: `xtrade-dev.tqer39.dev`
+- **環境変数**:
+  - `BETTER_AUTH_URL`
+  - `BETTER_AUTH_SECRET`
+  - `TWITTER_CLIENT_ID` / `TWITTER_CLIENT_SECRET`
+  - `DATABASE_URL`
+
+#### 3. Terraform State 管理
+
+- **バックエンド**: GCS（Google Cloud Storage）
+- **State ファイル**: `gs://xtrade-terraform-state/`
+- **ロック**: GCS のロック機能を使用
+
+### Terraform 運用フロー
+
+```bash
+# 初期化
+cd terraform/environments/dev
+terraform init
+
+# プラン確認
+terraform plan
+
+# 適用
+terraform apply
+
+# 環境変数の更新（例）
+terraform apply -var="better_auth_secret=new-secret"
+```
+
+### セキュリティ考慮事項
+
+1. **Secrets 管理**
+   - `terraform.tfvars` は `.gitignore` に追加
+   - センシティブな値は `sensitive = true` を設定
+   - 実行時に環境変数で渡す（`TF_VAR_` prefix）
+
+2. **State ファイル**
+   - GCS バックエンドで暗号化
+   - アクセス権限は必要最小限に
+
+3. **Provider 認証**
+   - GCP: Service Account の JSON キー（環境変数 `GOOGLE_APPLICATION_CREDENTIALS`）
+   - Vercel: API トークン（環境変数 `VERCEL_API_TOKEN`）
+
+### Terraform Provider バージョン
+
+```hcl
+terraform {
+  required_version = ">= 1.0"
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+    vercel = {
+      source  = "vercel/vercel"
+      version = "~> 1.0"
+    }
+  }
+}
+```
+
+### CI/CD との統合
+
+GitHub Actions で Terraform の plan / apply を自動化：
+
+- **PR 作成時**: `terraform plan` を実行し、結果をコメント
+- **main マージ時**: `terraform apply` を自動実行（dev 環境）
+- **リリースタグ**: `terraform apply` を実行（prod 環境）
+
+詳細は `.github/workflows/terraform.yml` を参照。

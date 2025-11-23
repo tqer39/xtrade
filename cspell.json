@@ -9,7 +9,9 @@
     ".vscode",
     ".pre-commit-config.yaml",
     "pyproject.toml",
-    "sounds"
+    "sounds",
+    ".env",
+    ".env.*"
   ],
   "words": [
     "afplay",
@@ -75,8 +77,12 @@
     "tfcmt",
     "tflint",
     "tfstate",
+    "tfvars",
     "Tink",
     "tqer",
+    "tqer39",
+    "tsbuildinfo",
+    "unpooled",
     "vercel",
     "Vercel",
     "xtrade"
