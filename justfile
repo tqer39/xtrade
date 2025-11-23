@@ -152,19 +152,14 @@ aws-exec profile *args:
     @echo "→ Executing with AWS profile: {{profile}}"
     aws-vault exec {{profile}} -- {{args}}
 
-# Terraform wrapper (forwards all arguments to aws-vault + terraform)
-# Usage:
-#   just tf -chdir=terraform/envs/dev/bootstrap init
-#   just tf -chdir=terraform/envs/dev/bootstrap plan
-#   just tf -chdir=terraform/envs/dev/bootstrap apply
+# Wrap terraform with convenient -chdir handling
+# Usage examples:
+#   just tf -chdir=dev/bootstrap init -reconfigure
+#   just tf -chdir=infra/terraform/envs/dev/bootstrap plan
+#   just tf version
 tf *args:
-    @echo "→ Running terraform with aws-vault..."
-    @if [ -z "${AWS_VAULT_PROFILE}" ]; then \
-        echo "⚠ AWS_VAULT_PROFILE not set. Please set it in .envrc or use:"; \
-        echo "  export AWS_VAULT_PROFILE=xtrade-dev"; \
-        exit 1; \
-    fi
-    aws-vault exec ${AWS_VAULT_PROFILE} -- terraform {{args}}
+    @echo "→ make terraform-cf ARGS='{{args}}'"
+    @exec make terraform-cf ARGS="{{args}}"
 
 # Database management commands
 
