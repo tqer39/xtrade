@@ -14,9 +14,11 @@
 
 ## プロジェクト構造とモジュール構成
 
-- ルート: 開発ツールとドキュメント。アプリランタイムはまだない。
+- ルート: 開発ツール、ドキュメント、Next.js アプリケーション `app/`。
+- `app/`: Next.js App Router ベースの xtrade 本体。API と UI を含む。
 - `.github/`: ワークフロー、`CODEOWNERS`、ラベル、PR テンプレート。
 - `docs/`: セットアップと使用方法の日本語ドキュメント。
+- `src/`: 共通ライブラリ、DB レイヤ、ドメインサービス、認証など。
 - `Makefile`、`justfile`、`Brewfile`: 環境構築とタスク実行。
 - 設定: `.editorconfig`、`.pre-commit-config.yaml`、`.prettierrc`、`.tool-versions`。
 
@@ -209,3 +211,23 @@ flowchart LR
 - Agent をまたぐ変更が必要な場合は、必ず関連 Agent にコメントで指示を残す
 - 設計変更は必ず `docs/` に反映する
 - 詳細は `docs/agents/` 配下の各 Agent ドキュメントを参照
+
+### タスクと担当 Agent の目安
+
+- Next.js プロジェクトの構成を決めたい / 変更したい
+  → **ArchAgent**
+
+- Drizzle スキーマを追加・変更したい / マイグレーションを作りたい
+  → **DBAgent**
+
+- BetterAuth や X ログインの設定を追加・変更したい
+  → **AuthAgent**
+
+- `/api/trades` / `/api/rooms` などの API を実装・修正したい
+  → **APIAgent**
+
+- 画面（page.tsx）やコンポーネントの UI を作りたい・直したい
+  → **UIAgent**
+
+- テスト（Unit / API / E2E）や lint 周りを整えたい
+  → **TestAgent**
