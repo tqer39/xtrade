@@ -173,6 +173,7 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 **役割**: xtrade 全体のアーキテクチャと開発規約を設計・維持する。
 
 **担当範囲**:
+
 - `README.md`, `docs/architecture.md`, `docs/api.md`
 - Next.js 構成（App Router、Route Handlers のパス設計）
 - `src/` 以下のレイヤ分けルール
@@ -180,6 +181,7 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 - 依存ライブラリの選定
 
 **禁止事項**:
+
 - 具体的な API 実装や UI 実装への直接的な変更
 - ドメインロジックの大幅な改修
 
@@ -188,11 +190,13 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 **役割**: Neon + Drizzle の DB 周りを一手に引き受ける。
 
 **担当範囲**:
+
 - `src/db/schema.ts`, `src/db/drizzle.ts`, `drizzle.config.ts`
 - マイグレーション生成・適用
 - インデックス・enum 定義
 
 **禁止事項**:
+
 - API のビジネスロジック実装
 - UI 実装
 
@@ -201,12 +205,14 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 **役割**: BetterAuth の設定と X OAuth の配線を全て担当する。
 
 **担当範囲**:
+
 - `src/lib/auth.ts`（BetterAuth サーバ設定）
 - `src/lib/auth-client.ts`（React クライアント）
 - `app/api/auth/[...all]/route.ts`
 - セッション取得ヘルパー
 
 **禁止事項**:
+
 - ドメインロジック（トレード / ルームなど）
 - DB スキーマ本体の変更
 
@@ -215,11 +221,13 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 **役割**: 取引ステートマシンを守りつつ、Route Handlers で API を実装する。
 
 **担当範囲**:
+
 - `app/api/trades/**/*.ts`
 - `app/api/rooms/**/*.ts`
 - `src/modules/**/service.ts`（ドメインサービス層）
 
 **禁止事項**:
+
 - Drizzle のスキーマ定義変更
 - UI 実装
 - Auth 設定の大幅変更
@@ -229,11 +237,13 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 **役割**: 最低限の UI をサクサク組む。ユーザーフローを途切れなく繋ぐ。
 
 **担当範囲**:
+
 - `app/**/page.tsx`
 - 共通レイアウト・ナビ（`app/layout.tsx`）
 - UI コンポーネント（`src/components/**`）
 
 **禁止事項**:
+
 - 複雑なビジネスロジック
 - DB 直接アクセス
 
@@ -242,11 +252,13 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 **役割**: ユースケース単位で壊れてないかを担保する。
 
 **担当範囲**:
+
 - Unit テスト：`src/modules/**/__tests__/*.test.ts`
 - API テスト：`app/api/**/__tests__/*.test.ts`
 - E2E テスト
 
 **禁止事項**:
+
 - ビジネスロジックそのものの大量実装
 
 ### Agent 間の依存関係
@@ -319,11 +331,11 @@ xtrade は local / dev / prod の 3 環境で運用します。
 
 ### 環境ごとの URL
 
-| 環境  | APP URL                          | DB                       | 備考                  |
-| ----- | -------------------------------- | ------------------------ | --------------------- |
-| local | `http://localhost:3000`          | Docker Postgres          | 開発用                |
-| dev   | `https://xtrade-dev.tqer39.dev`  | Neon (xtrade-dev)        | ステージング・動作確認 |
-| prod  | `https://xtrade.tqer39.dev`      | Neon (xtrade-prod)       | 本番                  |
+| 環境 | APP URL | DB | 備考 |
+| --- | --- | --- | --- |
+| local | `http://localhost:3000` | Docker Postgres | 開発用 |
+| dev | `https://xtrade-dev.tqer39.dev` | Neon (xtrade-dev) | ステージング・動作確認 |
+| prod | `https://xtrade.tqer39.dev` | Neon (xtrade-prod) | 本番 |
 
 ### 環境変数管理
 
