@@ -57,7 +57,7 @@ brew bundle install
 # 3. 開発環境のセットアップ
 just setup
 
-# 4. 環境変数の設定
+# 4. 環境変数の設定ｗ
 cp .env.example .env.local
 # .env.local を編集して、必要な値を設定
 ```
@@ -66,6 +66,22 @@ cp .env.example .env.local
 
 ```bash
 just setup
+```
+
+### AWS と環境変数の設定（Terraform 利用時）
+
+Terraform で AWS をバックエンドに使用する場合：
+
+```bash
+# 1. direnv の設定
+just setup-direnv
+# .envrc を編集して AWS プロファイルと Neon API キーを設定
+
+# 2. direnv を有効化
+just direnv-allow
+
+# 3. aws-vault でプロファイルを追加
+just aws-add xtrade-dev
 ```
 
 ### 開発サーバーの起動
@@ -78,7 +94,7 @@ just db-start
 just db-migrate
 
 # 開発サーバー起動
-npm run dev
+just dev
 ```
 
 ブラウザで `http://localhost:3000` を開くと、アプリケーションが起動します。
@@ -99,6 +115,48 @@ just setup-env
 
 # Node.js 依存関係のインストール
 just setup-deps
+
+# direnv セットアップ
+just setup-direnv
+
+# direnv を有効化
+just direnv-allow
+```
+
+### 開発サーバー
+
+```bash
+# 開発サーバー起動
+just dev
+
+# 本番ビルド
+just build
+
+# 本番サーバー起動
+just start
+```
+
+### AWS と Terraform
+
+```bash
+# AWS プロファイル追加
+just aws-add <profile-name>
+
+# AWS プロファイル一覧
+just aws-list
+
+# AWS 認証情報でコマンド実行
+just aws-exec <profile> <command>
+
+# Terraform コマンド（-chdir で環境を指定）
+just tf -chdir=infra/terraform/envs/dev/bootstrap init
+just tf -chdir=infra/terraform/envs/dev/bootstrap plan
+just tf -chdir=infra/terraform/envs/dev/bootstrap apply
+just tf -chdir=infra/terraform/envs/dev/bootstrap output
+just tf -chdir=infra/terraform/envs/dev/bootstrap destroy
+
+# Terraform バージョン確認
+just tf version
 ```
 
 ### データベース管理
@@ -161,10 +219,12 @@ xtrade/
 │   ├── db/           # データベース接続とスキーマ
 │   ├── modules/      # ドメインモジュール
 │   └── components/   # 共通 UI コンポーネント
-├── terraform/        # インフラ構成（IaC）
-│   ├── modules/      # 再利用可能な Terraform モジュール
-│   ├── environments/ # 環境ごとの設定（dev / prod）
-│   └── global/       # グローバルリソース（DNS など）
+├── infra/
+│   └── terraform/    # インフラ構成（IaC）
+│       ├── config.yml      # 共通設定ファイル
+│       ├── modules/        # 再利用可能な Terraform モジュール
+│       ├── envs/           # 環境ごとの設定（dev / prod）
+│       └── global/         # グローバルリソース（DNS など）
 ├── docs/             # ドキュメント
 ├── .github/          # GitHub Actions、CODEOWNERS、PR テンプレート
 ├── .claude/          # Claude Code Agent 設定
@@ -172,6 +232,30 @@ xtrade/
 ```
 
 詳細なアーキテクチャについては [docs/architecture.md](docs/architecture.md) を参照してください。
+
+## MCP サーバー
+
+Claude Code の能力を拡張するため、以下の MCP サーバーを導入しています：
+
+### 導入済み MCP サーバー
+
+- **Context7**: 最新のライブラリドキュメントとコード例を提供
+  - Terraform、AWS SDK などの公式ドキュメントをリアルタイムで取得
+  - 古い情報やハルシネーションを排除
+- **Serena**: セマンティックコード検索と編集機能を提供
+  - IDE のようなコード理解と編集機能を LLM に追加
+  - プロジェクト全体のコンテキストを活用した開発支援
+
+### MCP サーバーのセットアップ
+
+MCP サーバーは既に設定済みです。Claude Code を再起動すると自動的に有効化されます。
+
+```bash
+# 設定を確認（~/.claude.json に保存されています）
+cat ~/.claude.json
+```
+
+詳細は [Context7 公式ドキュメント](https://github.com/upstash/context7) と [Serena 公式ドキュメント](https://github.com/oraios/serena) を参照してください。
 
 ## Agent 構成
 
@@ -188,11 +272,38 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 
 詳細は [CLAUDE.md](CLAUDE.md#xtrade-開発用-agent-構成) を参照してください。
 
+## インフラ管理（Terraform）
+
+### Bootstrap（初回デプロイ）
+
+Dev 環境の初回セットアップ時に実行：
+
+```bash
+# 1. AWS と環境変数のセットアップ
+just setup-direnv
+# .envrc を編集して NEON_API_KEY と AWS_VAULT_PROFILE を設定
+just direnv-allow
+
+# 2. AWS プロファイル追加
+just aws-add xtrade-dev
+
+# 3. Terraform 実行
+just tf -chdir=infra/terraform/envs/dev/bootstrap init
+just tf -chdir=infra/terraform/envs/dev/bootstrap plan
+just tf -chdir=infra/terraform/envs/dev/bootstrap apply
+
+# 4. 接続情報確認
+just tf -chdir=infra/terraform/envs/dev/bootstrap output
+```
+
+詳細は [infra/terraform/envs/dev/bootstrap/README.md](infra/terraform/envs/dev/bootstrap/README.md) を参照してください。
+
 ## ドキュメント
 
 - [アーキテクチャ設計書](docs/architecture.md)
 - [AI ルール](docs/AI_RULES.ja.md)
 - [Claude Code 利用ガイド](docs/CLAUDE.ja.md)
+- [Terraform Bootstrap](infra/terraform/envs/dev/bootstrap/README.md)
 
 ## ライセンス
 
@@ -202,15 +313,16 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 
 このセットアップでは、ツールの責務を明確に分離しています：
 
-- **brew**: システムレベルの開発ツール (git, pre-commit, mise, just, uv)
-- **mise**: Node.js バージョン管理のみ
+- **brew**: システムレベルの開発ツール
+  - git, pre-commit, mise, just, uv
+  - aws-vault（AWS 認証情報管理）
+  - direnv（ディレクトリごとの環境変数管理）
+- **mise**: プログラミング言語とツールのバージョン管理
+  - Node.js 24
+  - Terraform (latest)
 - **uv**: Python パッケージとプロジェクト管理
 - **pre-commit**: すべてのリンティングツールを自動処理（個別インストール不要）
-
-### 自動 AI CLI ツール
-
-`just setup` 実行時（または `just ai-install` で手動実行）に Claude Code CLI を自動インストールします：
-
-- **Claude Code CLI**: `@anthropic-ai/claude-code` - VS Code での AI アシスト開発用
+- **aws-vault**: Terraform state の AWS S3 バックエンド用の安全な認証情報管理
+- **direnv**: プロジェクトディレクトリごとの環境変数自動ロード
 
 このアプローチにより、懸念事項の明確な分離と、システムツールと言語固有バージョン間の競合を回避します。
