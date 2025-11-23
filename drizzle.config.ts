@@ -1,4 +1,8 @@
+import { config } from 'dotenv'
 import { defineConfig } from 'drizzle-kit'
+
+// .env.local ファイルから環境変数を読み込む
+config({ path: '.env.local' })
 
 export default defineConfig({
   // Drizzle スキーマの場所

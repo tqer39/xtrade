@@ -71,8 +71,11 @@ just setup
 ### 開発サーバーの起動
 
 ```bash
+# ローカルデータベースの起動（Docker Compose）
+just db-start
+
 # データベースのマイグレーション実行
-npm run db:migrate
+just db-migrate
 
 # 開発サーバー起動
 npm run dev
@@ -82,10 +85,50 @@ npm run dev
 
 ## 利用可能なコマンド
 
+### 開発環境セットアップ
+
 ```bash
 # すべての利用可能なタスクを表示
 just help
 
+# 初回セットアップ（環境構築）
+just setup
+
+# 環境変数ファイルのみセットアップ
+just setup-env
+
+# Node.js 依存関係のインストール
+just setup-deps
+```
+
+### データベース管理
+
+```bash
+# ローカルデータベースの起動
+just db-start
+
+# ローカルデータベースの停止
+just db-stop
+
+# データベースログの表示
+just db-logs
+
+# マイグレーション実行
+just db-migrate
+
+# マイグレーションファイル生成
+just db-generate
+
+# Drizzle Studio 起動（GUI）
+just db-studio
+
+# データベースリセット（全データ削除）
+just db-reset
+```
+
+### コード品質チェック
+
+```bash
 # コード品質チェック
 just lint
 
@@ -94,7 +137,11 @@ just fix
 
 # pre-commit キャッシュのクリーン
 just clean
+```
 
+### ツール更新
+
+```bash
 # 開発ツールの更新
 just update-brew  # Homebrew パッケージを更新
 just update       # mise 管理ツールを更新

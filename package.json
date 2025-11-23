@@ -23,6 +23,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.7",
     "drizzle-kit": "^0.30.0",
     "typescript": "^5"
   }

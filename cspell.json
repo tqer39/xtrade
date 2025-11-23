@@ -11,7 +11,8 @@
     "pyproject.toml",
     "sounds",
     ".env",
-    ".env.*"
+    ".env.*",
+    "drizzle/**"
   ],
   "words": [
     "afplay",
@@ -40,6 +41,8 @@
     "fastapi",
     "FASTMCP",
     "getsentry",
+    "healthcheck",
+    "isready",
     "itkq",
     "justfile",
     "kentaro",
