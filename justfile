@@ -1,10 +1,7 @@
-# Development tasks for boilerplate-base
+# Development tasks for xtrade
 
 # Use bash for all recipes to avoid zsh/sh incompatibilities
 set shell := ["bash", "-c"]
-
-# Packages: AI CLI tools installed via Node.js (managed by mise)
-ai_cli_pkgs := "@anthropic-ai/claude-code"
 
 # Show available commands
 help:
@@ -22,7 +19,6 @@ setup:
         echo "⚠ mise not found. Please run 'make bootstrap' first."; \
         exit 1; \
     fi
-    @just ai-install
     pre-commit install
     @just setup-env
     @just setup-deps
@@ -58,11 +54,6 @@ setup-db:
     @echo "    1. Use Docker Compose: docker compose up -d"
     @echo "    2. Use Neon database: Update DATABASE_URL in .env.local"
     @echo "  After database is ready, run: npm run db:migrate"
-
-# Install AI CLI tools only (can be run independently)
-ai-install:
-    @echo "→ Installing Node.js AI CLI tools..."
-    mise exec node -- npm install -g {{ai_cli_pkgs}}
 
 # Run pre-commit hooks on all files
 lint:
