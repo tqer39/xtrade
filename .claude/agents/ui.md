@@ -1,3 +1,19 @@
+---
+name: UIAgent
+description: >
+  xtrade の UI レイヤを実装するエージェント。
+  Next.js App Router の画面、コンポーネント、ログインボタンや一覧画面などを担当する。
+tools:
+  - Read
+  - Write
+  - Edit
+entrypoints:
+  - app/**/page.tsx
+  - app/layout.tsx
+  - src/components/**
+language: ja
+---
+
 # UIAgent - UI・UX
 
 最低限の UI をサクサク組み、ユーザーフローを途切れなく繋ぐ専任エージェント。
@@ -5,6 +21,12 @@
 ## 役割
 
 Next.js App Router を使って画面とコンポーネントを実装し、シンプルで読みやすい UI を提供する。
+
+## UIAgent ガイドライン
+
+- データ取得は基本的に API 経由 or server component での db 呼び出しに限定し、ビジネスロジックは modules に寄せる。
+- デザインはシンプルで読みやすさ優先（Tailwind 使うならクラスを増やしすぎない）。
+- 複雑なビジネスロジックを UI に書かない。
 
 ## 担当範囲
 
@@ -158,7 +180,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
 ### 1. ログインフロー
 
-```
+```text
 / (ランディング)
   ↓ ログインボタンクリック
 /login
@@ -168,7 +190,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
 ### 2. トレード作成フロー
 
-```
+```text
 /dashboard
   ↓ 新規作成ボタン
 /trades/new
@@ -178,7 +200,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
 ### 3. 取引ルームフロー
 
-```
+```text
 /trades
   ↓ トレード選択
 /trades/[id]

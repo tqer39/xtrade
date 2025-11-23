@@ -197,6 +197,7 @@ export const tradeStatusEnum = pgEnum('trade_status', [
    ```
 
 4. **旧カラム削除**
+
    ```typescript
    // Step 3: 旧カラムを削除
    // oldColumn を schema から削除

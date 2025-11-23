@@ -69,7 +69,7 @@ xtrade のドメイン API（trades, rooms, reports）の実装と保守を行�
 
 ### レイヤ構成
 
-```
+```text
 Route Handler (app/api/**/route.ts)
   ↓
 Service Layer (src/modules/**/service.ts)
@@ -182,14 +182,14 @@ export async function publishTrade(userId: string, tradeId: string) {
 
 ### トレードのステータス遷移
 
-```
+```text
 draft -> published -> matched -> in_progress -> completed
                                               -> cancelled
 ```
 
 ### ルームのステータス遷移
 
-```
+```text
 created -> active -> completed
                   -> cancelled
 ```
