@@ -1,0 +1,133 @@
+name: DB Migration - dev
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/db/schema.ts'
+      - 'src/db/migrations/**'
+      - 'drizzle.config.ts'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/db/schema.ts'
+      - 'src/db/migrations/**'
+      - 'drizzle.config.ts'
+  workflow_dispatch:
+    inputs:
+      DRY_RUN:
+        description: 'ドライラン（マイグレーションを実行せずに確認のみ）'
+        required: true
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # マイグレーションは中断しない
+
+env:
+  NODE_VERSION: '24'
+  DRY_RUN: ${{ inputs.DRY_RUN || 'true' }}
+
+jobs:
+  db-migrate-dev:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+        with:
+          experimental: true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check migration files
+        id: check-migration
+        run: |
+          if [ -d "src/db/migrations" ] && [ "$(ls -A src/db/migrations)" ]; then
+            echo "has-migrations=true" >> "$GITHUB_OUTPUT"
+            echo "✅ マイグレーションファイルが見つかりました"
+            ls -la "src/db/migrations"
+          else
+            echo "has-migrations=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️ マイグレーションファイルが見つかりません"
+          fi
+
+      - name: Dry run - Check migration plan (PR only)
+        if: github.event_name == 'pull_request' && steps.check-migration.outputs.has-migrations == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+        run: |
+          echo "🔍 マイグレーションプランを確認しています（実行はしません）"
+          npm run db:generate
+          echo "✅ マイグレーション生成が正常に完了しました"
+
+      - name: Run database migration (main branch only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.check-migration.outputs.has-migrations == 'true' && env.DRY_RUN == 'false'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+        run: |
+          echo "🚀 データベースマイグレーションを実行しています"
+          npm run db:migrate
+          echo "✅ マイグレーションが正常に完了しました"
+
+      - name: Run database migration (manual trigger)
+        if: github.event_name == 'workflow_dispatch' && steps.check-migration.outputs.has-migrations == 'true' && env.DRY_RUN == 'false'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+        run: |
+          echo "🚀 データベースマイグレーションを手動実行しています"
+          npm run db:migrate
+          echo "✅ マイグレーションが正常に完了しました"
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.check-migration.outputs.has-migrations == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const comment = `## 🗃️ データベースマイグレーション確認
+
+            ✅ マイグレーションファイルの生成が正常に完了しました。
+
+            ### 次のステップ
+
+            このPRがマージされると、\`main\`ブランチへのpush時に自動的にdev環境のデータベースマイグレーションが実行されます。
+
+            **注意**: マイグレーションは本番環境には自動適用されません。本番環境へのマイグレーションは手動で実行してください。
+
+            ### マイグレーションファイル
+
+            \`\`\`
+            src/db/migrations/
+            \`\`\`
+
+            ---
+            🤖 このコメントは自動生成されました`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Notify success
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main' && env.DRY_RUN == 'false'
+        run: |
+          echo "✅ dev環境のデータベースマイグレーションが正常に完了しました"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ データベースマイグレーションが失敗しました"
+          exit 1
