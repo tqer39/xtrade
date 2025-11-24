@@ -1,0 +1,155 @@
+---
+name: Terraform Plan
+
+description: Terraform Plan
+
+inputs:
+  AWS_ENV_NAME:
+    description: 環境名
+    required: true
+  CHECK_DIFF:
+    description: 差分チェックを行うかどうか
+    required: true
+    default: '_false'
+  github-token:
+    description: サードパーティの Action を実行するための権限を付与するための認証用トークン
+    required: true
+  SLACK_WEBHOOK:
+    description: Slack の Webhook URL
+    required: true
+  working-directory:
+    description: Terraform CLI 実行時のパス
+    required: true
+  gcp-workload-identity-provider:
+    description: GCP Workload Identity Provider (domain ディレクトリの場合に必要)
+    required: false
+  gcp-service-account:
+    description: GCP Service Account (domain ディレクトリの場合に必要)
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Authenticate to Google Cloud (for domain directory)
+      if: inputs.gcp-workload-identity-provider != '' && inputs.gcp-service-account != ''
+      uses: google-github-actions/auth@v3
+      with:
+        workload_identity_provider: ${{ inputs.gcp-workload-identity-provider }}
+        service_account: ${{ inputs.gcp-service-account }}
+
+    - name: Setup Terraform
+      uses: ./.github/actions/setup-terraform
+      with:
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Terraform Validate
+      uses: ./.github/actions/terraform-validate
+      with:
+        github-token: ${{ inputs.github-token }}
+        working-directory: ${{ inputs.working-directory }}
+
+    - name: Cache tfcmt
+      id: cache-tfcmt
+      uses: actions/cache@v4
+      with:
+        path: ~/bin/tfcmt
+        key: tfcmt-${{ runner.os }}-v4.14.12
+
+    - name: Setup tfcmt
+      if: steps.cache-tfcmt.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p ~/bin
+        curl -fsSL https://github.com/suzuki-shunsuke/tfcmt/releases/download/v4.14.12/tfcmt_linux_amd64.tar.gz | tar -xz -C ~/bin tfcmt
+        chmod +x ~/bin/tfcmt
+      shell: bash
+
+    - name: Add tfcmt to PATH
+      run: echo "$HOME/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Set contact_address_lines as JSON
+      if: env.CONTACT_ADDRESS_LINES != ''
+      run: |
+        echo "TF_VAR_contact_address_lines=$(echo "$CONTACT_ADDRESS_LINES" | jq -R -c 'split(",")')" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Terraform Plan
+      continue-on-error: true
+      id: terraform-plan
+      run: |
+        # デバッグログをリアルタイムで標準エラー出力に流しながら、plan結果はファイルに保存
+        export CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN}"
+        export TF_VAR_gcp_project_id="${GCP_PROJECT_ID}"
+        export TF_VAR_cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
+        export TF_VAR_cloudflare_account_id="${CLOUDFLARE_ACCOUNT_ID}"
+        export TF_VAR_contact_country_code="${CONTACT_COUNTRY_CODE}"
+        export TF_VAR_contact_postal_code="${CONTACT_POSTAL_CODE}"
+        export TF_VAR_contact_administrative_area="${CONTACT_ADMINISTRATIVE_AREA}"
+        export TF_VAR_contact_locality="${CONTACT_LOCALITY}"
+        export TF_VAR_contact_recipient="${CONTACT_RECIPIENT}"
+        export TF_VAR_contact_email="${CONTACT_EMAIL}"
+        export TF_VAR_contact_phone="${CONTACT_PHONE}"
+        export TF_VAR_yearly_price_currency="${YEARLY_PRICE_CURRENCY}"
+        export TF_VAR_yearly_price_units="${YEARLY_PRICE_UNITS}"
+        terraform plan -detailed-exitcode -no-color 2>&1 | tee tf_plan.txt
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+
+    - name: tfcmt
+      if: steps.terraform-plan.outputs.exitcode != '1'
+      run: |
+        case "$TF_PLAN_EXIT_CODE" in
+          0) TF_PLAN_STATUS="no-changes" ;;
+          1) TF_PLAN_STATUS="error" ;;
+          2) TF_PLAN_STATUS="has-diff" ;;
+          *) TF_PLAN_STATUS="unknown-error" ;;
+        esac
+
+        TARGET=$(echo ${{ inputs.working-directory }} | sed -e 's|^.*\./infra/terraform/envs/||' | cut -c 1-36)
+        tfcmt --config $GITHUB_WORKSPACE/.github/tfcmt.yml --var target:$TARGET plan -patch -- cat tf_plan.txt
+
+        echo "TF_PLAN_STATUS=$TF_PLAN_STATUS"
+        echo "TF_PLAN_STATUS=$TF_PLAN_STATUS" >> $GITHUB_ENV
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        TF_PLAN_EXIT_CODE: ${{ steps.terraform-plan.outputs.exitcode }}
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+
+    - name: Set Slack Message (Terraform Plan failure)
+      if: env.TF_PLAN_STATUS == 'has-diff' && inputs.CHECK_DIFF == '_true'
+      run: echo "ERROR_MSG=インフラのコードと実態のリソースに差分があります" >> "$GITHUB_ENV"
+      shell: bash
+
+    - name: Set Slack Message (another error)
+      if: steps.terraform-plan.outputs.exitcode == '1'
+      run: echo "ERROR_MSG=difference check CIがエラー終了しました" >> "$GITHUB_ENV"
+      shell: bash
+
+    # - name: DEBUG
+    #   run: |
+    #     echo "exitcode: ${{ steps.terraform-plan.outputs.exitcode }}"
+    #     echo "TF_PLAN_STATUS: ${{ env.TF_PLAN_STATUS }}"
+    #     echo "CHECK_DIFF: ${{ inputs.CHECK_DIFF }}"
+    #   shell: bash
+
+    - name: Slack Notification (failure)
+      continue-on-error: true
+      if: steps.terraform-plan.outputs.exitcode == '1' || (env.TF_PLAN_STATUS == 'has-diff' && inputs.CHECK_DIFF == '_true')
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: '#ntf_gh_private-lab'
+        SLACK_COLOR: danger
+        SLACK_TITLE: '${{ inputs.AWS_ENV_NAME }}(${{ env.AWS_ACCOUNT_ID }}): ${{ env.ERROR_MSG }}'
+        SLACK_MESSAGE: "<!subteam^U0RFFAK9U> 確認してください。\npath: `${{ inputs.working-directory }}`"
+        SLACK_LINK_NAMES: 'true'
+        SLACK_USERNAME: github-bot
+        SLACK_ICON_EMOJI: ':x:'
+        SLACK_WEBHOOK: ${{ inputs.SLACK_WEBHOOK }}
+
+    - name: Fail workflow on Terraform error
+      if: steps.terraform-plan.outputs.exitcode == '1'
+      run: |
+        echo "::error::Terraform plan failed with errors. Check the logs above for details."
+        exit 1
+      shell: bash
