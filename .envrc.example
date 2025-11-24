@@ -9,6 +9,9 @@ export AWS_REGION=ap-northeast-1
 # Neon API Key for Terraform
 export NEON_API_KEY=your-neon-api-key
 
+# Vercel API Token for Terraform
+export VERCEL_API_TOKEN=your-vercel-api-token
+
 # Terraform 変数として自動的に読み込まれる（TF_VAR_ プレフィックス）
 export TF_VAR_neon_api_key="${NEON_API_KEY}"
 
