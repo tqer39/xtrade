@@ -1,23 +1,23 @@
-# xtrade Directory Structure
+# xtrade ディレクトリ構成
 
-[🇯🇵 日本語版](./directory-structure.ja.md)
+[🇺🇸 English](./directory-structure.md)
 
-## Design Principles
+## 設計方針
 
-- **Package by Feature**: Modularize by domain units
-- **Lightweight DDD**: Leverage DDD concepts with 3 layers: domain/app/infra
-- **MVP Optimization**: Realistic structure for solo development + AI collaboration
+- **Package by Feature**: ドメイン単位でモジュール分割
+- **薄い DDD**: domain/app/infra の 3 層で DDD の考え方を活かす
+- **MVP 最適化**: 1 人開発 + AI 協働を前提とした現実的な構成
 
-## Directory Structure
+## ディレクトリ構造
 
 ```text
 xtrade/
 ├── app/                          # Next.js App Router
-│   ├── (auth)/                   # Pages requiring authentication
+│   ├── (auth)/                   # 認証が必要なページグループ
 │   │   ├── trades/
 │   │   ├── rooms/
 │   │   └── profile/
-│   ├── api/                      # API Routes (thin controllers)
+│   ├── api/                      # API Routes（薄い Controller）
 │   │   ├── trades/
 │   │   │   ├── route.ts
 │   │   │   └── [id]/
@@ -36,56 +36,56 @@ xtrade/
 │   ├── layout.tsx
 │   └── page.tsx
 ├── src/
-│   ├── components/               # Common UI components
-│   │   ├── ui/                   # shadcn/ui components
+│   ├── components/               # 共通 UI コンポーネント
+│   │   ├── ui/                   # shadcn/ui コンポーネント
 │   │   ├── layouts/
-│   │   └── features/             # Feature-specific components
-│   ├── db/                       # Database
-│   │   ├── schema/               # Drizzle schema (by domain)
+│   │   └── features/             # 機能別コンポーネント
+│   ├── db/                       # データベース
+│   │   ├── schema/               # Drizzle スキーマ（ドメイン別）
 │   │   │   ├── trades.ts
 │   │   │   ├── rooms.ts
 │   │   │   ├── messages.ts
 │   │   │   ├── reports.ts
 │   │   │   ├── profiles.ts
-│   │   │   └── index.ts          # Export all schemas
-│   │   ├── drizzle.ts            # DB connection
-│   │   └── migrations/           # Migration files
-│   ├── lib/                      # Common library
-│   │   ├── auth.ts               # BetterAuth server config
-│   │   ├── auth-client.ts        # BetterAuth client
-│   │   └── auth-guards.ts        # Auth guards
-│   └── modules/                  # Domain modules (by feature)
-│       ├── shared/               # Shared module
+│   │   │   └── index.ts          # 全スキーマを export
+│   │   ├── drizzle.ts            # DB 接続
+│   │   └── migrations/           # マイグレーションファイル
+│   ├── lib/                      # 共通ライブラリ
+│   │   ├── auth.ts               # BetterAuth サーバー設定
+│   │   ├── auth-client.ts        # BetterAuth クライアント
+│   │   └── auth-guards.ts        # 認証ガード
+│   └── modules/                  # ドメインモジュール（Feature 単位）
+│       ├── shared/               # 共通モジュール
 │       │   ├── domain/
-│       │   │   ├── errors.ts     # DomainError, NotFoundError, etc.
-│       │   │   ├── types.ts      # Result<T, E> type, etc.
-│       │   │   └── events.ts     # Domain event base type
+│       │   │   ├── errors.ts     # DomainError, NotFoundError など
+│       │   │   ├── types.ts      # Result<T, E> 型など
+│       │   │   └── events.ts     # ドメインイベント基底型
 │       │   └── utils/
 │       │       ├── validation.ts
 │       │       └── logger.ts
-│       ├── trades/               # Trades (listings/offers)
+│       ├── trades/               # トレード（出品/募集）
 │       │   ├── domain/
-│       │   │   ├── model.ts      # Trade type, business rules
-│       │   │   ├── stateMachine.ts # State transition definitions
-│       │   │   └── validation.ts # Validation rules
+│       │   │   ├── model.ts      # Trade 型、ビジネスルール
+│       │   │   ├── stateMachine.ts # 状態遷移定義
+│       │   │   └── validation.ts # バリデーションルール
 │       │   ├── app/
-│       │   │   ├── service.ts    # Use case implementation
-│       │   │   └── dto.ts        # DTO definitions
+│       │   │   ├── service.ts    # ユースケース実装
+│       │   │   └── dto.ts        # DTO 定義
 │       │   ├── infra/
-│       │   │   └── repo.ts       # Persistence with Drizzle
-│       │   └── index.ts          # Public API
-│       ├── rooms/                # Trading rooms
+│       │   │   └── repo.ts       # Drizzle での永続化
+│       │   └── index.ts          # public API
+│       ├── rooms/                # 取引ルーム
 │       │   ├── domain/
 │       │   │   ├── model.ts
-│       │   │   ├── stateMachine.ts # Room state management
-│       │   │   └── rules.ts      # Trading rules
+│       │   │   ├── stateMachine.ts # ルームステート管理
+│       │   │   └── rules.ts      # 取引ルール
 │       │   ├── app/
 │       │   │   ├── service.ts
 │       │   │   └── dto.ts
 │       │   ├── infra/
 │       │   │   └── repo.ts
 │       │   └── index.ts
-│       ├── messages/             # Chat
+│       ├── messages/             # チャット
 │       │   ├── domain/
 │       │   │   └── model.ts
 │       │   ├── app/
@@ -93,7 +93,7 @@ xtrade/
 │       │   ├── infra/
 │       │   │   └── repo.ts
 │       │   └── index.ts
-│       ├── reports/              # Reports
+│       ├── reports/              # 通報
 │       │   ├── domain/
 │       │   │   ├── model.ts
 │       │   │   └── validation.ts
@@ -102,31 +102,31 @@ xtrade/
 │       │   ├── infra/
 │       │   │   └── repo.ts
 │       │   └── index.ts
-│       └── profiles/             # Profiles (X account + trust score)
+│       └── profiles/             # プロフィール（X アカウント + 信頼スコア）
 │           ├── domain/
 │           │   ├── model.ts
-│           │   └── trustScore.ts # Trust score calculation logic
+│           │   └── trustScore.ts # 信頼スコア計算ロジック
 │           ├── app/
 │           │   └── service.ts
 │           ├── infra/
 │           │   └── repo.ts
 │           └── index.ts
-├── infra/                        # Infrastructure
-│   └── terraform/                # Terraform configuration
+├── infra/                        # インフラストラクチャ
+│   └── terraform/                # Terraform 構成
 │       ├── config.yml
 │       ├── modules/
 │       ├── envs/
 │       └── global/
-├── docs/                         # Documentation
+├── docs/                         # ドキュメント
 ├── .github/                      # GitHub Actions
-└── scripts/                      # Development scripts
+└── scripts/                      # 開発用スクリプト
 ```
 
-## Module Structure Details
+## モジュール構成の詳細
 
-### domain/ Layer
+### domain/ 層
 
-**Responsibility**: Business rules, invariants, state transitions
+**責務**: ビジネスルール、不変条件、状態遷移
 
 ```typescript
 // modules/trades/domain/model.ts
@@ -150,15 +150,15 @@ export const TradeRules = {
 }
 ```
 
-**Characteristics**:
+**特徴**:
 
-- Pure TypeScript (no external dependencies)
-- Business logic only
-- Easy to test
+- Pure TypeScript（外部依存なし）
+- ビジネスロジックのみ
+- テストしやすい
 
-### app/ Layer
+### app/ 層
 
-**Responsibility**: Use case implementation, transaction control
+**責務**: ユースケース実装、トランザクション制御
 
 ```typescript
 // modules/trades/app/service.ts
@@ -183,15 +183,15 @@ export class TradeService {
 }
 ```
 
-**Characteristics**:
+**特徴**:
 
-- Represents use cases
-- Connects domain and infra
-- Transaction boundaries
+- ユースケースを表現
+- domain と infra を繋ぐ
+- トランザクション境界
 
-### infra/ Layer
+### infra/ 層
 
-**Responsibility**: DB access, external API calls
+**責務**: DB アクセス、外部 API 呼び出し
 
 ```typescript
 // modules/trades/infra/repo.ts
@@ -217,22 +217,22 @@ export class TradeRepository {
 }
 ```
 
-**Characteristics**:
+**特徴**:
 
-- Uses Drizzle ORM
-- Transforms between domain model and DB records
-- Not exported from this layer
+- Drizzle ORM を使用
+- Domain モデルと DB レコードの変換
+- この層は外部に export しない
 
-### index.ts (Public API)
+### index.ts（Public API）
 
 ```typescript
 // modules/trades/index.ts
 export * from './domain/model'
 export * from './app/service'
-// infra is not exported (implementation detail)
+// infra は export しない（実装の詳細）
 ```
 
-**Usage Example**:
+**使用例**:
 
 ```typescript
 // app/api/trades/route.ts
@@ -245,7 +245,7 @@ export async function POST(req: Request) {
 }
 ```
 
-## Dependency Rules
+## 依存関係のルール
 
 ```text
 app/api/          →  modules/*/app/
@@ -257,23 +257,23 @@ modules/*/infra/  →  modules/*/domain/
                   →  src/db/
 ```
 
-**Prohibited**:
+**禁止事項**:
 
-- Dependencies from `domain/` to `app/` or `infra/`
-- Dependencies from `infra/` to `app/`
-- Direct dependencies between modules (e.g., `trades/` to `rooms/`)
-  - If needed, call through `app/service.ts`
+- `domain/` から `app/` や `infra/` への依存
+- `infra/` から `app/` への依存
+- モジュール間の直接依存（`trades/` から `rooms/` など）
+  - 必要な場合は `app/service.ts` 経由で呼び出す
 
-## State Machine Implementation Example
+## ステートマシンの実装例
 
 ```typescript
 // modules/rooms/domain/stateMachine.ts
 export type RoomStatus =
-  | 'NEGOTIATING'   // Negotiating
-  | 'TRADING'       // Trading
-  | 'COMPLETED'     // Completed
-  | 'CANCELLED'     // Cancelled
-  | 'DISPUTED'      // Disputed
+  | 'NEGOTIATING'   // 交渉中
+  | 'TRADING'       // 取引中
+  | 'COMPLETED'     // 完了
+  | 'CANCELLED'     // キャンセル
+  | 'DISPUTED'      // 紛争中
 
 type Transition = {
   from: RoomStatus
@@ -307,40 +307,40 @@ export function transition(room: Room, to: RoomStatus): Result<Room> {
 }
 ```
 
-## Benefits for AI Collaboration
+## AI との協働での利点
 
-### 1. Easy to Focus Context
-
-```text
-"Look at modules/trades/ and add a new feature"
-→ Claude only needs to look at 3 files
-```
-
-### 2. Local Feature Addition
+### 1. コンテキストが絞りやすい
 
 ```text
-Add new "rating system" feature
-→ Just create modules/ratings/
-→ No impact on existing code
+「modules/trades/ を見て、新しい機能を追加して」
+→ Claude は 3 つのファイルだけ見ればいい
 ```
 
-### 3. State Machine Protection
+### 2. 機能追加が局所的
+
+```text
+新機能「評価システム」を追加
+→ modules/ratings/ を作るだけ
+→ 既存コードに影響なし
+```
+
+### 3. ステートマシンが守られる
 
 ```typescript
-// Defined in domain/stateMachine.ts
-→ Used in app/service.ts
-→ API Routes just call service
-→ Invalid state transitions prevented at domain layer
+// domain/stateMachine.ts で定義
+→ app/service.ts で使用
+→ API Routes は service を呼ぶだけ
+→ 不正な状態遷移は domain 層で防げる
 ```
 
-## Summary
+## まとめ
 
-This structure:
+この構成は：
 
-- ✅ Leverages good parts of DDD (bounded contexts, aggregates, state machines)
-- ✅ But minimal folder hierarchy (3 layers)
-- ✅ Doesn't break Next.js conventions
-- ✅ Optimal for solo development + AI collaboration
-- ✅ Scalable from MVP to production
+- ✅ DDD の良い部分（境界づけられたコンテキスト、集約、ステートマシン）を活かす
+- ✅ でもフォルダ階層は最小限（3 層）
+- ✅ Next.js の規約を壊さない
+- ✅ 1 人開発 + AI 協働に最適
+- ✅ MVP から本番まで拡張可能
 
-A good example of "practical DDD" rather than "textbook DDD".
+「教科書的 DDD」ではなく「実用的 DDD」の良い例です。

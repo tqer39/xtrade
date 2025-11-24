@@ -1,48 +1,50 @@
-# Terraform 環境変数管理ガイド
+# Terraform Environment Variables Management Guide
 
-このドキュメントでは、direnv を使って Terraform の環境変数を管理する方法を説明します。
+[🇯🇵 日本語版](./terraform-environment-variables.ja.md)
 
-## 概要
+This document explains how to manage Terraform environment variables using direnv.
 
-xtrade プロジェクトでは、環境変数の管理に **direnv** を使用します。これにより、ディレクトリごとに異なる環境変数を自動的にロード/アンロードできます。
+## Overview
 
-## direnv の基本
+The xtrade project uses **direnv** for environment variable management. This allows automatic loading/unloading of different environment variables per directory.
 
-### direnv とは
+## direnv Basics
 
-direnv は、ディレクトリに入ると自動的に環境変数をロードし、出ると自動的にアンロードするツールです。
+### What is direnv
 
-### 動作の仕組み
+direnv is a tool that automatically loads environment variables when entering a directory and unloads them when leaving.
 
-1. ディレクトリに `.envrc` ファイルを配置
-2. `direnv allow` で許可
-3. ディレクトリに入ると自動的に環境変数がロードされる
-4. ディレクトリを出ると自動的に環境変数がアンロードされる
+### How It Works
 
-## Terraform での使用パターン
+1. Place `.envrc` file in directory
+2. Allow with `direnv allow`
+3. Environment variables automatically load when entering directory
+4. Environment variables automatically unload when leaving directory
 
-### パターン 1: プロジェクトルートで管理（全環境共通）
+## Usage Patterns with Terraform
 
-**推奨度**: ⭐⭐⭐⭐⭐（最も簡単）
+### Pattern 1: Manage at Project Root (All Environments)
+
+**Recommendation**: ⭐⭐⭐⭐⭐ (Easiest)
 
 ```bash
-# プロジェクトルート
+# Project root
 /Users/you/workspace/xtrade/
-├── .envrc              # ← ここに配置
+├── .envrc              # ← Place here
 ├── .envrc.example
 └── infra/terraform/...
 ```
 
-**セットアップ**:
+**Setup**:
 
 ```bash
 cd /Users/you/workspace/xtrade
 cp .envrc.example .envrc
-vim .envrc  # API キーを設定
+vim .envrc  # Configure API keys
 direnv allow
 ```
 
-**.envrc の例**:
+**.envrc Example**:
 
 ```bash
 # AWS Vault Profile
@@ -52,94 +54,94 @@ export AWS_REGION=ap-northeast-1
 # Neon API Key
 export NEON_API_KEY=neon_api_xxxxxxxxxxxxx
 
-# Terraform 変数として自動読み込み
+# Auto-load as Terraform variable
 export TF_VAR_neon_api_key="${NEON_API_KEY}"
 ```
 
-**メリット**:
+**Advantages**:
 
-- プロジェクト全体で一度設定すればOK
-- どのディレクトリからでも `just tf` コマンドが動く
+- Configure once for entire project
+- `just tf` commands work from any directory
 
-**デメリット**:
+**Disadvantages**:
 
-- 環境（dev/prod）ごとに変数を切り替えられない
+- Cannot switch variables per environment (dev/prod)
 
-### パターン 2: 環境ごとに .envrc を配置（環境別管理）
+### Pattern 2: Place .envrc per Environment (Separate Management)
 
-**推奨度**: ⭐⭐⭐⭐（環境を厳密に分離したい場合）
+**Recommendation**: ⭐⭐⭐⭐ (For strict environment separation)
 
 ```bash
 infra/terraform/envs/
 ├── dev/
-│   ├── .envrc              # ← dev 環境用
+│   ├── .envrc              # ← For dev environment
 │   ├── .envrc.example
 │   └── database/
 │       └── main.tf
 └── prod/
-    ├── .envrc              # ← prod 環境用
+    ├── .envrc              # ← For prod environment
     ├── .envrc.example
     └── database/
         └── main.tf
 ```
 
-**セットアップ**:
+**Setup**:
 
 ```bash
-# dev 環境
+# dev environment
 cd infra/terraform/envs/dev
 cp .envrc.example .envrc
-vim .envrc  # dev 用の API キーを設定
+vim .envrc  # Configure dev API keys
 direnv allow
 
-# prod 環境
+# prod environment
 cd infra/terraform/envs/prod
 cp .envrc.example .envrc
-vim .envrc  # prod 用の API キーを設定
+vim .envrc  # Configure prod API keys
 direnv allow
 ```
 
-**メリット**:
+**Advantages**:
 
-- 環境ごとに異なる API キーを使用できる
-- 誤って別環境のリソースを操作するリスクが減る
+- Can use different API keys per environment
+- Reduces risk of accidentally operating on wrong environment
 
-**デメリット**:
+**Disadvantages**:
 
-- 各環境で個別に設定が必要
+- Requires individual configuration per environment
 
-### パターン 3: モジュールごとに .envrc を配置（最も細かい管理）
+### Pattern 3: Place .envrc per Module (Finest Granularity)
 
-**推奨度**: ⭐⭐⭐（特殊なケースのみ）
+**Recommendation**: ⭐⭐⭐ (Special cases only)
 
 ```bash
 infra/terraform/envs/dev/
 ├── database/
-│   ├── .envrc              # ← database 専用
+│   ├── .envrc              # ← database-specific
 │   └── main.tf
 ├── vercel/
-│   ├── .envrc              # ← vercel 専用
+│   ├── .envrc              # ← vercel-specific
 │   └── main.tf
 └── dns/
-    ├── .envrc              # ← dns 専用
+    ├── .envrc              # ← dns-specific
     └── main.tf
 ```
 
-**メリット**:
+**Advantages**:
 
-- モジュールごとに必要な環境変数だけを定義できる
+- Can define only necessary environment variables per module
 
-**デメリット**:
+**Disadvantages**:
 
-- 管理が煩雑になる
+- Management becomes complex
 
-## Terraform 変数の自動読み込み
+## Terraform Variable Auto-loading
 
-### TF_VAR_ プレフィックス
+### TF_VAR_ Prefix
 
-Terraform は `TF_VAR_` で始まる環境変数を自動的に変数として認識します。
+Terraform automatically recognizes environment variables starting with `TF_VAR_` as variables.
 
-**例**:
+**Example**:
 
 ```bash
 # .envrc
@@ -161,11 +163,11 @@ provider "neon" {
 }
 ```
 
-### 直接環境変数を使う方法
+### Using Environment Variables Directly
 
-Provider によっては、特定の環境変数名を直接認識します。
+Some providers directly recognize specific environment variable names.
 
-**Neon の例**:
+**Neon Example**:
 
 ```bash
 # .envrc
@@ -175,22 +177,22 @@ export NEON_API_KEY=neon_api_xxxxxxxxxxxxx
 ```hcl
 # provider.tf
 provider "neon" {
-  # NEON_API_KEY 環境変数を自動的に使用
+  # Automatically uses NEON_API_KEY environment variable
 }
 ```
 
-## 実践例：Neon データベースのセットアップ
+## Practical Example: Neon Database Setup
 
-### ステップ 1: API キーの取得
+### Step 1: Obtain API Key
 
-1. [Neon Console](https://console.neon.tech/) にログイン
+1. Log in to [Neon Console](https://console.neon.tech/)
 2. Account Settings → API Keys → Generate new API key
-3. API キーをコピー
+3. Copy API key
 
-### ステップ 2: .envrc の設定
+### Step 2: Configure .envrc
 
 ```bash
-# プロジェクトルートで設定（推奨）
+# Configure at project root (recommended)
 cd /Users/you/workspace/xtrade
 cp .envrc.example .envrc
 vim .envrc
@@ -203,20 +205,20 @@ vim .envrc
 export AWS_VAULT_PROFILE=xtrade-dev
 export AWS_REGION=ap-northeast-1
 
-# Neon API Key（ここに実際のキーを貼り付け）
+# Neon API Key (paste actual key here)
 export NEON_API_KEY=neon_api_xxxxxxxxxxxxx
 
-# Terraform 変数として自動読み込み
+# Auto-load as Terraform variable
 export TF_VAR_neon_api_key="${NEON_API_KEY}"
 ```
 
-### ステップ 3: direnv の有効化
+### Step 3: Enable direnv
 
 ```bash
 direnv allow
 ```
 
-### ステップ 4: 環境変数の確認
+### Step 4: Verify Environment Variables
 
 ```bash
 echo $NEON_API_KEY
@@ -226,86 +228,86 @@ echo $TF_VAR_neon_api_key
 # → neon_api_xxxxxxxxxxxxx
 ```
 
-### ステップ 5: Terraform の実行
+### Step 5: Execute Terraform
 
 ```bash
-# どのディレクトリからでも実行可能
+# Can run from any directory
 just tf -chdir=infra/terraform/envs/dev/database init
 just tf -chdir=infra/terraform/envs/dev/database plan
 just tf -chdir=infra/terraform/envs/dev/database apply
 ```
 
-## トラブルシューティング
+## Troubleshooting
 
-### 環境変数が読み込まれない
+### Environment Variables Not Loading
 
 ```bash
-# direnv のステータス確認
+# Check direnv status
 direnv status
 
-# .envrc を再読み込み
+# Reload .envrc
 direnv allow
 ```
 
-### 別の環境変数が優先されている
+### Different Environment Variable Taking Priority
 
 ```bash
-# 環境変数の優先順位を確認
+# Check environment variable priority
 env | grep NEON_API_KEY
 
-# direnv の環境変数のみ表示
+# Display only direnv environment variables
 direnv export bash | grep NEON_API_KEY
 ```
 
-### .envrc が自動的にロードされない
+### .envrc Not Loading Automatically
 
 ```bash
-# direnv のフックが有効か確認
+# Check if direnv hook is enabled
 echo $DIRENV_ACTIVE
-# → 1 が返ってくれば有効
+# → Should return 1 if enabled
 
-# シェルの設定を確認（.zshrc や .bashrc）
-# 以下の行が必要：
-# eval "$(direnv hook zsh)"  # zsh の場合
-# eval "$(direnv hook bash)" # bash の場合
+# Check shell configuration (.zshrc or .bashrc)
+# Following line is needed:
+# eval "$(direnv hook zsh)"  # for zsh
+# eval "$(direnv hook bash)" # for bash
 ```
 
-## セキュリティのベストプラクティス
+## Security Best Practices
 
-### 1. .envrc をバージョン管理に含めない
+### 1. Don't Include .envrc in Version Control
 
 ```bash
-# .gitignore に含まれていることを確認
+# Verify it's in .gitignore
 cat .gitignore | grep .envrc
-# → .envrc が含まれていればOK
+# → Should include .envrc
 ```
 
-### 2. .envrc.example を用意する
+### 2. Provide .envrc.example
 
 ```bash
-# テンプレートとして .envrc.example を作成
+# Create .envrc.example as template
 cp .envrc .envrc.example
 
-# 実際のキーを削除して、プレースホルダーに置き換える
+# Remove actual keys and replace with placeholders
 vim .envrc.example
 ```
 
-### 3. API キーを環境変数名で管理する
+### 3. Manage API Keys by Environment Variable Name
 
 ```bash
-# ❌ 悪い例：ハードコード
+# ❌ Bad: Hardcoded
 export NEON_API_KEY=neon_api_1234567890abcdef
 
-# ✅ 良い例：パスワードマネージャーから取得
+# ✅ Good: Retrieve from password manager
 export NEON_API_KEY=$(op read "op://Private/Neon API Key/credential")
 ```
 
-## まとめ
+## Summary
 
-| パターン | 推奨度 | ユースケース |
+| Pattern | Recommendation | Use Case |
 | -------- | ------ | ------------ |
-| プロジェクトルート | ⭐⭐⭐⭐⭐ | 個人開発、環境が1つ |
-| 環境ごと | ⭐⭐⭐⭐ | チーム開発、dev/prod 分離 |
-| モジュールごと | ⭐⭐⭐ | 複雑なモジュール構成 |
+| Project root | ⭐⭐⭐⭐⭐ | Solo development, single environment |
+| Per environment | ⭐⭐⭐⭐ | Team development, dev/prod separation |
+| Per module | ⭐⭐⭐ | Complex module structure |
 
-**xtrade での推奨**: プロジェクトルートで `.envrc` を管理し、必要に応じて環境ごとに分ける。
+**xtrade Recommendation**: Manage `.envrc` at project root, separate by environment as needed.

@@ -1,24 +1,26 @@
-# xtrade アーキテクチャ設計書
+# xtrade Architecture Design Document
 
-## 概要
+[🇯🇵 日本語版](./architecture.ja.md)
 
-xtrade は、X (旧 Twitter) のソーシャルグラフを活用したリアルタイムトレーディングサービスです。
-本ドキュメントでは、xtrade の技術的なアーキテクチャと設計思想を説明します。
+## Overview
 
-## システムアーキテクチャ
+xtrade is a real-time trading service that leverages X (formerly Twitter)'s social graph.
+This document explains xtrade's technical architecture and design philosophy.
 
-### 全体構成
+## System Architecture
+
+### Overall Structure
 
 ```text
 ┌──────────────────────────────────────────────────────────┐
-│                      クライアント                         │
+│                        Client                             │
 │              (Next.js App Router / React)                │
 └──────────────────┬───────────────────────────────────────┘
                    │
                    │ HTTPS
                    │
 ┌──────────────────▼───────────────────────────────────────┐
-│                  Vercel (ホスティング)                    │
+│                  Vercel (Hosting)                         │
 │  ┌─────────────────────────────────────────────────────┐ │
 │  │           Next.js App Router                        │ │
 │  │  ┌──────────────────┐  ┌──────────────────────┐    │ │
@@ -38,71 +40,71 @@ xtrade は、X (旧 Twitter) のソーシャルグラフを活用したリアル
 └───────────┘  └──────────┘  └──────────┘
 ```
 
-## モノレポ構成
+## Monorepo Structure
 
-xtrade はモノレポ構成で、フロントエンド・バックエンド・インフラをすべて 1 つのリポジトリで管理します。
+xtrade uses a monorepo structure, managing frontend, backend, and infrastructure in a single repository.
 
-### ディレクトリ構造
+### Directory Structure
 
 ```text
 xtrade/
 ├── app/                    # Next.js App Router
-│   ├── (app)/             # アプリケーションルート
-│   │   ├── layout.tsx     # 共通レイアウト
-│   │   ├── page.tsx       # トップページ
-│   │   ├── rooms/         # ルーム一覧・詳細
-│   │   └── trades/        # トレード一覧・詳細
-│   ├── api/               # Route Handlers（API）
-│   │   ├── auth/          # BetterAuth エンドポイント
+│   ├── (app)/             # Application routes
+│   │   ├── layout.tsx     # Common layout
+│   │   ├── page.tsx       # Top page
+│   │   ├── rooms/         # Room list/details
+│   │   └── trades/        # Trade list/details
+│   ├── api/               # Route Handlers (API)
+│   │   ├── auth/          # BetterAuth endpoints
 │   │   │   └── [...all]/route.ts
-│   │   ├── trades/        # トレード API
-│   │   └── rooms/         # ルーム API
-│   └── globals.css        # グローバル CSS
+│   │   ├── trades/        # Trade API
+│   │   └── rooms/         # Room API
+│   └── globals.css        # Global CSS
 │
-├── src/                   # 共通ライブラリ
-│   ├── lib/               # ユーティリティ
-│   │   ├── auth.ts        # BetterAuth サーバー設定
-│   │   └── auth-client.ts # BetterAuth クライアント
-│   ├── db/                # データベース
-│   │   ├── schema.ts      # Drizzle スキーマ定義
-│   │   └── drizzle.ts     # Drizzle クライアント
-│   ├── modules/           # ドメインモジュール
-│   │   ├── trades/        # トレードドメイン
-│   │   │   └── service.ts # トレードサービス
-│   │   └── rooms/         # ルームドメイン
-│   │       └── service.ts # ルームサービス
-│   └── components/        # 共通 UI コンポーネント
+├── src/                   # Common library
+│   ├── lib/               # Utilities
+│   │   ├── auth.ts        # BetterAuth server config
+│   │   └── auth-client.ts # BetterAuth client
+│   ├── db/                # Database
+│   │   ├── schema.ts      # Drizzle schema definition
+│   │   └── drizzle.ts     # Drizzle client
+│   ├── modules/           # Domain modules
+│   │   ├── trades/        # Trade domain
+│   │   │   └── service.ts # Trade service
+│   │   └── rooms/         # Room domain
+│   │       └── service.ts # Room service
+│   └── components/        # Common UI components
 │
-├── terraform/             # インフラ構成（IaC）
-│   ├── modules/           # 再利用可能なモジュール
-│   │   ├── dns/           # GCP Cloud DNS モジュール
-│   │   ├── vercel/        # Vercel プロジェクトモジュール
-│   │   └── neon/          # Neon DB モジュール（将来対応）
-│   ├── environments/      # 環境ごとの設定
-│   │   ├── dev/           # dev 環境
+├── terraform/             # Infrastructure config (IaC)
+│   ├── modules/           # Reusable modules
+│   │   ├── dns/           # GCP Cloud DNS module
+│   │   ├── vercel/        # Vercel project module
+│   │   └── neon/          # Neon DB module (future)
+│   ├── environments/      # Environment-specific config
+│   │   ├── dev/           # dev environment
 │   │   │   ├── main.tf
 │   │   │   ├── variables.tf
 │   │   │   └── terraform.tfvars
-│   │   └── prod/          # prod 環境
+│   │   └── prod/          # prod environment
 │   │       ├── main.tf
 │   │       ├── variables.tf
 │   │       └── terraform.tfvars
-│   └── global/            # グローバルリソース
-│       ├── dns.tf         # DNS ゾーン
-│       └── backend.tf     # Terraform state 管理
+│   └── global/            # Global resources
+│       ├── dns.tf         # DNS zone
+│       └── backend.tf     # Terraform state management
 │
-├── docs/                  # ドキュメント
-│   ├── architecture.md    # 本ドキュメント
-│   ├── api.md             # API 仕様書
-│   └── agents/            # Agent 別ドキュメント
+├── docs/                  # Documentation
+│   ├── architecture.md    # This document
+│   ├── api.md             # API specification
+│   └── agents/            # Agent-specific docs
 │
-├── .github/               # GitHub 関連
+├── .github/               # GitHub related
 │   ├── workflows/         # GitHub Actions
-│   ├── CODEOWNERS         # コードオーナー
+│   ├── CODEOWNERS         # Code owners
 │   └── pull_request_template.md
 │
-├── .claude/               # Claude Code Agent 設定
-│   └── agents/            # Agent 定義
+├── .claude/               # Claude Code Agent config
+│   └── agents/            # Agent definitions
 │       ├── arch.md        # ArchAgent
 │       ├── db.md          # DBAgent
 │       ├── auth.md        # AuthAgent
@@ -110,12 +112,12 @@ xtrade/
 │       ├── ui.md          # UIAgent
 │       └── test.md        # TestAgent
 │
-└── scripts/               # 開発用スクリプト
+└── scripts/               # Development scripts
 ```
 
-## レイヤアーキテクチャ
+## Layer Architecture
 
-xtrade は以下のレイヤで構成されます：
+xtrade is composed of the following layers:
 
 ```text
 ┌─────────────────────────────────────────────────┐
@@ -139,135 +141,135 @@ xtrade は以下のレイヤで構成されます：
 └─────────────────────────────────────────────────┘
 ```
 
-### レイヤの責務
+### Layer Responsibilities
 
 1. **Presentation Layer** (`app/**/*.tsx`)
-   - UI コンポーネントとページ
-   - ユーザーインタラクション処理
-   - クライアントサイドの状態管理
+   - UI components and pages
+   - User interaction handling
+   - Client-side state management
 
 2. **Application Layer** (`app/api/**/*.ts`)
-   - Route Handlers による API エンドポイント
-   - リクエスト/レスポンスの変換
-   - 認証・認可チェック
-   - Domain Layer の呼び出し
+   - API endpoints via Route Handlers
+   - Request/response transformation
+   - Authentication and authorization checks
+   - Calling Domain Layer
 
 3. **Domain Layer** (`src/modules/**/service.ts`)
-   - ビジネスロジック
-   - ドメインルールの実装
-   - トランザクション管理
+   - Business logic
+   - Domain rule implementation
+   - Transaction management
 
 4. **Infrastructure Layer** (`src/db/`, `src/lib/`)
-   - データベースアクセス
-   - 外部サービス連携
-   - 認証基盤
+   - Database access
+   - External service integration
+   - Authentication infrastructure
 
-## Agent 構成と責務
+## Agent Structure and Responsibilities
 
-xtrade では、Claude Code の Sub Agent を活用して責務を分離した開発を行います。
+xtrade uses Claude Code's Sub Agent to develop with separated responsibilities.
 
-### Agent 一覧
+### Agent List
 
-#### 1. ArchAgent（アーキテクチャ設計・規約）
+#### 1. ArchAgent (Architecture Design & Conventions)
 
-**役割**: xtrade 全体のアーキテクチャと開発規約を設計・維持する。
+**Role**: Design and maintain xtrade's overall architecture and development conventions.
 
-**担当範囲**:
+**Scope**:
 
 - `README.md`, `docs/architecture.md`, `docs/api.md`
-- Next.js 構成（App Router、Route Handlers のパス設計）
-- `src/` 以下のレイヤ分けルール
-- コーディング規約
-- 依存ライブラリの選定
+- Next.js structure (App Router, Route Handlers path design)
+- Layer separation rules under `src/`
+- Coding conventions
+- Dependency library selection
 
-**禁止事項**:
+**Prohibited**:
 
-- 具体的な API 実装や UI 実装への直接的な変更
-- ドメインロジックの大幅な改修
+- Direct changes to concrete API or UI implementations
+- Major refactoring of domain logic
 
-#### 2. DBAgent（データベース・スキーマ管理）
+#### 2. DBAgent (Database & Schema Management)
 
-**役割**: Neon + Drizzle の DB 周りを一手に引き受ける。
+**Role**: Handle all database-related work with Neon + Drizzle.
 
-**担当範囲**:
+**Scope**:
 
 - `src/db/schema.ts`, `src/db/drizzle.ts`, `drizzle.config.ts`
-- マイグレーション生成・適用
-- インデックス・enum 定義
+- Migration generation and application
+- Index and enum definitions
 
-**禁止事項**:
+**Prohibited**:
 
-- API のビジネスロジック実装
-- UI 実装
+- API business logic implementation
+- UI implementation
 
-#### 3. AuthAgent（認証・セッション管理）
+#### 3. AuthAgent (Authentication & Session Management)
 
-**役割**: BetterAuth の設定と X OAuth の配線を全て担当する。
+**Role**: Handle all BetterAuth configuration and X OAuth wiring.
 
-**担当範囲**:
+**Scope**:
 
-- `src/lib/auth.ts`（BetterAuth サーバ設定）
-- `src/lib/auth-client.ts`（React クライアント）
+- `src/lib/auth.ts` (BetterAuth server config)
+- `src/lib/auth-client.ts` (React client)
 - `app/api/auth/[...all]/route.ts`
-- セッション取得ヘルパー
+- Session retrieval helpers
 
-**禁止事項**:
+**Prohibited**:
 
-- ドメインロジック（トレード / ルームなど）
-- DB スキーマ本体の変更
+- Domain logic (trades/rooms, etc.)
+- Direct DB schema changes
 
-#### 4. APIAgent（API・ビジネスロジック）
+#### 4. APIAgent (API & Business Logic)
 
-**役割**: 取引ステートマシンを守りつつ、Route Handlers で API を実装する。
+**Role**: Implement APIs with Route Handlers while maintaining trading state machine.
 
-**担当範囲**:
+**Scope**:
 
 - `app/api/trades/**/*.ts`
 - `app/api/rooms/**/*.ts`
-- `src/modules/**/service.ts`（ドメインサービス層）
+- `src/modules/**/service.ts` (domain service layer)
 
-**禁止事項**:
+**Prohibited**:
 
-- Drizzle のスキーマ定義変更
-- UI 実装
-- Auth 設定の大幅変更
+- Drizzle schema definition changes
+- UI implementation
+- Major authentication config changes
 
-#### 5. UIAgent（UI・UX）
+#### 5. UIAgent (UI & UX)
 
-**役割**: 最低限の UI をサクサク組む。ユーザーフローを途切れなく繋ぐ。
+**Role**: Build minimal UI quickly. Connect user flows seamlessly.
 
-**担当範囲**:
+**Scope**:
 
 - `app/**/page.tsx`
-- 共通レイアウト・ナビ（`app/layout.tsx`）
-- UI コンポーネント（`src/components/**`）
+- Common layouts and navigation (`app/layout.tsx`)
+- UI components (`src/components/**`)
 
-**禁止事項**:
+**Prohibited**:
 
-- 複雑なビジネスロジック
-- DB 直接アクセス
+- Complex business logic
+- Direct DB access
 
-#### 6. TestAgent（テスト・品質保証）
+#### 6. TestAgent (Testing & Quality Assurance)
 
-**役割**: ユースケース単位で壊れてないかを担保する。
+**Role**: Ensure nothing breaks at the use case level.
 
-**担当範囲**:
+**Scope**:
 
-- Unit テスト：`src/modules/**/__tests__/*.test.ts`
-- API テスト：`app/api/**/__tests__/*.test.ts`
-- E2E テスト
+- Unit tests: `src/modules/**/__tests__/*.test.ts`
+- API tests: `app/api/**/__tests__/*.test.ts`
+- E2E tests
 
-**禁止事項**:
+**Prohibited**:
 
-- ビジネスロジックそのものの大量実装
+- Mass implementation of business logic itself
 
-### Agent 間の依存関係
+### Agent Dependencies
 
 ```mermaid
 flowchart LR
-    Arch[ArchAgent<br/>設計・規約] --> DBA[DBAgent<br/>Drizzle/Neon]
+    Arch[ArchAgent<br/>Design/Conventions] --> DBA[DBAgent<br/>Drizzle/Neon]
     Arch --> Auth[AuthAgent<br/>BetterAuth/X OAuth]
-    Arch --> API[APIAgent<br/>Route Handlers/ロジック]
+    Arch --> API[APIAgent<br/>Route Handlers/Logic]
     Arch --> UI[UIAgent<br/>UI/UX]
 
     DBA --> API
@@ -277,80 +279,80 @@ flowchart LR
     UI  --> Test
 ```
 
-## データフロー
+## Data Flow
 
-### 認証フロー
+### Authentication Flow
 
 ```mermaid
 sequenceDiagram
-    participant User as ユーザー
+    participant User as User
     participant UI as UI (Next.js)
     participant API as /api/auth/[...all]
     participant BA as BetterAuth
     participant X as X (Twitter)
     participant DB as Neon DB
 
-    User->>UI: ログインボタンクリック
+    User->>UI: Click login button
     UI->>API: GET /api/auth/signin/twitter
     API->>BA: signIn('twitter')
-    BA->>X: OAuth 認証リクエスト
-    X-->>User: X ログイン画面
-    User->>X: 認証許可
-    X-->>API: コールバック
+    BA->>X: OAuth authentication request
+    X-->>User: X login screen
+    User->>X: Approve authentication
+    X-->>API: Callback
     API->>BA: handleCallback()
-    BA->>DB: ユーザー情報保存
-    BA-->>UI: セッション Cookie 発行
-    UI-->>User: ログイン完了
+    BA->>DB: Save user info
+    BA-->>UI: Issue session cookie
+    UI-->>User: Login complete
 ```
 
-### トレード作成フロー（例）
+### Trade Creation Flow (Example)
 
 ```mermaid
 sequenceDiagram
-    participant User as ユーザー
+    participant User as User
     participant UI as UI (page.tsx)
     participant API as /api/trades
     participant Service as TradeService
     participant DB as Drizzle/Neon
 
-    User->>UI: トレード作成フォーム送信
+    User->>UI: Submit trade creation form
     UI->>API: POST /api/trades
-    API->>API: セッションチェック
+    API->>API: Session check
     API->>Service: createTrade(data)
-    Service->>Service: ビジネスロジック検証
+    Service->>Service: Business logic validation
     Service->>DB: insert(trades)
-    DB-->>Service: トレード ID
-    Service-->>API: トレードオブジェクト
-    API-->>UI: JSON レスポンス
-    UI-->>User: トレード作成完了
+    DB-->>Service: Trade ID
+    Service-->>API: Trade object
+    API-->>UI: JSON response
+    UI-->>User: Trade creation complete
 ```
 
-## 環境構成
+## Environment Configuration
 
-xtrade は local / dev / prod の 3 環境で運用します。
+xtrade operates with 3 environments: local / dev / prod.
 
-### 環境ごとの URL
+### URLs by Environment
 
-| 環境 | APP URL | DB | 備考 |
+| Environment | APP URL | DB | Notes |
 | --- | --- | --- | --- |
-| local | `http://localhost:3000` | Docker Postgres | 開発用 |
-| dev | `https://xtrade-dev.tqer39.dev` | Neon (xtrade-dev) | ステージング・動作確認 |
-| prod | `https://xtrade.tqer39.dev` | Neon (xtrade-prod) | 本番 |
+| local | `http://localhost:3000` | Docker Postgres | Development |
+| dev | `https://xtrade-dev.tqer39.dev` | Neon (xtrade-dev) | Staging/verification |
+| prod | `https://xtrade.tqer39.dev` | Neon (xtrade-prod) | Production |
 
-### 環境変数管理
+### Environment Variables Management
 
-環境ごとに異なる環境変数：
+Environment-specific variables:
 
-- `NEXT_PUBLIC_APP_URL` - アプリケーション URL
-- `BETTER_AUTH_URL` - BetterAuth のベース URL
-- `BETTER_AUTH_SECRET` - セッション署名用シークレット
-- `DATABASE_URL` - データベース接続文字列
+- `NEXT_PUBLIC_APP_URL` - Application URL
+- `BETTER_AUTH_URL` - BetterAuth base URL
+- `BETTER_AUTH_SECRET` - Session signing secret
+- `DATABASE_URL` - Database connection string
 
-`.env.example` にすべての必要な環境変数を記載し、`.env.local` で環境ごとに設定します。
+All required environment variables are listed in `.env.example` and configured per environment in `.env.local`.
 
-## インフラ構成（Terraform）
+## Infrastructure Configuration (Terraform)
 
-### DNS / Vercel 構成
+### DNS / Vercel Configuration
 
 ```mermaid
 flowchart TD
@@ -359,7 +361,7 @@ flowchart TD
     B[xtrade-dev.tqer39.dev] --> V
   end
 
-  subgraph Vercel[xtrade プロジェクト]
+  subgraph Vercel[xtrade project]
     V1[Production env<br/>https://xtrade.tqer39.dev]
     V2[Preview/Dev env<br/>https://xtrade-dev.tqer39.dev]
   end
@@ -369,124 +371,124 @@ flowchart TD
   end
 ```
 
-### 管理対象リソース
+### Managed Resources
 
 #### 1. GCP Cloud DNS
 
-- **リソース**: `tqer39.dev` の DNS ゾーン
-- **レコード**:
-  - `xtrade.tqer39.dev` → Vercel の prod 環境
-  - `xtrade-dev.tqer39.dev` → Vercel の dev 環境
+- **Resource**: DNS zone for `tqer39.dev`
+- **Records**:
+  - `xtrade.tqer39.dev` → Vercel prod environment
+  - `xtrade-dev.tqer39.dev` → Vercel dev environment
 
 #### 2. Vercel
 
-- **プロジェクト**: `xtrade`
-- **カスタムドメイン**:
+- **Project**: `xtrade`
+- **Custom domains**:
   - Production: `xtrade.tqer39.dev`
   - Preview/Dev: `xtrade-dev.tqer39.dev`
-- **環境変数**: Terraform で管理
+- **Environment variables**: Managed by Terraform
 
-#### 3. Terraform State 管理
+#### 3. Terraform State Management
 
-- **バックエンド**: GCS（Google Cloud Storage）
-- **State ファイル**: `gs://xtrade-terraform-state/`
+- **Backend**: GCS (Google Cloud Storage)
+- **State file**: `gs://xtrade-terraform-state/`
 
-### Terraform ディレクトリ構成
+### Terraform Directory Structure
 
 ```text
 terraform/
-├── modules/           # 再利用可能なモジュール
-│   ├── dns/          # GCP Cloud DNS モジュール
-│   ├── vercel/       # Vercel プロジェクト・ドメインモジュール
-│   └── neon/         # Neon DB（将来対応）
-├── environments/      # 環境ごとの設定
-│   ├── dev/          # dev 環境
-│   └── prod/         # prod 環境
-└── global/           # グローバルリソース
-    ├── dns.tf        # DNS ゾーン
-    └── backend.tf    # Terraform state 管理
+├── modules/           # Reusable modules
+│   ├── dns/          # GCP Cloud DNS module
+│   ├── vercel/       # Vercel project/domain module
+│   └── neon/         # Neon DB (future)
+├── environments/      # Environment-specific config
+│   ├── dev/          # dev environment
+│   └── prod/         # prod environment
+└── global/           # Global resources
+    ├── dns.tf        # DNS zone
+    └── backend.tf    # Terraform state management
 ```
 
-## セキュリティ考慮事項
+## Security Considerations
 
-### 認証・認可
+### Authentication & Authorization
 
-- BetterAuth による X OAuth 認証
-- セッション Cookie による状態管理
-- CSRF トークン保護（BetterAuth 内蔵）
-- セッション有効期限管理
+- X OAuth authentication via BetterAuth
+- Session management via cookies
+- CSRF token protection (built into BetterAuth)
+- Session expiration management
 
-### データベース
+### Database
 
-- Neon の SSL 接続必須
-- 接続文字列は環境変数で管理
-- マイグレーションは unpooled 接続を使用
+- Neon SSL connection required
+- Connection strings managed via environment variables
+- Migrations use unpooled connections
 
-### Secrets 管理
+### Secrets Management
 
-- `.env.local` は Git 管理外
-- Vercel 環境変数は Web UI で設定（暗号化保存）
-- Terraform の `terraform.tfvars` は `.gitignore` に追加
-- センシティブな値は `sensitive = true` を設定
+- `.env.local` excluded from Git
+- Vercel environment variables configured via Web UI (encrypted storage)
+- Terraform's `terraform.tfvars` added to `.gitignore`
+- Sensitive values configured with `sensitive = true`
 
 ### CORS / CSP
 
-- Next.js の App Router はデフォルトで同一オリジンポリシー
-- API エンドポイントは認証必須
-- 将来的に CSP ヘッダーの追加を検討
+- Next.js App Router uses same-origin policy by default
+- API endpoints require authentication
+- Consider adding CSP headers in the future
 
-## 技術選定の理由
+## Technology Selection Rationale
 
 ### Next.js App Router
 
-- SSR と CSR のハイブリッド
-- Route Handlers による API 実装
-- React Server Components によるパフォーマンス向上
+- Hybrid of SSR and CSR
+- API implementation via Route Handlers
+- Performance improvement via React Server Components
 
 ### Drizzle ORM
 
-- TypeScript ネイティブ
-- 型安全な SQL ビルダー
-- Neon との相性が良い
+- TypeScript native
+- Type-safe SQL builder
+- Good compatibility with Neon
 
 ### Neon
 
 - Serverless PostgreSQL
-- ブランチ機能による環境分離
-- スケーラビリティ
+- Environment isolation via branching feature
+- Scalability
 
 ### BetterAuth
 
-- X OAuth のシンプルな実装
-- TypeScript サポート
-- Next.js との統合が容易
+- Simple X OAuth implementation
+- TypeScript support
+- Easy integration with Next.js
 
 ### Terraform
 
-- インフラのコード化
-- バージョン管理
-- 環境の再現性
+- Infrastructure as code
+- Version control
+- Environment reproducibility
 
-## 今後の拡張計画
+## Future Expansion Plans
 
-### Phase 1: MVP（現在）
+### Phase 1: MVP (Current)
 
-- X ログイン
-- トレーディングルームの作成・参加
-- 基本的な取引機能
+- X login
+- Trading room creation/joining
+- Basic trading features
 
-### Phase 2: 機能拡張
+### Phase 2: Feature Expansion
 
-- リアルタイム通知
-- トレード履歴の可視化
-- ユーザーランキング
+- Real-time notifications
+- Trade history visualization
+- User rankings
 
-### Phase 3: スケーリング
+### Phase 3: Scaling
 
-- Neon Read Replica の活用
-- キャッシュ層の追加（Redis）
-- CDN の最適化
+- Leverage Neon Read Replica
+- Add cache layer (Redis)
+- CDN optimization
 
-## 変更履歴
+## Change History
 
-- 2025-11-23: 初版作成（ArchAgent）
+- 2025-11-23: Initial version created (ArchAgent)
