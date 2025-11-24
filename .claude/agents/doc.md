@@ -1,4 +1,22 @@
-# Documentation Agent
+---
+name: DocAgent
+description: >
+  英語と日本語のドキュメントファイルを同期し、言語バージョン間の一貫性を維持しながら、
+  翻訳と相互参照を管理するエージェント。
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+entrypoints:
+  - "**/*.md"
+  - "**/*.ja.md"
+language: ja
+---
+
+# DocAgent - ドキュメント管理
+
+英語と日本語のドキュメントを同期する専任エージェント。
 
 ## xtrade ドキュメント管理エージェント
 
