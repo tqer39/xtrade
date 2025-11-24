@@ -20,13 +20,14 @@ This document lists all the GitHub Secrets required for the xtrade project's CI/
 
 | Secret Name | Description | Used In | Required |
 | -------- | ---- | ------ | -------- |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token for Terraform | `terraform-dev.yml` | Yes |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | `terraform-dev.yml` | Yes |
+| `NEON_API_KEY` | Neon API key for Terraform | `terraform-dev.yml` | Yes |
+| `VERCEL_API_TOKEN` | Vercel API token for Terraform | `terraform-dev.yml` | Yes |
 | `SLACK_WEBHOOK_DEV` | Slack webhook URL for dev environment notifications | `terraform-dev.yml` | No |
 
 **How to get**:
 
-- Cloudflare: [Cloudflare Dashboard](https://dash.cloudflare.com/) → API Tokens
+- Neon: [Neon Console](https://console.neon.tech/) → Account Settings → API Keys
+- Vercel: [Vercel Dashboard](https://vercel.com/account/tokens) → Create Token
 - Slack: [Slack API](https://api.slack.com/messaging/webhooks)
 
 ### GitHub Apps

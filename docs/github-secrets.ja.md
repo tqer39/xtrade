@@ -20,13 +20,14 @@
 
 | Secret 名 | 説明 | 使用箇所 | 必須 |
 | -------- | ---- | ------ | -------- |
-| `CLOUDFLARE_API_TOKEN` | Terraform 用 Cloudflare API トークン | `terraform-dev.yml` | Yes |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウント ID | `terraform-dev.yml` | Yes |
+| `NEON_API_KEY` | Terraform 用 Neon API キー | `terraform-dev.yml` | Yes |
+| `VERCEL_API_TOKEN` | Terraform 用 Vercel API トークン | `terraform-dev.yml` | Yes |
 | `SLACK_WEBHOOK_DEV` | dev 環境通知用 Slack webhook URL | `terraform-dev.yml` | No |
 
 **取得方法**:
 
-- Cloudflare: [Cloudflare Dashboard](https://dash.cloudflare.com/) → API Tokens
+- Neon: [Neon Console](https://console.neon.tech/) → Account Settings → API Keys
+- Vercel: [Vercel Dashboard](https://vercel.com/account/tokens) → Create Token
 - Slack: [Slack API](https://api.slack.com/messaging/webhooks)
 
 ### GitHub Apps
