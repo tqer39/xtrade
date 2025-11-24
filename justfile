@@ -19,7 +19,7 @@ setup:
         echo "⚠ mise not found. Please run 'make bootstrap' first."; \
         exit 1; \
     fi
-    pre-commit install
+    prek install
     @just setup-env
     @just setup-deps
     @just setup-db
@@ -72,32 +72,28 @@ direnv-allow:
     direnv allow
     @echo "  ✓ direnv allowed"
 
-# Run pre-commit hooks on all files
+# Run prek hooks on all files
 lint:
-    pre-commit run --all-files
+    prek run --all-files
 
-# Run specific pre-commit hook
+# Run specific prek hook
 lint-hook hook:
-    pre-commit run {{hook}}
+    prek run {{hook}}
 
-# Update pre-commit hooks to latest versions
+# Update prek hooks to latest versions
 update-hooks:
-    pre-commit autoupdate
+    prek autoupdate
 
 # Fix common formatting issues
 fix:
-    pre-commit run end-of-file-fixer --all-files
-    pre-commit run trailing-whitespace --all-files
-    pre-commit run markdownlint-cli2 --all-files
+    prek run end-of-file-fixer --all-files
+    prek run trailing-whitespace --all-files
+    prek run markdownlint-cli2 --all-files
 
-# Clean pre-commit cache
+# Clean prek cache
 clean:
-    @echo "Cleaning pre-commit cache..."
-    -pre-commit clean
-    @if [ -d ~/.cache/pre-commit ]; then \
-        echo "→ Force removing pre-commit cache directory..."; \
-        rm -rf ~/.cache/pre-commit; \
-    fi
+    @echo "Cleaning prek cache..."
+    -prek clean
     @echo "Clean complete!"
 
 # Show mise status

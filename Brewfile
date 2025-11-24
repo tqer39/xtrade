@@ -6,7 +6,6 @@
 brew "mise"        # Version manager for multiple languages
 brew "just"        # Command runner and task automation
 brew "git"         # Version control system
-brew "pre-commit"  # Git hooks framework
 brew "uv"          # Python package and project manager
 
 # Infrastructure and cloud tools

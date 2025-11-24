@@ -23,7 +23,7 @@ xtrade は、X (旧 Twitter) のソーシャルグラフを活用したリアル
 - **ORM**: Drizzle ORM
 - **認証**: BetterAuth + X OAuth
 - **インフラ**: Vercel + GCP Cloud DNS (Terraform 管理)
-- **開発ツール**: mise, just, pre-commit
+- **開発ツール**: mise, just, prek
 
 ## 環境構成
 
@@ -193,7 +193,7 @@ just lint
 # 一般的なフォーマット問題の修正
 just fix
 
-# pre-commit キャッシュのクリーン
+# prek キャッシュのクリーン
 just clean
 ```
 
@@ -203,7 +203,7 @@ just clean
 # 開発ツールの更新
 just update-brew  # Homebrew パッケージを更新
 just update       # mise 管理ツールを更新
-just update-hooks # pre-commit フックを更新
+just update-hooks # prek フックを更新
 
 # mise ステータス表示
 just status
@@ -314,14 +314,15 @@ just tf -chdir=infra/terraform/envs/dev/bootstrap output
 このセットアップでは、ツールの責務を明確に分離しています：
 
 - **brew**: システムレベルの開発ツール
-  - git, pre-commit, mise, just, uv
+  - git, mise, just, uv
   - aws-vault（AWS 認証情報管理）
   - direnv（ディレクトリごとの環境変数管理）
 - **mise**: プログラミング言語とツールのバージョン管理
   - Node.js 24
-  - Terraform (latest)
+  - Terraform 1.14.0
+  - prek (latest) - Git hooks フレームワーク
 - **uv**: Python パッケージとプロジェクト管理
-- **pre-commit**: すべてのリンティングツールを自動処理（個別インストール不要）
+- **prek**: すべてのリンティングツールを自動処理（Rust 製で高速、pre-commit の完全互換）
 - **aws-vault**: Terraform state の AWS S3 バックエンド用の安全な認証情報管理
 - **direnv**: プロジェクトディレクトリごとの環境変数自動ロード
 
