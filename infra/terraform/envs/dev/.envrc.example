@@ -1,0 +1,15 @@
+# xtrade dev 環境用の環境変数
+# このファイルをコピーして .envrc を作成してください
+# cp .envrc.example .envrc
+
+# Neon API Key
+export NEON_API_KEY="your-neon-api-key-here"
+
+# AWS Vault Profile
+export AWS_VAULT_PROFILE="xtrade-dev"
+
+# Terraform 変数として使用する場合
+export TF_VAR_neon_api_key="${NEON_API_KEY}"
+
+# その他の環境変数
+export TF_ENV="dev"

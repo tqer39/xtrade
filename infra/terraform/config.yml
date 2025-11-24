@@ -14,10 +14,12 @@ environments:
     name: dev
     full_name: development
     subdomain: xtrade-dev
+    neon_region: aws-us-east-2
   prod:
     name: prod
     full_name: production
     subdomain: xtrade
+    neon_region: aws-us-east-2
 
 aws:
   account_id: '072693953877'

@@ -9,5 +9,8 @@ export AWS_REGION=ap-northeast-1
 # Neon API Key for Terraform
 export NEON_API_KEY=your-neon-api-key
 
+# Terraform 変数として自動的に読み込まれる（TF_VAR_ プレフィックス）
+export TF_VAR_neon_api_key="${NEON_API_KEY}"
+
 # Node.js version management (handled by mise)
 # mise will automatically load the correct Node.js version from .tool-versions
