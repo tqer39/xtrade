@@ -47,6 +47,7 @@
     "esac",
     "fastapi",
     "FASTMCP",
+    "frontmatter",
     "getsentry",
     "getline",
     "hashicorp",
