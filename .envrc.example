@@ -1,0 +1,13 @@
+# direnv configuration example
+# Copy this file to .envrc and customize for your environment
+# Run `just direnv-allow` to activate
+
+# AWS profile for terraform (required for `just tf` commands)
+export AWS_VAULT_PROFILE=xtrade-dev
+export AWS_REGION=ap-northeast-1
+
+# Neon API Key for Terraform
+export NEON_API_KEY=your-neon-api-key
+
+# Node.js version management (handled by mise)
+# mise will automatically load the correct Node.js version from .tool-versions
