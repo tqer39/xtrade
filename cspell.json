@@ -14,7 +14,7 @@
     ".env.*",
     ".envrc",
     ".envrc.*",
-    "drizzle/**",
+    "src/db/migrations/**",
     "infra/terraform/config.yml"
   ],
   "words": [

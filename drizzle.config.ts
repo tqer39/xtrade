@@ -9,7 +9,7 @@ export default defineConfig({
   schema: './src/db/schema.ts',
 
   // マイグレーションファイルの出力先
-  out: './drizzle',
+  out: './src/db/migrations',
 
   // 使用するデータベースドライバ
   dialect: 'postgresql',
