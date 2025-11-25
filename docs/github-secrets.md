@@ -22,12 +22,18 @@ This document lists all the GitHub Secrets required for the xtrade project's CI/
 | -------- | ---- | ------ | -------- |
 | `NEON_API_KEY` | Neon API key for Terraform | `terraform-dev.yml` | Yes |
 | `VERCEL_API_TOKEN` | Vercel API token for Terraform | `terraform-dev.yml` | Yes |
+| `GCP_PROJECT_ID` | GCP project ID | `terraform-dev.yml` | Yes |
+| `GCP_SERVICE_ACCOUNT` | GCP service account email for Workload Identity | `terraform-dev.yml` | Yes |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | GCP Workload Identity Provider resource name | `terraform-dev.yml` | Yes |
 | `SLACK_WEBHOOK_DEV` | Slack webhook URL for dev environment notifications | `terraform-dev.yml` | No |
 
 **How to get**:
 
 - Neon: [Neon Console](https://console.neon.tech/) → Account Settings → API Keys
 - Vercel: [Vercel Dashboard](https://vercel.com/account/tokens) → Create Token
+- GCP Project ID: GCP Console → Project Info → Project ID
+- GCP Service Account: GCP Console → IAM & Admin → Service Accounts
+- GCP Workload Identity Provider: Format `projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID`
 - Slack: [Slack API](https://api.slack.com/messaging/webhooks)
 
 ### GitHub Apps
