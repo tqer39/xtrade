@@ -32,10 +32,7 @@ runs:
 
     - name: Terraform Apply
       run: |
-        export CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN}"
         export TF_VAR_gcp_project_id="${GCP_PROJECT_ID}"
-        export TF_VAR_cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
-        export TF_VAR_cloudflare_account_id="${CLOUDFLARE_ACCOUNT_ID}"
         export TF_VAR_contact_country_code="${CONTACT_COUNTRY_CODE}"
         export TF_VAR_contact_postal_code="${CONTACT_POSTAL_CODE}"
         export TF_VAR_contact_administrative_area="${CONTACT_ADMINISTRATIVE_AREA}"
