@@ -31,9 +31,7 @@ This document lists all the GitHub Secrets required for the xtrade project's CI/
 
 - Neon: [Neon Console](https://console.neon.tech/) → Account Settings → API Keys
 - Vercel: [Vercel Dashboard](https://vercel.com/account/tokens) → Create Token
-- GCP Project ID: GCP Console → Project Info → Project ID
-- GCP Service Account: GCP Console → IAM & Admin → Service Accounts
-- GCP Workload Identity Provider: Format `projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID`
+- GCP Project ID, Service Account, Workload Identity Provider: See [GCP Workload Identity Setup Guide](./gcp-workload-identity-setup.md)
 - Slack: [Slack API](https://api.slack.com/messaging/webhooks)
 
 ### GitHub Apps

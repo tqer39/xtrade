@@ -31,9 +31,7 @@
 
 - Neon: [Neon Console](https://console.neon.tech/) → Account Settings → API Keys
 - Vercel: [Vercel Dashboard](https://vercel.com/account/tokens) → Create Token
-- GCP Project ID: GCP Console → プロジェクト情報 → プロジェクト ID
-- GCP Service Account: GCP Console → IAM と管理 → サービスアカウント
-- GCP Workload Identity Provider: 形式 `projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID`
+- GCP Project ID, Service Account, Workload Identity Provider: [GCP Workload Identity 設定ガイド](./gcp-workload-identity-setup.ja.md) を参照
 - Slack: [Slack API](https://api.slack.com/messaging/webhooks)
 
 ### GitHub Apps
