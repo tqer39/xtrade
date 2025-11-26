@@ -62,7 +62,7 @@ jobs:
     if: ${{ needs.set-matrix.outputs.matrix != '["_empty"]' }}
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # For aws-actions/configure-aws-credentials
+      id-token: write # For aws-actions/configure-aws-credentials and google-github-actions/auth
       contents: read # For aws-actions/configure-aws-credentials
       deployments: write # For bobheadxi/deployments
       pull-requests: write # For bobheadxi/deployments
@@ -82,12 +82,15 @@ jobs:
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         with:
           AWS_ENV_NAME: ${{ env.AWS_ENV_NAME }}
           CHECK_DIFF: ${{ env.CHECK_DIFF }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_DEV }}
           working-directory: ./infra/terraform/envs/${{ env.AWS_ENV_NAME }}/${{ matrix.directory }}
+          gcp-workload-identity-provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          gcp-service-account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Start Deployment
         if: env.TF_PLAN_STATUS == 'has-diff' && github.ref == 'refs/heads/main'
@@ -104,8 +107,11 @@ jobs:
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         with:
           working-directory: ./infra/terraform/envs/${{ env.AWS_ENV_NAME }}/${{ matrix.directory }}
+          gcp-workload-identity-provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          gcp-service-account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Finish Deployment
         if: env.TF_PLAN_STATUS == 'has-diff' && always() && github.ref == 'refs/heads/main'

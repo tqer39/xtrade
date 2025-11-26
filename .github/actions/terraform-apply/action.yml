@@ -27,6 +27,8 @@ runs:
     - name: Terraform Apply
       run: |
         export TF_VAR_gcp_project_id="${GCP_PROJECT_ID}"
+        export TF_VAR_neon_api_key="${NEON_API_KEY}"
+        export TF_VAR_vercel_api_token="${VERCEL_API_TOKEN}"
         terraform apply -auto-approve
       working-directory: ${{ inputs.working-directory }}
       shell: bash

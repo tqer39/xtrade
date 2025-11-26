@@ -73,6 +73,8 @@ runs:
       run: |
         # デバッグログをリアルタイムで標準エラー出力に流しながら、plan結果はファイルに保存
         export TF_VAR_gcp_project_id="${GCP_PROJECT_ID}"
+        export TF_VAR_neon_api_key="${NEON_API_KEY}"
+        export TF_VAR_vercel_api_token="${VERCEL_API_TOKEN}"
         terraform plan -detailed-exitcode -no-color 2>&1 | tee tf_plan.txt
       working-directory: ${{ inputs.working-directory }}
       shell: bash
