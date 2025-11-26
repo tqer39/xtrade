@@ -15,11 +15,11 @@ setup:
         echo "→ Installing tools with mise..."; \
         eval "$(mise activate bash)"; \
         mise install; \
+        prek install; \
     else \
         echo "⚠ mise not found. Please run 'make bootstrap' first."; \
         exit 1; \
     fi
-    prek install
     @just setup-env
     @just setup-deps
     @just setup-db
