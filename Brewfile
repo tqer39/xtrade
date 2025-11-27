@@ -7,6 +7,7 @@ brew "mise"        # Version manager for multiple languages
 brew "just"        # Command runner and task automation
 brew "git"         # Version control system
 brew "uv"          # Python package and project manager
+brew "prek"        # Pre-commit hook manager (Rust-based)
 
 # Infrastructure and cloud tools
 brew "aws-vault"   # AWS credential manager for secure access

@@ -15,9 +15,15 @@ setup:
         echo "→ Installing tools with mise..."; \
         eval "$(mise activate bash)"; \
         mise install; \
-        prek install; \
     else \
         echo "⚠ mise not found. Please run 'make bootstrap' first."; \
+        exit 1; \
+    fi
+    @if command -v prek >/dev/null 2>&1; then \
+        echo "→ Installing pre-commit hooks with prek..."; \
+        prek install; \
+    else \
+        echo "⚠ prek not found. Please run 'brew bundle install' first."; \
         exit 1; \
     fi
     @just setup-env
