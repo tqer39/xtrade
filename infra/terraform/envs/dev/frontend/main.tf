@@ -2,7 +2,6 @@
 locals {
   config        = yamldecode(file("../../../config.yml"))
   vercel_config = local.config.vercel.dev
-  project       = local.config.project
   github        = local.config.github
 }
 
