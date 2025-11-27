@@ -1,0 +1,9 @@
+# xtrade dev/vercel 環境用の環境変数
+# このファイルをコピーして .envrc を作成してください
+# cp .envrc.example .envrc
+
+# Vercel API Token (必須)
+export VERCEL_API_TOKEN="your-vercel-api-token-here"
+
+# AWS Vault Profile (Terraform state 用)
+export AWS_VAULT_PROFILE="xtrade-dev"

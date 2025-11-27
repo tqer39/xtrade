@@ -12,62 +12,119 @@
 - ファイル参照は `path/to/file:line` の形式で短く明示する。
 - 大きな変更は動機と範囲を先に提示する。
 
-## プロジェクト構造とモジュール構成
+## プロジェクト構造
 
-- ルート: 開発ツールとドキュメント。アプリランタイムはまだない。
-- `.github/`: ワークフロー、`CODEOWNERS`、ラベル、PR テンプレート。
-- `docs/`: セットアップと使用方法の日本語ドキュメント。
-- `Makefile`、`justfile`、`Brewfile`: 環境構築とタスク実行。
-- 設定: `.editorconfig`、`.pre-commit-config.yaml`、`.prettierrc`、`.tool-versions`。
+```text
+xtrade/
+├── app/              # Next.js App Router（フロントエンド + API）
+├── src/              # 共通ライブラリ、DB、ドメインサービス
+├── infra/terraform/  # インフラ構成（IaC）
+├── docs/             # ドキュメント
+├── .github/          # GitHub Actions、CODEOWNERS
+├── .claude/          # Claude Code Agent 設定
+└── scripts/          # 開発用スクリプト
+```
 
-## ビルド・テスト・開発コマンド
+詳細は `docs/architecture.ja.md` と `docs/directory-structure.ja.md` を参照。
 
-- `make bootstrap`: Homebrew のインストール（macOS/Linux のみ）。
-- `brew bundle install`: `Brewfile` から開発ツールをインストール。
-- `just setup`: mise によるツールプロビジョニング、AI CLI のインストール、pre-commit のインストール。
-- `just lint`: すべてのファイルに対して pre-commit チェックを実行。
-- `just fix`: 一般的な自動修正を適用（EOF、空白、Markdown）。
-- `just update-brew` / `just update` / `just update-hooks`: パッケージ、ツール、フックの更新。
+## 主要コマンド
 
-## コーディングスタイルと命名規則
+- `make bootstrap`: Homebrew インストール
+- `just setup`: 開発環境セットアップ（mise、pre-commit）
+- `just lint`: すべてのファイルをチェック
+- `just fix`: 自動修正適用
+- `npm run dev`: ローカル開発サーバー起動
 
-- インデント: `.editorconfig` に従う
-  - デフォルト: 2 スペース
-  - Python: 4 スペース
-  - `Makefile`: タブ
-  - 改行: LF、ファイル末尾に改行を入れる
-- フォーマット: Prettier（`.prettierrc` で設定）、markdownlint、yamllint。
-- テキスト品質: cspell、textlint（Markdown 用）。
-- ファイル名: 可能な限り小文字とハイフンを使用。
-- シェル: shellcheck に準拠。
-- YAML/JSON: 有効かつリント可能であること。
+詳細は `docs/local-dev.ja.md` を参照。
 
-## テストガイドライン
+## コーディング規約
 
-- この boilerplate はリントに重点を置いており、ユニットテストフレームワークは事前設定されていない。
-- コードを追加する場合、`tests/` 配下にテストを配置し、エコシステムの規範に従う：
-  - JavaScript: `__tests__/` または `*.test.ts`
-  - Python: `tests/test_*.py`（pytest 使用）
-- PR を開く前に `just lint` が通ることを確認。
-- 新しい言語を追加する場合は、必要に応じて CI も追加。
+- インデント: デフォルト 2 スペース（Python は 4 スペース）
+- フォーマット: Prettier、markdownlint、yamllint
+- ファイル名: 小文字とハイフン
+- シェル: shellcheck 準拠
 
-## コミットと Pull Request ガイドライン
+## Agent 構成
 
-- コミット: 短く、命令形。絵文字はオプション（`git log` を参照）。
-- 該当する場合は `#123` で issue を参照。
-- PR: テンプレートを使用。説明は簡潔に。理由を含める。
-- 視覚的な変更の場合はスクリーンショットや出力を含める。
-- CI: GitHub Actions で pre-commit を実行。`CODEOWNERS` が自動でレビューをリクエスト。
+xtrade では以下の Agent を使用して責務を分離：
 
-## セキュリティと設定のヒント
+- **ArchAgent** 🧠: アーキテクチャ設計・規約
+- **DBAgent** 🗃: データベース・スキーマ管理（Drizzle）
+- **AuthAgent** 🔐: 認証・セッション管理（BetterAuth）
+- **APIAgent** 🛠: API・ビジネスロジック
+- **UIAgent** 🎨: UI・UX
+- **TestAgent** 🧪: テスト・品質保証
+- **DocAgent** 📝: ドキュメント管理
 
-- シークレットをコミットしない。フックが AWS 認証情報や秘密鍵を検出する。
-- GitHub Actions は PR 説明生成のために `OPENAI_API_KEY` が必要。
-- ツールバージョンは mise で管理（`.tool-versions`、Node.js はピン留め）。
+各 Agent の詳細は `.claude/agents/` 配下の設定ファイルを参照。
 
-## Claude Code 使用時の追加指示
+## 環境構成
 
-- 上記ガイドラインに従い、差分を最小限に保つ。
-- ツールを変更する際はドキュメントを更新する。
-- ローカルで `just lint` を実行し、ワークフローが正常であることを確認する。
-- VS Code と Claude Code の統合を活用し、効率的に作業する。
+| 環境 | URL | データベース |
+| --- | --- | --- |
+| local | `http://localhost:3000` | Docker Postgres |
+| dev | `https://xtrade-dev.tqer39.dev` | Neon xtrade-dev |
+| prod | `https://xtrade.tqer39.dev` | Neon xtrade-prod |
+
+### 重要な環境変数
+
+- `BETTER_AUTH_URL` / `NEXT_PUBLIC_APP_URL`: 環境ごとの URL
+- `BETTER_AUTH_SECRET`: 環境ごとに異なる値
+- `TWITTER_CLIENT_ID` / `TWITTER_CLIENT_SECRET`: X OAuth
+- `DATABASE_URL`: Neon 接続文字列
+
+詳細は `.env.example` と `docs/local-dev.ja.md` を参照。
+
+## インフラ構成（Terraform）
+
+```text
+infra/terraform/
+├── modules/          # 再利用可能なモジュール（gcp, neon, vercel）
+├── envs/             # 環境ごとの設定（dev, prod）
+└── config.yml        # 共通設定
+```
+
+### 管理対象リソース
+
+- **GCP Cloud DNS**: `tqer39.dev` ドメインと DNS レコード
+- **Neon**: PostgreSQL データベース
+- **Vercel**: フロントエンドホスティングとドメイン設定
+
+### Terraform 運用
+
+```bash
+cd infra/terraform/envs/dev/dns
+terraform init
+terraform plan
+terraform apply
+```
+
+詳細は以下を参照：
+
+- `docs/gcp-subdomain-setup.ja.md`: GCP DNS 設定
+- `docs/gcp-workload-identity-setup.ja.md`: GCP 認証設定
+- `docs/terraform-environment-variables.ja.md`: Terraform 環境変数
+- `docs/github-secrets.ja.md`: GitHub Secrets 設定
+
+## CI/CD
+
+- **PR 作成時**: `terraform plan` を実行、結果をコメント
+- **main マージ時**: `terraform apply` を自動実行（dev）
+- **DB マイグレーション**: PR では dry-run、main マージ時に自動実行
+
+ワークフローは `.github/workflows/` を参照。
+
+## セキュリティ
+
+- シークレットは絶対にコミットしない
+- `.env.local` は Git 管理外
+- GitHub Secrets に認証情報を保存
+- GCP は Workload Identity Federation を使用
+
+## 参考ドキュメント
+
+- アーキテクチャ: `docs/architecture.ja.md`
+- ディレクトリ構成: `docs/directory-structure.ja.md`
+- ローカル開発: `docs/local-dev.ja.md`
+- GCP 設定: `docs/gcp-*.ja.md`
+- GitHub Secrets: `docs/github-secrets.ja.md`

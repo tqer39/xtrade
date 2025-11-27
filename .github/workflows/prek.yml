@@ -1,0 +1,37 @@
+---
+name: prek
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  prek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }}
+
+      # prek の terraform-fmt 用
+      - uses: jdx/mise-action@v3.4.1
+        with:
+          version: 2025.9.13
+          cache: true
+
+      - run: mise install
+
+      # Install pnpm dependencies
+      - name: Install dependencies
+        run: pnpm install
+
+      # Run prek with official action
+      - uses: j178/prek-action@v1
+        with:
+          extra_args: --all-files

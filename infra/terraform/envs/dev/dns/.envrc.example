@@ -1,0 +1,13 @@
+# GCP 認証設定
+
+# 方法 1: サービスアカウントキーを使用
+# export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
+
+# 方法 2: gcloud CLI の認証を使用（推奨）
+# gcloud auth application-default login を実行してください
+
+# GCP プロジェクト ID（config.yml から読み込まれますが、上書きも可能）
+# export GOOGLE_PROJECT="xtrade-project"
+
+# Vercel CNAME ターゲット（Vercel Dashboard で確認）
+export TF_VAR_dev_cname_target="cname.vercel-dns.com."

@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "SessionEnd": {
+      "*": "./scripts/play-sound.sh"
+    }
+  }
+}

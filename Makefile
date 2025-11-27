@@ -62,8 +62,22 @@ else ifeq ($(UNAME_S),Linux)
 	fi
 endif
 
+.PHONY: brew-bundle
+brew-bundle: ## Install dependencies listed in Brewfile
+	@if command -v brew >/dev/null 2>&1; then \
+		:; \
+	elif [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then \
+		eval "$$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
+	else \
+		echo "⚠ Homebrew が見つかりません。まず make install-brew を実行してください。"; \
+		exit 1; \
+	fi; \
+	echo "Installing packages from Brewfile..."; \
+	brew bundle install; \
+	echo "✓ Brewfile のパッケージをインストールしました"
+
 .PHONY: bootstrap
-bootstrap: install-brew ## Install Homebrew and show next steps
+bootstrap: install-brew brew-bundle ## Install Homebrew and show next steps
 	@echo ""
 	@echo "🍺 Homebrew installation complete!"
 	@echo ""
@@ -79,10 +93,33 @@ else ifeq ($(UNAME_S),Linux)
 else
 	@echo "1. Reload your shell or restart terminal"
 endif
-	@echo "2. Run: brew bundle install (to install all development tools)"
-	@echo "3. Run: just setup (to setup development environment)"
+	@echo "2. Run: just setup (to setup development environment)"
 	@echo ""
 	@echo "Available commands after setup:"
 	@echo "  just help    - Show available tasks"
 	@echo "  just setup   - Setup development environment"
 	@echo "  just lint    - Run code quality checks"
+
+.PHONY: terraform-cf
+terraform-cf: ## Run terraform via aws-vault (ARGS="-chdir=... plan")
+	@set -- $(ARGS); \
+	NORMALIZED=""; \
+	while [ $$# -gt 0 ]; do \
+	  ARG="$$1"; shift; \
+	  case "$$ARG" in \
+	    -chdir=*) \
+	      PATH_ARG="$${ARG#-chdir=}"; \
+	      case "$$PATH_ARG" in \
+	        ./*) PATH_ARG="$${PATH_ARG#./}" ;; \
+	      esac; \
+	      case "$$PATH_ARG" in \
+	        /*|infra/*|../*|./*) ;; \
+	        *) PATH_ARG="infra/terraform/envs/$$PATH_ARG" ;; \
+	      esac; \
+	      NORMALIZED="$$NORMALIZED -chdir=$$PATH_ARG" ;; \
+	    *) NORMALIZED="$$NORMALIZED $$ARG" ;; \
+	  esac; \
+	done; \
+	NORMALIZED="$${NORMALIZED# }"; \
+	echo "→ aws-vault exec portfolio -- terraform $$NORMALIZED"; \
+	aws-vault exec portfolio -- terraform $$NORMALIZED

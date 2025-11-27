@@ -1,0 +1,92 @@
+# xtrade インフラ共通設定
+# このファイルは各 Terraform モジュールから参照されます
+
+# プロジェクト情報
+project:
+  name: xtrade
+  organization: tqer39
+  domain: tqer39.dev
+  repository: xtrade
+
+# 環境設定
+environments:
+  dev:
+    name: dev
+    full_name: development
+    subdomain: xtrade-dev
+    neon_region: aws-us-east-2
+  prod:
+    name: prod
+    full_name: production
+    subdomain: xtrade
+    neon_region: aws-us-east-2
+
+aws:
+  account_id: '072693953877'
+  env_name: portfolio
+  region: ap-northeast-1
+  IaC: Terraform
+
+github:
+  organization: 'tqer39'
+  repository_owner: 'tqer39'
+  repository_name: 'xtrade'
+
+# Neon データベース設定
+neon:
+  region: aws-us-east-2
+  dev:
+    project_name: xtrade-dev
+    database_name: xtrade
+    database_owner: xtrade
+    compute_min_cu: 0.25
+    compute_max_cu: 1.0
+    suspend_timeout_seconds: 300
+    history_retention_seconds: 604800 # 7日間
+  prod:
+    project_name: xtrade-prod
+    database_name: xtrade
+    database_owner: xtrade
+    compute_min_cu: 0.5
+    compute_max_cu: 4.0
+    suspend_timeout_seconds: 600
+    history_retention_seconds: 2592000 # 30日間
+
+# Vercel 設定
+vercel:
+  dev:
+    project_name: xtrade-dev
+    framework: nextjs
+    build_command: npm run build
+    output_directory: .next
+    install_command: npm install
+  prod:
+    project_name: xtrade
+    framework: nextjs
+    build_command: npm run build
+    output_directory: .next
+    install_command: npm install
+
+# GCP 設定
+gcp:
+  project_id: xtrade-project
+  region: asia-northeast1
+
+# DNS 設定（GCP Cloud DNS）
+dns:
+  zone_name: tqer39-dev
+  dns_name: tqer39.dev.
+  description: DNS zone for tqer39.dev domain
+  ttl: 300
+  dnssec_enabled: false
+
+# タグ設定
+tags:
+  common:
+    Project: xtrade
+    ManagedBy: terraform
+    Repository: https://github.com/tqer39/xtrade
+  dev:
+    Environment: development
+  prod:
+    Environment: production
