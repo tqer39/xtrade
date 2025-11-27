@@ -12,19 +12,6 @@ resource "neon_project" "this" {
   name      = var.project_name
   region_id = var.region_id
 
-  # デフォルトブランチ（main）の設定
-  default_branch_name = var.default_branch_name
-
-  # コンピュートの自動スケーリング設定
-  branch {
-    name = var.default_branch_name
-
-    compute {
-      min_cu = var.compute_min_cu
-      max_cu = var.compute_max_cu
-    }
-  }
-
   # プロジェクトの履歴保持期間（秒）
   history_retention_seconds = var.history_retention_seconds
 
@@ -38,10 +25,16 @@ resource "neon_project" "this" {
   }
 }
 
+# ブランチの作成（プロジェクト作成時にデフォルトブランチが自動作成されるため、data source で参照）
+data "neon_branch" "default" {
+  project_id = neon_project.this.id
+  id         = neon_project.this.default_branch_id
+}
+
 # データベースの作成
 resource "neon_database" "this" {
   project_id = neon_project.this.id
-  branch_id  = neon_project.this.default_branch_id
+  branch_id  = data.neon_branch.default.id
   name       = var.database_name
   owner_name = var.database_owner
 }
@@ -49,7 +42,7 @@ resource "neon_database" "this" {
 # コンピュートエンドポイントの作成
 resource "neon_endpoint" "this" {
   project_id = neon_project.this.id
-  branch_id  = neon_project.this.default_branch_id
+  branch_id  = data.neon_branch.default.id
 
   type                     = "read_write"
   autoscaling_limit_min_cu = var.compute_min_cu
@@ -62,6 +55,6 @@ resource "neon_endpoint" "this" {
 # ロール（ユーザー）の作成
 resource "neon_role" "this" {
   project_id = neon_project.this.id
-  branch_id  = neon_project.this.default_branch_id
+  branch_id  = data.neon_branch.default.id
   name       = var.database_owner
 }
