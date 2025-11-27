@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "terraform": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-terraform"
+      ],
+      "env": {
+        "TERRAFORM_PATH": "terraform"
+      }
+    }
+  }
+}
