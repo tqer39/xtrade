@@ -20,10 +20,10 @@ output "zone_id" {
 
 output "prod_fqdn" {
   description = "本番環境の FQDN"
-  value       = var.prod_subdomain != "" ? "${var.prod_subdomain}.${trimSuffix(var.dns_name, ".")}" : null
+  value       = var.prod_subdomain != "" ? "${var.prod_subdomain}.${trimsuffix(var.dns_name, ".")}" : null
 }
 
 output "dev_fqdn" {
   description = "開発環境の FQDN"
-  value       = var.dev_subdomain != "" ? "${var.dev_subdomain}.${trimSuffix(var.dns_name, ".")}" : null
+  value       = var.dev_subdomain != "" ? "${var.dev_subdomain}.${trimsuffix(var.dns_name, ".")}" : null
 }
