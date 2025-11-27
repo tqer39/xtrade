@@ -23,9 +23,6 @@ resource "vercel_project" "this" {
   build_command    = var.build_command
   output_directory = var.output_directory
   install_command  = var.install_command
-
-  # 自動デプロイ設定
-  auto_assign_custom_domains = true
 }
 
 # 環境変数の設定
