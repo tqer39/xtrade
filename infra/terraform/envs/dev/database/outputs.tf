@@ -27,7 +27,7 @@ output "database_password" {
 output "vercel_env_vars" {
   description = "Vercel に設定する環境変数のテンプレート"
   value = {
-    DATABASE_URL          = "${replace(module.neon.connection_uri_pooled, "postgres://xtrade@", "postgres://xtrade:PASSWORD@")}"
-    DATABASE_URL_UNPOOLED = "${replace(module.neon.connection_uri, "postgres://xtrade@", "postgres://xtrade:PASSWORD@")}"
+    DATABASE_URL          = replace(module.neon.connection_uri_pooled, "postgres://xtrade@", "postgres://xtrade:PASSWORD@")
+    DATABASE_URL_UNPOOLED = replace(module.neon.connection_uri, "postgres://xtrade@", "postgres://xtrade:PASSWORD@")
   }
 }
