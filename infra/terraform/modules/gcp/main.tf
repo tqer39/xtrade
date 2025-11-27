@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 6.0"
-    }
-  }
-}
-
 # DNS Managed Zone
 resource "google_dns_managed_zone" "main" {
   name        = var.zone_name

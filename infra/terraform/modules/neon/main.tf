@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    neon = {
-      source  = "kislerdm/neon"
-      version = "~> 0.12.0"
-    }
-  }
-}
-
 # Neon プロジェクトの作成
 resource "neon_project" "this" {
   name      = var.project_name

@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    vercel = {
-      source  = "vercel/vercel"
-      version = "~> 1.0"
-    }
-  }
-}
-
 # Vercel プロジェクトの作成
 resource "vercel_project" "this" {
   name      = var.project_name
