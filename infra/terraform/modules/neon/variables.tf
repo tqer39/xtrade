@@ -46,9 +46,9 @@ variable "suspend_timeout_seconds" {
 }
 
 variable "history_retention_seconds" {
-  description = "履歴保持期間（秒）"
+  description = "履歴保持期間（秒、無料プランは最大21600秒=6時間）"
   type        = number
-  default     = 604800 # 7日間
+  default     = 21600 # 6時間（無料プランの上限）
 }
 
 variable "quota_active_time_seconds" {
