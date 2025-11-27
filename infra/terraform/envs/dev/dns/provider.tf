@@ -1,5 +1,5 @@
 # Google Cloud Provider 設定
 provider "google" {
-  project = local.gcp_config.project_id
+  project = var.gcp_project_id
   region  = local.gcp_config.region
 }

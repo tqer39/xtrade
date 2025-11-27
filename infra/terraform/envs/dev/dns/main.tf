@@ -8,8 +8,8 @@ locals {
 module "dns" {
   source = "../../../modules/gcp"
 
-  # GCP 設定
-  project_id = local.gcp_config.project_id
+  # GCP 設定（環境変数から取得）
+  project_id = var.gcp_project_id
 
   # DNS ゾーン設定
   zone_name   = local.dns_config.zone_name
