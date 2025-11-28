@@ -25,23 +25,23 @@ output "database_owner" {
 
 output "endpoint_id" {
   description = "コンピュートエンドポイント ID"
-  value       = neon_endpoint.this.id
+  value       = local.default_endpoint.id
 }
 
 output "endpoint_host" {
   description = "コンピュートエンドポイントのホスト名"
-  value       = neon_endpoint.this.host
+  value       = local.default_endpoint.host
 }
 
 output "connection_uri" {
   description = "データベース接続 URI（パスワードは含まない）"
-  value       = "postgres://${neon_role.this.name}@${neon_endpoint.this.host}/${neon_database.this.name}?sslmode=require"
+  value       = "postgres://${neon_role.this.name}@${local.default_endpoint.host}/${neon_database.this.name}?sslmode=require"
   sensitive   = false
 }
 
 output "connection_uri_pooled" {
   description = "プーリング接続 URI（パスワードは含まない）"
-  value       = "postgres://${neon_role.this.name}@${neon_endpoint.this.host}/${neon_database.this.name}?sslmode=require&pgbouncer=true"
+  value       = "postgres://${neon_role.this.name}@${local.default_endpoint.host}/${neon_database.this.name}?sslmode=require&pgbouncer=true"
   sensitive   = false
 }
 
