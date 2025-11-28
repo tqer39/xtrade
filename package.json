@@ -26,5 +26,8 @@
     "dotenv": "16.6.1",
     "drizzle-kit": "0.31.7",
     "typescript": "5"
+  },
+  "overrides": {
+    "esbuild": "0.25.0"
   }
 }
