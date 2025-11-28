@@ -8,6 +8,7 @@
     ".gitignore",
     ".vscode",
     ".pre-commit-config.yaml",
+    ".serena/**",
     "pyproject.toml",
     "sounds",
     ".env",
