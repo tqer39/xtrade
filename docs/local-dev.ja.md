@@ -403,23 +403,44 @@ cf-vault add xtrade
 
 ### CloudFlare 認証のセットアップ（cf-vault）
 
-CloudFlare リソースへのローカルアクセスを設定します：
+CloudFlare リソースへのローカルアクセスを設定します。
+
+#### 1. API Token の作成
+
+1. [CloudFlare Dashboard - API Tokens](https://dash.cloudflare.com/profile/api-tokens) にアクセス
+2. **Create Token** をクリック
+3. **Edit zone DNS** テンプレートの **Use template** をクリック
+4. **Zone Resources** で以下を設定：
+   - **Include** → **Specific zone** → **tqer39.dev**
+5. **Continue to summary** → **Create Token**
+6. 表示されたトークンをコピー（この画面を閉じると再表示できません）
+
+#### 2. cf-vault プロファイルの追加
 
 ```bash
-# cf-vault プロファイルを追加（初回のみ）
+# xtrade プロファイルを追加
 cf-vault add xtrade
+
+# API Token の入力を求められるので、上記で取得したトークンを貼り付け
+# トークンはキーチェーンに安全に保存されます
 
 # プロファイルが追加されたことを確認
 cf-vault list
 ```
 
-**API Token の取得方法：**
+出力例：
 
-1. [CloudFlare Dashboard](https://dash.cloudflare.com/profile/api-tokens) にアクセス
-2. **Create Token** をクリック
-3. **Edit zone DNS** テンプレートを使用
-4. 対象ゾーン（tqer39.dev）を選択
-5. トークンを生成してコピー
+```text
+PROFILE NAME    AUTHENTICATION TYPE    EMAIL
+xtrade          api_token
+```
+
+#### 3. 動作確認
+
+```bash
+# 環境変数が設定されることを確認
+cf-vault exec xtrade -- env | grep CLOUDFLARE
+```
 
 ### Terraform のセットアップ
 
