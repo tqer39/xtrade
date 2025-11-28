@@ -67,18 +67,11 @@ vercel:
     output_directory: .next
     install_command: npm install
 
-# GCP 設定
-gcp:
-  project_id: xtrade-project
-  region: asia-northeast1
-
-# DNS 設定（GCP Cloud DNS）
-dns:
-  zone_name: tqer39-dev
-  dns_name: tqer39.dev.
-  description: DNS zone for tqer39.dev domain
-  ttl: 300
-  dnssec_enabled: false
+# CloudFlare 設定
+cloudflare:
+  # Zone ID は環境変数 TF_VAR_cloudflare_zone_id で設定
+  # API Token は環境変数 CLOUDFLARE_API_TOKEN で設定
+  domain: tqer39.dev
 
 # タグ設定
 tags:

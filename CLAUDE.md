@@ -79,30 +79,27 @@ xtrade では以下の Agent を使用して責務を分離：
 
 ```text
 infra/terraform/
-├── modules/          # 再利用可能なモジュール（gcp, neon, vercel）
+├── modules/          # 再利用可能なモジュール（cloudflare, neon, vercel）
 ├── envs/             # 環境ごとの設定（dev, prod）
 └── config.yml        # 共通設定
 ```
 
 ### 管理対象リソース
 
-- **GCP Cloud DNS**: `tqer39.dev` ドメインと DNS レコード
+- **CloudFlare**: `tqer39.dev` ドメインの DNS レコード
 - **Neon**: PostgreSQL データベース
 - **Vercel**: フロントエンドホスティングとドメイン設定
 
 ### Terraform 運用
 
 ```bash
-cd infra/terraform/envs/dev/dns
-terraform init
-terraform plan
-terraform apply
+just tf -chdir=dev/dns init
+just tf -chdir=dev/dns plan
+just tf -chdir=dev/dns apply
 ```
 
 詳細は以下を参照：
 
-- `docs/gcp-subdomain-setup.ja.md`: GCP DNS 設定
-- `docs/gcp-workload-identity-setup.ja.md`: GCP 認証設定
 - `docs/terraform-environment-variables.ja.md`: Terraform 環境変数
 - `docs/github-secrets.ja.md`: GitHub Secrets 設定
 
@@ -119,12 +116,10 @@ terraform apply
 - シークレットは絶対にコミットしない
 - `.env.local` は Git 管理外
 - GitHub Secrets に認証情報を保存
-- GCP は Workload Identity Federation を使用
 
 ## 参考ドキュメント
 
 - アーキテクチャ: `docs/architecture.ja.md`
 - ディレクトリ構成: `docs/directory-structure.ja.md`
 - ローカル開発: `docs/local-dev.ja.md`
-- GCP 設定: `docs/gcp-*.ja.md`
 - GitHub Secrets: `docs/github-secrets.ja.md`

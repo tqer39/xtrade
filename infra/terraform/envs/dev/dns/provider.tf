@@ -1,5 +1,3 @@
-# Google Cloud Provider 設定
-provider "google" {
-  project = var.gcp_project_id
-  region  = local.gcp_config.region
-}
+# CloudFlare Provider 設定
+# API Token は環境変数 CLOUDFLARE_API_TOKEN から自動的に読み込まれます
+provider "cloudflare" {}

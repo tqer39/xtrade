@@ -1,10 +1,10 @@
-variable "gcp_project_id" {
-  description = "GCP プロジェクト ID（環境変数 TF_VAR_gcp_project_id から設定）"
+variable "cloudflare_zone_id" {
+  description = "CloudFlare Zone ID（環境変数 TF_VAR_cloudflare_zone_id から設定）"
   type        = string
 }
 
-variable "dev_cname_target" {
-  description = "dev 環境の Vercel CNAME ターゲット（例: cname.vercel-dns.com.）"
+variable "vercel_cname_target" {
+  description = "Vercel の CNAME ターゲット（例: cname.vercel-dns.com）"
   type        = string
-  default     = ""
+  default     = "cname.vercel-dns.com"
 }
