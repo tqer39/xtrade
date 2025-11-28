@@ -342,6 +342,34 @@ direnv allow
 npm run dev
 ```
 
+### 問題: CloudFlare 認証エラー
+
+**エラー：** `Error: failed to lookup credentials`
+
+**解決策：**
+
+```bash
+# cf-vault プロファイルを確認
+cf-vault list
+
+# プロファイルが存在しない場合、追加
+cf-vault add xtrade
+
+# 環境変数を確認
+cf-vault exec xtrade -- env | grep CLOUDFLARE
+```
+
+**エラー：** `CLOUDFLARE_API_TOKEN` または `CLOUDFLARE_ACCOUNT_ID` が見つからない
+
+**解決策：**
+
+```bash
+# プロファイルを再追加
+cf-vault add xtrade
+
+# トークンの権限を確認（Edit zone DNS が必要）
+```
+
 ## オプション: direnv による環境管理
 
 環境変数の自動読み込みを使用する場合：
@@ -370,22 +398,71 @@ npm run dev
 ### 前提条件
 
 - AWS 認証情報が設定済み（S3 バックエンド用）
+- CloudFlare API Token が設定済み（DNS 管理用）
 - mise 経由で Terraform がインストール済み
+
+### CloudFlare 認証のセットアップ（cf-vault）
+
+CloudFlare リソースへのローカルアクセスを設定します。
+
+#### 1. API Token の作成
+
+1. [CloudFlare Dashboard - API Tokens](https://dash.cloudflare.com/profile/api-tokens) にアクセス
+2. **Create Token** をクリック
+3. **Edit zone DNS** テンプレートの **Use template** をクリック
+4. **Zone Resources** で以下を設定：
+   - **Include** → **Specific zone** → **tqer39.dev**
+5. **Continue to summary** → **Create Token**
+6. 表示されたトークンをコピー（この画面を閉じると再表示できません）
+
+#### 2. cf-vault プロファイルの追加
+
+```bash
+# xtrade プロファイルを追加
+cf-vault add xtrade
+
+# API Token の入力を求められるので、上記で取得したトークンを貼り付け
+# トークンはキーチェーンに安全に保存されます
+
+# プロファイルが追加されたことを確認
+cf-vault list
+```
+
+出力例：
+
+```text
+PROFILE NAME    AUTHENTICATION TYPE    EMAIL
+xtrade          api_token
+```
+
+#### 3. 動作確認
+
+```bash
+# 環境変数が設定されることを確認
+cf-vault exec xtrade -- env | grep CLOUDFLARE
+```
 
 ### Terraform のセットアップ
 
 ```bash
-# dev 環境に移動
-cd infra/terraform/envs/dev/database
-
-# Terraform を初期化
-just tf -chdir=infra/terraform/envs/dev/database init
+# Terraform を初期化（初回のみ）
+just tf -chdir=dev/database init
 
 # 変更を計画
-just tf -chdir=infra/terraform/envs/dev/database plan
+just tf -chdir=dev/database plan
 
 # 適用（Neon データベースを作成）
-just tf -chdir=infra/terraform/envs/dev/database apply
+just tf -chdir=dev/database apply
+```
+
+### DNS 設定（CloudFlare）
+
+```bash
+# DNS 設定を計画
+just tf -chdir=dev/dns plan
+
+# DNS 設定を適用
+just tf -chdir=dev/dns apply
 ```
 
 詳細は [Terraform 環境変数](./terraform-environment-variables.ja.md) を参照してください。

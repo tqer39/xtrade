@@ -12,3 +12,8 @@ output "vercel_deployment_url" {
   description = "Vercel デプロイメント URL"
   value       = module.vercel.deployment_url
 }
+
+output "vercel_cname_target" {
+  description = "DNS CNAME ターゲット"
+  value       = module.vercel.cname_target
+}
