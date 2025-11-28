@@ -23,7 +23,7 @@
 | `NEON_API_KEY` | Terraform 用 Neon API キー | `terraform-dev.yml` | Yes |
 | `VERCEL_API_TOKEN` | Terraform 用 Vercel API トークン | `terraform-dev.yml` | Yes |
 | `CLOUDFLARE_API_TOKEN` | CloudFlare API トークン（DNS 管理用） | `terraform-dev.yml` | Yes |
-| `CLOUDFLARE_ZONE_ID` | CloudFlare Zone ID（tqer39.dev ドメイン） | `terraform-dev.yml` | Yes |
+| `CLOUDFLARE_ACCOUNT_ID` | CloudFlare Account ID | `terraform-dev.yml` | Yes |
 | `SLACK_WEBHOOK_DEV` | dev 環境通知用 Slack webhook URL | `terraform-dev.yml` | No |
 
 **取得方法**:
@@ -31,8 +31,10 @@
 - Neon: [Neon Console](https://console.neon.tech/) → Account Settings → API Keys
 - Vercel: [Vercel Dashboard](https://vercel.com/account/tokens) → Create Token
 - CloudFlare API Token: [CloudFlare Dashboard](https://dash.cloudflare.com/profile/api-tokens) → Create Token → Edit zone DNS テンプレート使用
-- CloudFlare Zone ID: [CloudFlare Dashboard](https://dash.cloudflare.com/) → ドメイン選択 → Overview → 右側の API セクション
+- CloudFlare Account ID: [CloudFlare Dashboard](https://dash.cloudflare.com/) → 右上のアカウントメニュー → Account ID、または任意のドメインの Overview ページ右側
 - Slack: [Slack API](https://api.slack.com/messaging/webhooks)
+
+**注**: `CLOUDFLARE_ZONE_ID` は Terraform の data source で自動取得するため、設定不要です。
 
 ### GitHub Apps
 

@@ -12,3 +12,8 @@ output "deployment_url" {
   description = "デプロイメント URL"
   value       = "https://${var.project_name}.vercel.app"
 }
+
+output "cname_target" {
+  description = "DNS CNAME ターゲット"
+  value       = "cname.vercel-dns.com"
+}

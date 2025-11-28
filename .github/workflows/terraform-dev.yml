@@ -83,7 +83,7 @@ jobs:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         with:
           AWS_ENV_NAME: ${{ env.AWS_ENV_NAME }}
           CHECK_DIFF: ${{ env.CHECK_DIFF }}
@@ -107,7 +107,7 @@ jobs:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         with:
           working-directory: ./infra/terraform/envs/${{ env.AWS_ENV_NAME }}/${{ matrix.directory }}
 
