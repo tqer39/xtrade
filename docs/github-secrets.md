@@ -24,6 +24,7 @@ This document lists all the GitHub Secrets required for the xtrade project's CI/
 | `VERCEL_API_TOKEN` | Vercel API token for Terraform | `terraform-dev.yml` | Yes |
 | `CLOUDFLARE_API_TOKEN` | CloudFlare API token (for DNS management) | `terraform-dev.yml` | Yes |
 | `CLOUDFLARE_ACCOUNT_ID` | CloudFlare Account ID | `terraform-dev.yml` | Yes |
+| `CLOUDFLARE_ZONE_ID` | CloudFlare Zone ID (tqer39.dev) | `terraform-dev.yml` | Yes |
 | `SLACK_WEBHOOK_DEV` | Slack webhook URL for dev environment notifications | `terraform-dev.yml` | No |
 
 **How to get**:
@@ -32,9 +33,8 @@ This document lists all the GitHub Secrets required for the xtrade project's CI/
 - Vercel: [Vercel Dashboard](https://vercel.com/account/tokens) → Create Token
 - CloudFlare API Token: [CloudFlare Dashboard](https://dash.cloudflare.com/profile/api-tokens) → Create Token → Use "Edit zone DNS" template
 - CloudFlare Account ID: [CloudFlare Dashboard](https://dash.cloudflare.com/) → Account menu in top right → Account ID, or on the Overview page of any domain
+- CloudFlare Zone ID: [CloudFlare Dashboard](https://dash.cloudflare.com/) → Select domain → Overview page → "Zone ID" on the right side
 - Slack: [Slack API](https://api.slack.com/messaging/webhooks)
-
-**Note**: `CLOUDFLARE_ZONE_ID` is automatically retrieved via Terraform data source, so it does not need to be configured.
 
 ### GitHub Apps
 
