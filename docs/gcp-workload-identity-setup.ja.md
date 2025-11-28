@@ -161,9 +161,24 @@ gcloud services list --enabled --project=${PROJECT_ID} | grep -E '(dns|serviceus
 
 ## ステップ 5: サービスアカウントへの権限付与
 
+Terraform で GCP リソースを管理するために、サービスアカウントに適切な IAM ロールを付与します。
+
+### 必要な IAM ロール一覧
+
+| ロール | 用途 |
+| ------ | ---- |
+| `roles/dns.admin` | Cloud DNS の管理（ゾーン作成、レコード設定） |
+| `roles/serviceusage.serviceUsageConsumer` | GCP API の利用 |
+| `roles/domains.admin` | ドメイン管理（必要な場合） |
+
 ### Cloud DNS 管理権限の付与
 
+Cloud DNS でゾーンやレコードを Terraform で管理する場合、`roles/dns.admin` ロールが必要です。
+
 ```bash
+# プロジェクト ID を設定
+export PROJECT_ID="your-project-id"
+
 # Cloud DNS Admin ロールを付与
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
   --member="serviceAccount:github-actions-terraform@${PROJECT_ID}.iam.gserviceaccount.com" \
@@ -173,6 +188,26 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID} \
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
   --member="serviceAccount:github-actions-terraform@${PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/serviceusage.serviceUsageConsumer"
+```
+
+### 権限の確認
+
+サービスアカウントに付与されているロールを確認するには：
+
+```bash
+gcloud projects get-iam-policy ${PROJECT_ID} \
+  --flatten="bindings[].members" \
+  --format="table(bindings.role)" \
+  --filter="bindings.members:github-actions-terraform@${PROJECT_ID}.iam.gserviceaccount.com"
+```
+
+出力例：
+
+```text
+ROLE
+roles/dns.admin
+roles/domains.admin
+roles/serviceusage.serviceUsageConsumer
 ```
 
 ### Workload Identity User ロールの付与
@@ -274,6 +309,37 @@ jobs:
    ```bash
    gcloud services enable dns.googleapis.com --project=${PROJECT_ID}
    ```
+
+### Issue: DNS Managed Zone 作成時の Forbidden エラー
+
+**エラー**:
+
+```text
+Error: Error creating ManagedZone: googleapi: Error 403: Forbidden, forbidden
+```
+
+**原因**: サービスアカウントに `roles/dns.admin` ロールが付与されていない
+
+**解決策**:
+
+1. 現在のロールを確認：
+
+   ```bash
+   gcloud projects get-iam-policy ${PROJECT_ID} \
+     --flatten="bindings[].members" \
+     --format="table(bindings.role)" \
+     --filter="bindings.members:github-actions-terraform@${PROJECT_ID}.iam.gserviceaccount.com"
+   ```
+
+2. `roles/dns.admin` がない場合、付与する：
+
+   ```bash
+   gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+     --member="serviceAccount:github-actions-terraform@${PROJECT_ID}.iam.gserviceaccount.com" \
+     --role="roles/dns.admin"
+   ```
+
+3. CI を再実行して確認
 
 ### Issue: Pool または Provider が見つからない
 

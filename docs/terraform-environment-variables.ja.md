@@ -181,35 +181,33 @@ provider "neon" {
 }
 ```
 
-## 実践例：Neon データベースのセットアップ
+## 実践例：Neon データベースのローカル terraform plan
+
+Neon データベースの Terraform をローカルで実行する手順を説明します。
 
 ### ステップ 1: API キーの取得
 
 1. [Neon Console](https://console.neon.tech/) にログイン
-2. Account Settings → API Keys → Generate new API key
-3. API キーをコピー
+2. **Account Settings** → **API Keys** → **Generate new API key** をクリック
+3. API キーをコピー（`neon_api_` で始まる文字列）
 
 ### ステップ 2: .envrc の設定
 
 ```bash
 # プロジェクトルートで設定（推奨）
-cd /Users/you/workspace/xtrade
+cd /path/to/xtrade
 cp .envrc.example .envrc
 vim .envrc
 ```
 
-**.envrc**:
+**.envrc** に以下を追加：
 
 ```bash
-# AWS Vault Profile
-export AWS_VAULT_PROFILE=xtrade-dev
-export AWS_REGION=ap-northeast-1
+# AWS Vault Profile（Terraform Backend 用）
+export AWS_VAULT_PROFILE=portfolio
 
 # Neon API Key（ここに実際のキーを貼り付け）
 export NEON_API_KEY=neon_api_xxxxxxxxxxxxx
-
-# Terraform 変数として自動読み込み
-export TF_VAR_neon_api_key="${NEON_API_KEY}"
 ```
 
 ### ステップ 3: direnv の有効化
@@ -222,20 +220,61 @@ direnv allow
 
 ```bash
 echo $NEON_API_KEY
-# → neon_api_xxxxxxxxxxxxx
-
-echo $TF_VAR_neon_api_key
-# → neon_api_xxxxxxxxxxxxx
+# → neon_api_xxxxxxxxxxxxx（実際の値が表示されればOK）
 ```
 
 ### ステップ 5: Terraform の実行
 
 ```bash
-# どのディレクトリからでも実行可能
-just tf -chdir=infra/terraform/envs/dev/database init
-just tf -chdir=infra/terraform/envs/dev/database plan
-just tf -chdir=infra/terraform/envs/dev/database apply
+# 初期化（初回のみ）
+just tf -chdir=dev/database init
+
+# plan 実行
+just tf -chdir=dev/database plan
+
+# apply 実行（必要な場合）
+just tf -chdir=dev/database apply
 ```
+
+### トラブルシューティング
+
+#### エラー: `authorization key must be provided`
+
+```text
+Error: authorization key must be provided
+```
+
+**原因**: `NEON_API_KEY` 環境変数が設定されていない
+
+**解決策**:
+
+```bash
+# 環境変数を確認
+echo $NEON_API_KEY
+
+# 設定されていない場合、.envrc を確認して direnv allow を実行
+direnv allow
+```
+
+#### エラー: `database owner not found`
+
+```text
+Error: database owner not found; role_name:"xtrade"
+```
+
+**原因**: Terraform のリソース依存関係の問題（ロールが作成される前にデータベースが作成されようとしている）
+
+**解決策**: `infra/terraform/modules/neon/main.tf` で `neon_database` リソースに `depends_on = [neon_role.this]` が設定されていることを確認
+
+#### エラー: `ENDPOINTS_LIMIT_EXCEEDED`
+
+```text
+Error: read_write endpoint already exists
+```
+
+**原因**: Neon プロジェクト作成時にデフォルトエンドポイントが自動作成されるため、追加で作成しようとするとエラーになる
+
+**解決策**: `neon_endpoint` リソースを削除し、`data "neon_branch_endpoints"` でデフォルトエンドポイントを参照するように変更
 
 ## トラブルシューティング
 

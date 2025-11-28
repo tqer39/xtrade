@@ -59,6 +59,7 @@
     "frontmatter",
     "getsentry",
     "getline",
+    "googleapi",
     "googledomains",
     "hashicorp",
     "healthcheck",
