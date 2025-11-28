@@ -35,8 +35,8 @@ xtrade は、X (旧 Twitter) のソーシャルグラフを活用したリアル
     ┌──────────────┼──────────────┐
     │              │              │
 ┌───▼──────┐  ┌───▼──────┐  ┌───▼──────┐
-│ BetterAuth│  │   Neon   │  │   GCP    │
-│  + X OAuth│  │   (DB)   │  │Cloud DNS │
+│ BetterAuth│  │   Neon   │  │CloudFlare│
+│  + X OAuth│  │   (DB)   │  │   DNS    │
 └───────────┘  └──────────┘  └──────────┘
 ```
 
@@ -77,7 +77,7 @@ xtrade/
 │
 ├── terraform/             # インフラ構成（IaC）
 │   ├── modules/           # 再利用可能なモジュール
-│   │   ├── dns/           # GCP Cloud DNS モジュール
+│   │   ├── cloudflare/    # CloudFlare DNS モジュール
 │   │   ├── vercel/        # Vercel プロジェクトモジュール
 │   │   └── neon/          # Neon DB モジュール（将来対応）
 │   ├── environments/      # 環境ごとの設定
@@ -373,12 +373,12 @@ flowchart TD
 
 ### 管理対象リソース
 
-#### 1. GCP Cloud DNS
+#### 1. CloudFlare DNS
 
 - **リソース**: `tqer39.dev` の DNS ゾーン
 - **レコード**:
-  - `xtrade.tqer39.dev` → Vercel の prod 環境
-  - `xtrade-dev.tqer39.dev` → Vercel の dev 環境
+  - `xtrade.tqer39.dev` → Vercel の prod 環境（CNAME）
+  - `xtrade-dev.tqer39.dev` → Vercel の dev 環境（CNAME）
 
 #### 2. Vercel
 
@@ -390,23 +390,24 @@ flowchart TD
 
 #### 3. Terraform State 管理
 
-- **バックエンド**: GCS（Google Cloud Storage）
-- **State ファイル**: `gs://xtrade-terraform-state/`
+- **バックエンド**: S3（AWS）
+- **State ファイル**: `s3://terraform-tfstate-tqer39-072693953877-ap-northeast-1/xtrade/`
 
 ### Terraform ディレクトリ構成
 
 ```text
-terraform/
+infra/terraform/
 ├── modules/           # 再利用可能なモジュール
-│   ├── dns/          # GCP Cloud DNS モジュール
-│   ├── vercel/       # Vercel プロジェクト・ドメインモジュール
-│   └── neon/         # Neon DB（将来対応）
-├── environments/      # 環境ごとの設定
+│   ├── cloudflare/   # CloudFlare DNS モジュール
+│   ├── vercel/       # Vercel プロジェクトモジュール
+│   └── neon/         # Neon DB モジュール
+├── envs/              # 環境ごとの設定
 │   ├── dev/          # dev 環境
+│   │   ├── database/ # Neon データベース
+│   │   ├── frontend/ # Vercel プロジェクト
+│   │   └── dns/      # CloudFlare DNS レコード
 │   └── prod/         # prod 環境
-└── global/           # グローバルリソース
-    ├── dns.tf        # DNS ゾーン
-    └── backend.tf    # Terraform state 管理
+└── config.yml        # 共通設定
 ```
 
 ## セキュリティ考慮事項

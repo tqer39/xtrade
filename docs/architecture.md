@@ -35,8 +35,8 @@ This document explains xtrade's technical architecture and design philosophy.
     ┌──────────────┼──────────────┐
     │              │              │
 ┌───▼──────┐  ┌───▼──────┐  ┌───▼──────┐
-│ BetterAuth│  │   Neon   │  │   GCP    │
-│  + X OAuth│  │   (DB)   │  │Cloud DNS │
+│ BetterAuth│  │   Neon   │  │CloudFlare│
+│  + X OAuth│  │   (DB)   │  │   DNS    │
 └───────────┘  └──────────┘  └──────────┘
 ```
 
@@ -77,7 +77,7 @@ xtrade/
 │
 ├── terraform/             # Infrastructure config (IaC)
 │   ├── modules/           # Reusable modules
-│   │   ├── dns/           # GCP Cloud DNS module
+│   │   ├── cloudflare/    # CloudFlare DNS module
 │   │   ├── vercel/        # Vercel project module
 │   │   └── neon/          # Neon DB module (future)
 │   ├── environments/      # Environment-specific config
@@ -373,12 +373,12 @@ flowchart TD
 
 ### Managed Resources
 
-#### 1. GCP Cloud DNS
+#### 1. CloudFlare DNS
 
 - **Resource**: DNS zone for `tqer39.dev`
 - **Records**:
-  - `xtrade.tqer39.dev` → Vercel prod environment
-  - `xtrade-dev.tqer39.dev` → Vercel dev environment
+  - `xtrade.tqer39.dev` → Vercel prod environment (CNAME)
+  - `xtrade-dev.tqer39.dev` → Vercel dev environment (CNAME)
 
 #### 2. Vercel
 
@@ -390,23 +390,24 @@ flowchart TD
 
 #### 3. Terraform State Management
 
-- **Backend**: GCS (Google Cloud Storage)
-- **State file**: `gs://xtrade-terraform-state/`
+- **Backend**: S3 (AWS)
+- **State file**: `s3://terraform-tfstate-tqer39-072693953877-ap-northeast-1/xtrade/`
 
 ### Terraform Directory Structure
 
 ```text
-terraform/
+infra/terraform/
 ├── modules/           # Reusable modules
-│   ├── dns/          # GCP Cloud DNS module
-│   ├── vercel/       # Vercel project/domain module
-│   └── neon/         # Neon DB (future)
-├── environments/      # Environment-specific config
+│   ├── cloudflare/   # CloudFlare DNS module
+│   ├── vercel/       # Vercel project module
+│   └── neon/         # Neon DB module
+├── envs/              # Environment-specific config
 │   ├── dev/          # dev environment
+│   │   ├── database/ # Neon database
+│   │   ├── frontend/ # Vercel project
+│   │   └── dns/      # CloudFlare DNS records
 │   └── prod/         # prod environment
-└── global/           # Global resources
-    ├── dns.tf        # DNS zone
-    └── backend.tf    # Terraform state management
+└── config.yml        # Shared configuration
 ```
 
 ## Security Considerations

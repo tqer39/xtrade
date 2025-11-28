@@ -14,15 +14,10 @@ data "terraform_remote_state" "frontend" {
   }
 }
 
-# ドメイン名から Zone ID を取得
-data "cloudflare_zones" "this" {
-  name = local.domain
-}
-
 module "dns" {
   source = "../../../modules/cloudflare"
 
-  zone_id = data.cloudflare_zones.this.result[0].id
+  zone_id = var.cloudflare_zone_id
 
   records = [
     {

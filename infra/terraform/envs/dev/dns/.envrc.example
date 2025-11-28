@@ -1,13 +1,13 @@
-# GCP 認証設定
+# CloudFlare 認証設定
 
-# 方法 1: サービスアカウントキーを使用
-# export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
+# 方法 1: cf-vault を使用（推奨）
+# cf-vault add xtrade を実行してプロファイルを追加
+# cf-vault exec xtrade -- terraform plan で実行
 
-# 方法 2: gcloud CLI の認証を使用（推奨）
-# gcloud auth application-default login を実行してください
+# 方法 2: 環境変数を直接設定
+# export CLOUDFLARE_API_TOKEN="your-api-token"
+# export CLOUDFLARE_ACCOUNT_ID="your-account-id"
 
-# GCP プロジェクト ID（config.yml から読み込まれますが、上書きも可能）
-# export GOOGLE_PROJECT="xtrade-project"
-
-# Vercel CNAME ターゲット（Vercel Dashboard で確認）
-export TF_VAR_dev_cname_target="cname.vercel-dns.com."
+# AWS 認証（S3 バックエンド用）
+# aws-vault add portfolio で設定済みの場合は以下は不要
+# export AWS_PROFILE="portfolio"

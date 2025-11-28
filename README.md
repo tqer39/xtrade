@@ -22,7 +22,7 @@ xtrade は、X (旧 Twitter) のソーシャルグラフを活用したリアル
 - **データベース**: Neon (Serverless PostgreSQL)
 - **ORM**: Drizzle ORM
 - **認証**: BetterAuth + X OAuth
-- **インフラ**: Vercel + GCP Cloud DNS (Terraform 管理)
+- **インフラ**: Vercel + CloudFlare DNS (Terraform 管理)
 - **開発ツール**: mise, just, prek
 
 ## 環境構成
