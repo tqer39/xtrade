@@ -101,7 +101,7 @@ endif
 	@echo "  just lint    - Run code quality checks"
 
 .PHONY: terraform-cf
-terraform-cf: ## Run terraform via aws-vault (ARGS="-chdir=... plan")
+terraform-cf: ## Run terraform via cf-vault and aws-vault (ARGS="-chdir=... plan")
 	@set -- $(ARGS); \
 	NORMALIZED=""; \
 	while [ $$# -gt 0 ]; do \
@@ -121,5 +121,5 @@ terraform-cf: ## Run terraform via aws-vault (ARGS="-chdir=... plan")
 	  esac; \
 	done; \
 	NORMALIZED="$${NORMALIZED# }"; \
-	echo "→ aws-vault exec portfolio -- terraform $$NORMALIZED"; \
-	aws-vault exec portfolio -- terraform $$NORMALIZED
+	echo "→ cf-vault exec xtrade -- aws-vault exec portfolio -- terraform $$NORMALIZED"; \
+	cf-vault exec xtrade -- aws-vault exec portfolio -- terraform $$NORMALIZED

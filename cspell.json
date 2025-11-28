@@ -65,6 +65,7 @@
     "healthcheck",
     "isready",
     "itkq",
+    "jacobbednarz",
     "killall",
     "kislerdm",
     "justfile",

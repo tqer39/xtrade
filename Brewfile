@@ -13,6 +13,10 @@ brew "prek"        # Pre-commit hook manager (Rust-based)
 brew "aws-vault"   # AWS credential manager for secure access
 brew "direnv"      # Environment variable manager per directory
 
+# Cloudflare tools
+tap "jacobbednarz/tap"              # cf-vault 公式リポジトリ
+brew "jacobbednarz/tap/cf-vault"    # Cloudflare API Secrets 用 Vault CLI
+
 # Optional: Additional useful tools
 # brew "gh"            # GitHub CLI
 # brew "jq"            # JSON processor
