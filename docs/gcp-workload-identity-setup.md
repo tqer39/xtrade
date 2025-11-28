@@ -133,7 +133,33 @@ The provider full path will be in this format:
 projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github/providers/github
 ```
 
-## Step 4: Grant Permissions to Service Account
+## Step 4: Enable Required APIs
+
+Enable the necessary APIs to use Cloud DNS.
+
+```bash
+# Enable Cloud DNS API
+gcloud services enable dns.googleapis.com --project=${PROJECT_ID}
+
+# Enable Service Usage API (for API usage)
+gcloud services enable serviceusage.googleapis.com --project=${PROJECT_ID}
+
+# Enable IAM API (for Workload Identity)
+gcloud services enable iam.googleapis.com --project=${PROJECT_ID}
+
+# Verify the APIs are enabled
+gcloud services list --enabled --project=${PROJECT_ID} | grep -E '(dns|serviceusage|iam)'
+```
+
+### Using GCP Console
+
+1. Navigate to [APIs & Services](https://console.cloud.google.com/apis/library)
+2. Search and enable the following APIs:
+   - **Cloud DNS API**
+   - **Service Usage API**
+   - **Identity and Access Management (IAM) API**
+
+## Step 5: Grant Permissions to Service Account
 
 ### Grant Cloud DNS Admin Permissions
 
@@ -171,7 +197,7 @@ To get the project number:
 gcloud projects describe ${PROJECT_ID} --format="value(projectNumber)"
 ```
 
-## Step 5: Register GitHub Secrets
+## Step 6: Register GitHub Secrets
 
 Register the obtained values as Secrets in your GitHub repository.
 
@@ -188,7 +214,7 @@ Register the obtained values as Secrets in your GitHub repository.
 | `GCP_SERVICE_ACCOUNT` | `github-actions-terraform@xtrade-project.iam.gserviceaccount.com` | Service account email address |
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | `projects/123456789/locations/global/workloadIdentityPools/github/providers/github` | Workload Identity Provider full path |
 
-## Step 6: Verify Setup
+## Step 7: Verify Setup
 
 Run a GitHub Actions workflow to verify access to GCP resources.
 

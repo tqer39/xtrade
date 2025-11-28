@@ -133,7 +133,33 @@ gcloud iam workload-identity-pools providers describe github \
 projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github/providers/github
 ```
 
-## ステップ 4: サービスアカウントへの権限付与
+## ステップ 4: 必要な API の有効化
+
+Cloud DNS を使用するために、必要な API を有効化します。
+
+```bash
+# Cloud DNS API を有効化
+gcloud services enable dns.googleapis.com --project=${PROJECT_ID}
+
+# Service Usage API を有効化（API 利用のため）
+gcloud services enable serviceusage.googleapis.com --project=${PROJECT_ID}
+
+# IAM API を有効化（Workload Identity のため）
+gcloud services enable iam.googleapis.com --project=${PROJECT_ID}
+
+# 有効化されたことを確認
+gcloud services list --enabled --project=${PROJECT_ID} | grep -E '(dns|serviceusage|iam)'
+```
+
+### GCP Console を使用
+
+1. [API とサービス](https://console.cloud.google.com/apis/library) に移動
+2. 以下の API を検索して有効化：
+   - **Cloud DNS API**
+   - **Service Usage API**
+   - **Identity and Access Management (IAM) API**
+
+## ステップ 5: サービスアカウントへの権限付与
 
 ### Cloud DNS 管理権限の付与
 
@@ -171,7 +197,7 @@ gcloud iam service-accounts add-iam-policy-binding \
 gcloud projects describe ${PROJECT_ID} --format="value(projectNumber)"
 ```
 
-## ステップ 5: GitHub Secrets への登録
+## ステップ 6: GitHub Secrets への登録
 
 取得した値を GitHub リポジトリの Secrets に登録します。
 
@@ -188,7 +214,7 @@ gcloud projects describe ${PROJECT_ID} --format="value(projectNumber)"
 | `GCP_SERVICE_ACCOUNT` | `github-actions-terraform@xtrade-project.iam.gserviceaccount.com` | サービスアカウントのメールアドレス |
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | `projects/123456789/locations/global/workloadIdentityPools/github/providers/github` | Workload Identity Provider の完全パス |
 
-## ステップ 6: 動作確認
+## ステップ 7: 動作確認
 
 GitHub Actions ワークフローを実行して、GCP リソースにアクセスできることを確認します。
 

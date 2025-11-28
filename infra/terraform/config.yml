@@ -42,7 +42,7 @@ neon:
     compute_min_cu: 0.25
     compute_max_cu: 1.0
     suspend_timeout_seconds: 300
-    history_retention_seconds: 604800 # 7日間
+    history_retention_seconds: 21600 # 6時間（無料プランの上限）
   prod:
     project_name: xtrade-prod
     database_name: xtrade
@@ -50,7 +50,7 @@ neon:
     compute_min_cu: 0.5
     compute_max_cu: 4.0
     suspend_timeout_seconds: 600
-    history_retention_seconds: 2592000 # 30日間
+    history_retention_seconds: 21600 # 6時間（有料プランでは増やせます）
 
 # Vercel 設定
 vercel:
