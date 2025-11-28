@@ -1,6 +1,7 @@
 variable "zone_id" {
   description = "CloudFlare Zone ID"
   type        = string
+  sensitive   = true
 }
 
 variable "records" {

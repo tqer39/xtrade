@@ -47,4 +47,5 @@ variable "environment_variables" {
   description = "環境変数（key-value ペア）"
   type        = map(string)
   default     = {}
+  sensitive   = true
 }
