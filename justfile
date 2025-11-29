@@ -214,3 +214,39 @@ db-reset:
     else \
         echo "  ✓ Cancelled"; \
     fi
+
+# Test commands
+
+# Run all unit tests
+test:
+    @echo "→ Running unit tests..."
+    npm run test:run
+
+# Run unit tests in watch mode
+test-watch:
+    @echo "→ Running unit tests in watch mode..."
+    npm run test
+
+# Run unit tests with coverage
+test-coverage:
+    @echo "→ Running unit tests with coverage..."
+    npm run test:coverage
+
+# Run E2E tests
+test-e2e:
+    @echo "→ Running E2E tests..."
+    npm run test:e2e
+
+# Run E2E tests with UI
+test-e2e-ui:
+    @echo "→ Running E2E tests with UI..."
+    npm run test:e2e:ui
+
+# Install Playwright browsers
+test-e2e-install:
+    @echo "→ Installing Playwright browsers..."
+    npx playwright install chromium --with-deps
+
+# Run all tests (unit + E2E)
+test-all: test test-e2e
+    @echo "✅ All tests completed!"
