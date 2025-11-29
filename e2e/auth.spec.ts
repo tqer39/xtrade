@@ -9,6 +9,11 @@ test.describe('Authentication', () => {
     await expect(loginButton).toBeVisible()
   })
 
+  // CI 環境では Twitter OAuth の認証情報がないためスキップ
+  test.skip(
+    !!process.env.CI,
+    'Skipped in CI: Twitter OAuth credentials not available'
+  )
   test('should redirect to Twitter OAuth when clicking login', async ({
     page,
   }) => {
