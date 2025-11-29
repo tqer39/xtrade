@@ -48,3 +48,9 @@ variable "environment_variables" {
   type        = map(string)
   default     = {}
 }
+
+variable "custom_domain" {
+  description = "カスタムドメイン（例: xtrade-dev.tqer39.dev）"
+  type        = string
+  default     = ""
+}

@@ -1,8 +1,10 @@
 # 共通設定の読み込み
 locals {
   config        = yamldecode(file("../../../config.yml"))
+  env_config    = local.config.environments.dev
   vercel_config = local.config.vercel.dev
   github        = local.config.github
+  domain        = local.config.project.domain
 }
 
 # Vercel プロジェクトの作成
@@ -19,6 +21,9 @@ module "vercel" {
   repository_owner  = local.github.repository_owner
   repository_name   = local.github.repository_name
   production_branch = "main"
+
+  # カスタムドメイン
+  custom_domain = "${local.env_config.subdomain}.${local.domain}"
 
   # 環境変数（database からの参照）
   environment_variables = {
