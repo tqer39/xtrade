@@ -61,6 +61,7 @@ xtrade では以下の Agent を使用して責務を分離：
 - **APIAgent** 🛠: API・ビジネスロジック
 - **UIAgent** 🎨: UI・UX
 - **TestAgent** 🧪: テスト・品質保証
+- **SecurityAgent** 🔒: セキュリティチェック・脆弱性検出
 - **DocAgent** 📝: ドキュメント管理
 
 各 Agent の詳細は `.claude/agents/` 配下の設定ファイルを参照。
