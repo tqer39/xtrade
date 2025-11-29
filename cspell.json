@@ -19,6 +19,7 @@
     "infra/terraform/config.yml"
   ],
   "words": [
+    "unittests",
     "afplay",
     "alsa",
     "apne",
