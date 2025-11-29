@@ -45,6 +45,14 @@
 
 **取得方法**: リポジトリ設定で GitHub App を作成し、秘密鍵を生成。
 
+### Test / Coverage
+
+| Secret 名 | 説明 | 使用箇所 | 必須 |
+| -------- | ---- | ------ | -------- |
+| `CODECOV_TOKEN` | Codecov へのカバレッジアップロード用トークン | `test.yml` | Yes |
+
+**取得方法**: [Codecov](https://codecov.io/) → リポジトリ設定 → Upload Token
+
 ### AI/LLM
 
 | Secret 名 | 説明 | 使用箇所 | 必須 |

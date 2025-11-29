@@ -1,5 +1,10 @@
 # xtrade
 
+[![codecov](https://codecov.io/gh/tqer39/xtrade/graph/badge.svg)](https://codecov.io/gh/tqer39/xtrade)
+[![Test](https://github.com/tqer39/xtrade/actions/workflows/test.yml/badge.svg)](https://github.com/tqer39/xtrade/actions/workflows/test.yml)
+[![Terraform Dev](https://github.com/tqer39/xtrade/actions/workflows/terraform-dev.yml/badge.svg)](https://github.com/tqer39/xtrade/actions/workflows/terraform-dev.yml)
+[![DB Migrate Dev](https://github.com/tqer39/xtrade/actions/workflows/db-migrate-dev.yml/badge.svg)](https://github.com/tqer39/xtrade/actions/workflows/db-migrate-dev.yml)
+
 X を利用した toC 向けソーシャルトレーディングサービス
 
 ## 概要
