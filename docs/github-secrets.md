@@ -45,6 +45,14 @@ This document lists all the GitHub Secrets required for the xtrade project's CI/
 
 **How to get**: Create a GitHub App in repository settings and generate a private key.
 
+### Test / Coverage
+
+| Secret Name | Description | Used In | Required |
+| -------- | ---- | ------ | -------- |
+| `CODECOV_TOKEN` | Token for uploading coverage to Codecov | `test.yml` | Yes |
+
+**How to get**: [Codecov](https://codecov.io/) → Repository Settings → Upload Token
+
 ### AI/LLM
 
 | Secret Name | Description | Used In | Required |
