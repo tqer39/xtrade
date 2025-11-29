@@ -1,0 +1,69 @@
+'use client'
+
+import { signOut, useSession } from '@/lib/auth-client'
+import { LoginButton } from './login-button'
+
+/**
+ * ユーザーメニュー
+ * ログイン状態に応じてユーザー情報またはログインボタンを表示
+ */
+export function UserMenu() {
+  const { data: session, isPending } = useSession()
+
+  if (isPending) {
+    return (
+      <div
+        style={{
+          width: '120px',
+          height: '40px',
+          backgroundColor: '#e5e5e5',
+          borderRadius: '8px',
+          animation: 'pulse 2s infinite',
+        }}
+      />
+    )
+  }
+
+  if (!session?.user) {
+    return <LoginButton />
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+      }}
+    >
+      {session.user.image && (
+        <img
+          src={session.user.image}
+          alt={session.user.name || 'User'}
+          style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+          }}
+        />
+      )}
+      <div>
+        <div style={{ fontWeight: '600' }}>{session.user.name}</div>
+        <button
+          onClick={() => signOut()}
+          style={{
+            padding: '4px 8px',
+            fontSize: '12px',
+            color: '#666',
+            backgroundColor: 'transparent',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            cursor: 'pointer',
+          }}
+        >
+          ログアウト
+        </button>
+      </div>
+    </div>
+  )
+}
