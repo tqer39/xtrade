@@ -25,3 +25,11 @@ resource "vercel_project_environment_variable" "this" {
   value      = each.value
   target     = ["production", "preview", "development"]
 }
+
+# カスタムドメインの設定
+resource "vercel_project_domain" "this" {
+  count = var.custom_domain != "" ? 1 : 0
+
+  project_id = vercel_project.this.id
+  domain     = var.custom_domain
+}
