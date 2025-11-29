@@ -64,6 +64,8 @@
     "googledomains",
     "hashicorp",
     "healthcheck",
+    "HSTS",
+    "IDOR",
     "isready",
     "itkq",
     "jacobbednarz",
@@ -78,6 +80,7 @@
     "nana",
     "neondatabase",
     "nextjs",
+    "nosniff",
     "nodenv",
     "noreply",
     "nslookup",
@@ -123,9 +126,11 @@
     "tqer",
     "tqer39",
     "tsbuildinfo",
+    "twimg",
     "unpooled",
     "vercel",
     "Vercel",
-    "xtrade"
+    "xtrade",
+    "Zenn"
   ]
 }
