@@ -3,7 +3,7 @@ terraform {
   required_providers {
     vercel = {
       source  = "vercel/vercel"
-      version = "3.17.0"
+      version = "4.0.1"
     }
   }
   backend "s3" {
