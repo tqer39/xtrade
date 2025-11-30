@@ -250,3 +250,61 @@ test-e2e-install:
 # Run all tests (unit + E2E)
 test-all: test test-e2e
     @echo "✅ All tests completed!"
+
+# Git Worktree commands
+
+# Worktree directory (relative to repo root)
+wt_dir := "../xtrade-worktrees"
+
+# Create a new worktree with a new branch
+wt-new name:
+    @echo "→ Creating worktree: {{name}}"
+    @mkdir -p {{wt_dir}}
+    git worktree add {{wt_dir}}/{{name}} -b {{name}}
+    @echo "→ Installing dependencies..."
+    @cd {{wt_dir}}/{{name}} && npm install
+    @if [ -f .env.local ]; then \
+        cp .env.local {{wt_dir}}/{{name}}/.env.local; \
+        echo "  ✓ Copied .env.local"; \
+    fi
+    @echo "✅ Worktree ready: {{wt_dir}}/{{name}}"
+    @echo "  → Open in VS Code: code {{wt_dir}}/{{name}}"
+
+# Create a worktree from an existing branch
+wt-add branch:
+    @echo "→ Creating worktree from branch: {{branch}}"
+    @mkdir -p {{wt_dir}}
+    git worktree add {{wt_dir}}/{{branch}} {{branch}}
+    @echo "→ Installing dependencies..."
+    @cd {{wt_dir}}/{{branch}} && npm install
+    @if [ -f .env.local ]; then \
+        cp .env.local {{wt_dir}}/{{branch}}/.env.local; \
+        echo "  ✓ Copied .env.local"; \
+    fi
+    @echo "✅ Worktree ready: {{wt_dir}}/{{branch}}"
+
+# List all worktrees
+wt-list:
+    @git worktree list
+
+# Remove a worktree
+wt-rm name:
+    @echo "→ Removing worktree: {{name}}"
+    git worktree remove {{wt_dir}}/{{name}}
+    @echo "✅ Worktree removed"
+
+# Remove a worktree (force)
+wt-rm-force name:
+    @echo "→ Force removing worktree: {{name}}"
+    git worktree remove --force {{wt_dir}}/{{name}}
+    @echo "✅ Worktree removed"
+
+# Open worktree in VS Code
+wt-code name:
+    @code {{wt_dir}}/{{name}}
+
+# Prune stale worktree references
+wt-prune:
+    @echo "→ Pruning stale worktree references..."
+    git worktree prune
+    @echo "✅ Pruned"
