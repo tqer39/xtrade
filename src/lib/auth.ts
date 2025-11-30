@@ -36,10 +36,23 @@ export const auth = betterAuth({
   },
 
   // 信頼する Origin（CSRF 対策）
-  trustedOrigins: [
-    process.env.BETTER_AUTH_URL!,
-    process.env.NEXT_PUBLIC_APP_URL!,
-  ].filter(Boolean),
+  trustedOrigins: (request) => {
+    const origin = request.headers.get('origin') || ''
+    const baseOrigins = [
+      process.env.BETTER_AUTH_URL,
+      process.env.NEXT_PUBLIC_APP_URL,
+      'https://xtrade-dev.tqer39.dev',
+      'https://xtrade.tqer39.dev',
+      'http://localhost:3000',
+    ].filter(Boolean) as string[]
+
+    // Vercel プレビュー URL を動的に追加
+    if (origin.endsWith('.vercel.app')) {
+      return [...baseOrigins, origin]
+    }
+
+    return baseOrigins
+  },
 })
 
 // 型エクスポート
