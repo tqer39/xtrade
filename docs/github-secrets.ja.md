@@ -23,11 +23,13 @@
 | `BETTER_AUTH_SECRET_DEV` | dev 環境用 BetterAuth シークレットキー | `terraform-dev.yml` | Yes |
 | `TWITTER_CLIENT_ID_DEV` | dev 環境用 X (Twitter) OAuth クライアント ID | `terraform-dev.yml` | Yes |
 | `TWITTER_CLIENT_SECRET_DEV` | dev 環境用 X (Twitter) OAuth クライアントシークレット | `terraform-dev.yml` | Yes |
+| `ALLOWED_TWITTER_IDS_DEV` | dev 環境でログイン許可する X アカウント ID（カンマ区切り） | `terraform-dev.yml` | No |
 
 **取得方法**:
 
 - `BETTER_AUTH_SECRET_DEV`: `openssl rand -base64 32` で生成
 - `TWITTER_CLIENT_ID_DEV` / `TWITTER_CLIENT_SECRET_DEV`: [X Developer Portal](https://developer.x.com/en/portal/dashboard) で取得
+- `ALLOWED_TWITTER_IDS_DEV`: 許可する X アカウントの ID をカンマ区切りで指定（例: `123456789,987654321`）。未設定の場合は全ユーザーがログイン可能。
 
 ### Terraform
 
