@@ -29,7 +29,7 @@ concurrency:
 
 env:
   NODE_VERSION: '24'
-  DRY_RUN: ${{ inputs.DRY_RUN || 'true' }}
+  DRY_RUN: ${{ inputs.DRY_RUN == false && 'false' || 'true' }}
 
 jobs:
   db-migrate-dev:
