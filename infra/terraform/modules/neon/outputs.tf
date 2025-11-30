@@ -34,15 +34,15 @@ output "endpoint_host" {
 }
 
 output "connection_uri" {
-  description = "データベース接続 URI（パスワードは含まない）"
-  value       = "postgres://${neon_role.this.name}@${local.default_endpoint.host}/${neon_database.this.name}?sslmode=require"
-  sensitive   = false
+  description = "データベース接続 URI（パスワード含む）"
+  value       = "postgres://${neon_role.this.name}:${neon_role.this.password}@${local.default_endpoint.host}/${neon_database.this.name}?sslmode=require"
+  sensitive   = true
 }
 
 output "connection_uri_pooled" {
-  description = "プーリング接続 URI（パスワードは含まない）"
-  value       = "postgres://${neon_role.this.name}@${local.default_endpoint.host}/${neon_database.this.name}?sslmode=require&pgbouncer=true"
-  sensitive   = false
+  description = "プーリング接続 URI（パスワード含む）"
+  value       = "postgres://${neon_role.this.name}:${neon_role.this.password}@${local.default_endpoint.host}/${neon_database.this.name}?sslmode=require&pgbouncer=true"
+  sensitive   = true
 }
 
 output "role_password" {
