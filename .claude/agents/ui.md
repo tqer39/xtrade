@@ -210,41 +210,102 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 /rooms/[id]/complete
 ```
 
-## スタイリング
+## デザインシステム
 
-### Tailwind CSS の使用
+### shadcn/ui
+
+本プロジェクトでは [shadcn/ui](https://ui.shadcn.com/) を採用している。
+
+#### 設定
+
+- **スタイル**: `new-york`
+- **ベースカラー**: `neutral`
+- **CSS 変数**: 有効（ライト/ダークテーマ対応）
+- **アイコン**: `lucide-react`
+
+#### 主要ファイル
+
+| ファイル | 説明 |
+| --- | --- |
+| `components.json` | shadcn/ui 設定ファイル |
+| `app/globals.css` | Tailwind CSS v4 + CSS 変数定義 |
+| `src/lib/utils.ts` | `cn()` ユーティリティ（clsx + tailwind-merge） |
+| `src/components/ui/` | shadcn/ui コンポーネント |
+
+#### コンポーネントの追加方法
+
+```bash
+# 例: Card コンポーネントを追加
+npx shadcn@latest add card
+
+# 複数コンポーネントを追加
+npx shadcn@latest add avatar dropdown-menu
+```
+
+#### 利用可能なコンポーネント
+
+現在インストール済み：
+
+- `Button` - ボタン（6 バリアント: default, destructive, outline, secondary, ghost, link）
+
+よく使うコンポーネント（必要に応じて追加）：
+
+- `Card` - カードコンテナ
+- `Avatar` - ユーザーアバター
+- `DropdownMenu` - ドロップダウンメニュー
+- `Dialog` - モーダルダイアログ
+- `Input` / `Textarea` - フォーム入力
+- `Form` - フォームバリデーション（react-hook-form + zod）
+
+### スタイリング
+
+#### Tailwind CSS + CSS 変数
 
 ```typescript
+// ✅ CSS 変数を使ったセマンティックなカラー
+<div className="bg-background text-foreground">
+  <p className="text-muted-foreground">説明文</p>
+  <button className="bg-primary text-primary-foreground">ボタン</button>
+</div>
+
 // ✅ シンプルで読みやすい
-<div className="p-4 bg-white rounded shadow">
+<div className="p-4 bg-card rounded-lg shadow">
   <h2 className="text-xl font-bold mb-2">タイトル</h2>
-  <p className="text-gray-600">説明文</p>
+  <p className="text-muted-foreground">説明文</p>
 </div>
 
 // ❌ クラスが多すぎる
 <div className="p-4 px-6 py-8 bg-white bg-opacity-90 rounded-lg rounded-t-xl shadow-md shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out">
 ```
 
-### コンポーネントの再利用
+#### 主要な CSS 変数
+
+| 変数 | 用途 |
+| --- | --- |
+| `--background` / `--foreground` | ページ背景・テキスト |
+| `--card` / `--card-foreground` | カード背景・テキスト |
+| `--primary` / `--primary-foreground` | プライマリボタン |
+| `--muted` / `--muted-foreground` | 補助テキスト |
+| `--destructive` | 危険なアクション |
+| `--border` / `--input` / `--ring` | ボーダー・フォーカス |
+
+### コンポーネントの使用例
 
 ```typescript
-// src/components/ui/button.tsx
-interface ButtonProps {
-  children: React.ReactNode
-  onClick?: () => void
-  variant?: 'primary' | 'secondary'
-}
+// src/components/ui/button.tsx を使用
+import { Button } from '@/components/ui/button'
 
-export function Button({ children, onClick, variant = 'primary' }: ButtonProps) {
-  const baseClass = 'px-4 py-2 rounded font-medium'
-  const variantClass = variant === 'primary' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'
+// バリアント
+<Button>デフォルト</Button>
+<Button variant="outline">アウトライン</Button>
+<Button variant="destructive">削除</Button>
+<Button variant="ghost">ゴースト</Button>
 
-  return (
-    <button className={`${baseClass} ${variantClass}`} onClick={onClick}>
-      {children}
-    </button>
-  )
-}
+// サイズ
+<Button size="sm">小</Button>
+<Button size="default">中</Button>
+<Button size="lg">大</Button>
+<Button size="icon"><Icon /></Button>
 ```
 
 ## AuthAgent との連携
