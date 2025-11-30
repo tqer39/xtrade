@@ -7,3 +7,8 @@ export VERCEL_API_TOKEN="your-vercel-api-token-here"
 
 # AWS Vault Profile (Terraform state 用)
 export AWS_VAULT_PROFILE="xtrade-dev"
+
+# BetterAuth 認証設定 (必須)
+export TF_VAR_better_auth_secret="your-better-auth-secret-here"
+export TF_VAR_twitter_client_id="your-twitter-client-id-here"
+export TF_VAR_twitter_client_secret="your-twitter-client-secret-here"

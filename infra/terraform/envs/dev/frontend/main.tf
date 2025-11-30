@@ -5,6 +5,26 @@ locals {
   vercel_config = local.config.vercel.dev
   github        = local.config.github
   domain        = local.config.project.domain
+  app_url       = "https://${local.env_config.subdomain}.${local.domain}"
+}
+
+# 認証関連のシークレット（TF_VAR_ 環境変数から取得）
+variable "better_auth_secret" {
+  description = "BetterAuth のシークレットキー"
+  type        = string
+  sensitive   = true
+}
+
+variable "twitter_client_id" {
+  description = "X (Twitter) OAuth クライアント ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "twitter_client_secret" {
+  description = "X (Twitter) OAuth クライアントシークレット"
+  type        = string
+  sensitive   = true
 }
 
 # Vercel プロジェクトの作成
@@ -30,6 +50,11 @@ module "vercel" {
     DATABASE_URL          = data.terraform_remote_state.database.outputs.database_connection_uri_pooled
     DATABASE_URL_UNPOOLED = data.terraform_remote_state.database.outputs.database_connection_uri
     NODE_ENV              = "production"
+    BETTER_AUTH_URL       = local.app_url
+    NEXT_PUBLIC_APP_URL   = local.app_url
+    BETTER_AUTH_SECRET    = var.better_auth_secret
+    TWITTER_CLIENT_ID     = var.twitter_client_id
+    TWITTER_CLIENT_SECRET = var.twitter_client_secret
   }
 }
 
