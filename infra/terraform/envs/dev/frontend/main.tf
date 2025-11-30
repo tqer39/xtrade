@@ -30,7 +30,8 @@ variable "twitter_client_secret" {
 variable "admin_twitter_username" {
   description = "管理者の X ユーザー名（@なし）- ホワイトリスト機能の管理者"
   type        = string
-  default     = "tqer39"
+  sensitive   = true
+  default     = ""
 }
 
 # Vercel プロジェクトの作成
