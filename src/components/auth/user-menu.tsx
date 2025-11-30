@@ -1,6 +1,7 @@
 'use client'
 
 import { signOut, useSession } from '@/lib/auth-client'
+import { Button } from '@/components/ui/button'
 import { LoginButton } from './login-button'
 
 /**
@@ -12,15 +13,7 @@ export function UserMenu() {
 
   if (isPending) {
     return (
-      <div
-        style={{
-          width: '120px',
-          height: '40px',
-          backgroundColor: '#e5e5e5',
-          borderRadius: '8px',
-          animation: 'pulse 2s infinite',
-        }}
-      />
+      <div className="w-30 h-10 bg-muted rounded-lg animate-pulse" />
     )
   }
 
@@ -29,40 +22,24 @@ export function UserMenu() {
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-      }}
-    >
+    <div className="flex items-center gap-3">
       {session.user.image && (
         <img
           src={session.user.image}
           alt={session.user.name || 'User'}
-          style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-          }}
+          className="w-10 h-10 rounded-full"
         />
       )}
       <div>
-        <div style={{ fontWeight: '600' }}>{session.user.name}</div>
-        <button
+        <div className="font-semibold">{session.user.name}</div>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => signOut()}
-          style={{
-            padding: '4px 8px',
-            fontSize: '12px',
-            color: '#666',
-            backgroundColor: 'transparent',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
+          className="text-xs"
         >
           ログアウト
-        </button>
+        </Button>
       </div>
     </div>
   )
