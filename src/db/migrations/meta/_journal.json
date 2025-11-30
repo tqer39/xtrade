@@ -8,6 +8,13 @@
       "when": 1764379344483,
       "tag": "0000_smiling_jackpot",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1764493524387,
+      "tag": "0001_chubby_warbird",
+      "breakpoints": true
     }
   ]
 }
