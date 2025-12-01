@@ -15,6 +15,20 @@
       "when": 1764493524387,
       "tag": "0001_chubby_warbird",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764536962952,
+      "tag": "0002_spotty_shiver_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1764537180582,
+      "tag": "0003_cold_zzzax",
+      "breakpoints": true
     }
   ]
 }

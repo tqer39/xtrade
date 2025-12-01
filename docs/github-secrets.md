@@ -16,6 +16,32 @@ This document lists all the GitHub Secrets required for the xtrade project's CI/
 
 **Format**: `postgresql://[user]:[password]@[host]/[database]?sslmode=require`
 
+### BetterAuth Authentication
+
+| Secret Name | Description | Used In | Required |
+| -------- | ---- | ------ | -------- |
+| `BETTER_AUTH_SECRET_DEV` | BetterAuth secret key for dev environment | `terraform-dev.yml` | Yes |
+| `TWITTER_CLIENT_ID_DEV` | X (Twitter) OAuth client ID for dev environment | `terraform-dev.yml` | Yes |
+| `TWITTER_CLIENT_SECRET_DEV` | X (Twitter) OAuth client secret for dev environment | `terraform-dev.yml` | Yes |
+
+**How to get**:
+
+- `BETTER_AUTH_SECRET_DEV`: Generate with `openssl rand -base64 32`
+- `TWITTER_CLIENT_ID_DEV` / `TWITTER_CLIENT_SECRET_DEV`: Get from [X Developer Portal](https://developer.x.com/en/portal/dashboard)
+
+### Whitelist Feature
+
+| Variable Name | Description | Used In | Required |
+| -------- | ---- | ------ | -------- |
+| `TF_VAR_admin_twitter_username` | Admin's X username (without @) | Terraform variables | No |
+
+**Description**:
+
+- When this value is set, the whitelist feature is enabled
+- Admin can always log in and receives admin role on first login
+- Users not on the whitelist cannot log in
+- Set as `ADMIN_TWITTER_USERNAME_DEV` in GitHub Secrets and pass as `TF_VAR_admin_twitter_username` in CI/CD
+
 ### Terraform
 
 | Secret Name | Description | Used In | Required |

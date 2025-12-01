@@ -2,6 +2,12 @@
 
 import { signOut, useSession } from '@/lib/auth-client'
 import { LoginButton } from './login-button'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+
+interface UserData {
+  role: string
+}
 
 /**
  * ユーザーメニュー
@@ -9,6 +15,20 @@ import { LoginButton } from './login-button'
  */
 export function UserMenu() {
   const { data: session, isPending } = useSession()
+  const [userData, setUserData] = useState<UserData | null>(null)
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetch('/api/admin/me')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.user) {
+            setUserData(data.user)
+          }
+        })
+        .catch(console.error)
+    }
+  }, [session?.user?.id])
 
   if (isPending) {
     return (
@@ -27,6 +47,8 @@ export function UserMenu() {
   if (!session?.user) {
     return <LoginButton />
   }
+
+  const isAdmin = userData?.role === 'admin'
 
   return (
     <div
@@ -49,20 +71,37 @@ export function UserMenu() {
       )}
       <div>
         <div style={{ fontWeight: '600' }}>{session.user.name}</div>
-        <button
-          onClick={() => signOut()}
-          style={{
-            padding: '4px 8px',
-            fontSize: '12px',
-            color: '#666',
-            backgroundColor: 'transparent',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
-          ログアウト
-        </button>
+        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+          {isAdmin && (
+            <Link
+              href="/admin/users"
+              style={{
+                padding: '4px 8px',
+                fontSize: '12px',
+                color: '#fff',
+                backgroundColor: '#000',
+                borderRadius: '4px',
+                textDecoration: 'none',
+              }}
+            >
+              管理画面
+            </Link>
+          )}
+          <button
+            onClick={() => signOut()}
+            style={{
+              padding: '4px 8px',
+              fontSize: '12px',
+              color: '#666',
+              backgroundColor: 'transparent',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            ログアウト
+          </button>
+        </div>
       </div>
     </div>
   )

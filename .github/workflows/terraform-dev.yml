@@ -88,6 +88,7 @@ jobs:
           TF_VAR_better_auth_secret: ${{ secrets.BETTER_AUTH_SECRET_DEV }}
           TF_VAR_twitter_client_id: ${{ secrets.TWITTER_CLIENT_ID_DEV }}
           TF_VAR_twitter_client_secret: ${{ secrets.TWITTER_CLIENT_SECRET_DEV }}
+          TF_VAR_admin_twitter_username: ${{ secrets.ADMIN_TWITTER_USERNAME_DEV }}
         with:
           AWS_ENV_NAME: ${{ env.AWS_ENV_NAME }}
           CHECK_DIFF: ${{ env.CHECK_DIFF }}
@@ -116,6 +117,7 @@ jobs:
           TF_VAR_better_auth_secret: ${{ secrets.BETTER_AUTH_SECRET_DEV }}
           TF_VAR_twitter_client_id: ${{ secrets.TWITTER_CLIENT_ID_DEV }}
           TF_VAR_twitter_client_secret: ${{ secrets.TWITTER_CLIENT_SECRET_DEV }}
+          TF_VAR_admin_twitter_username: ${{ secrets.ADMIN_TWITTER_USERNAME_DEV }}
         with:
           working-directory: ./infra/terraform/envs/${{ env.AWS_ENV_NAME }}/${{ matrix.directory }}
 
