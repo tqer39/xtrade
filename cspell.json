@@ -19,6 +19,14 @@
     "infra/terraform/config.yml"
   ],
   "words": [
+    "adminuser",
+    "deleteduser",
+    "existinguser",
+    "myadmin",
+    "newuser",
+    "testadmin",
+    "testdb",
+    "testuser",
     "unittests",
     "afplay",
     "alsa",
