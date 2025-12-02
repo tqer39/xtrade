@@ -11,6 +11,11 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
+  twitterUsername: text('twitter_username'), // X ユーザー名（@なし）
+  role: text('role').default('user').notNull(), // 'admin' | 'user'
+  banned: boolean('banned').default(false),
+  banReason: text('ban_reason'),
+  banExpires: timestamp('ban_expires'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()
@@ -115,8 +120,32 @@ export const accountRelations = relations(account, ({ one }) => ({
 }))
 
 // =====================================
-// xtrade 独自のテーブル（今後追加予定）
+// xtrade 独自のテーブル
 // =====================================
+
+/**
+ * ログイン許可ユーザーのホワイトリストテーブル
+ * 管理者が X ユーザー名で許可するユーザーを管理
+ */
+export const allowedUser = pgTable(
+  'allowed_user',
+  {
+    id: text('id').primaryKey(),
+    twitterUsername: text('twitter_username').notNull().unique(),
+    addedBy: text('added_by')
+      .notNull()
+      .references(() => user.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('allowed_user_twitter_username_idx').on(table.twitterUsername)]
+)
+
+export const allowedUserRelations = relations(allowedUser, ({ one }) => ({
+  addedByUser: one(user, {
+    fields: [allowedUser.addedBy],
+    references: [user.id],
+  }),
+}))
 
 // TODO(DBAgent): 今後、以下のテーブルを追加予定
 // - trades: トレード情報テーブル

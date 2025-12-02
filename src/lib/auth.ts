@@ -1,28 +1,44 @@
 import { betterAuth } from 'better-auth'
 import { APIError } from 'better-auth/api'
+import { admin } from 'better-auth/plugins'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from '@/db/drizzle'
 import * as schema from '@/db/schema'
+import { eq } from 'drizzle-orm'
 
 /**
- * 許可された X アカウント ID のホワイトリスト
- * dev 環境ではこのリストに含まれるユーザーのみ登録可能
- * 環境変数 ALLOWED_TWITTER_IDS でカンマ区切りで指定可能
+ * 管理者の X ユーザー名（環境変数から取得）
+ * このユーザーは常にログイン可能で、初回ログイン時に admin ロールが付与される
  */
-const getAllowedTwitterIds = (): string[] => {
-  const envIds = process.env.ALLOWED_TWITTER_IDS
-  if (envIds) {
-    return envIds.split(',').map((id) => id.trim())
-  }
-  return []
-}
+const ADMIN_TWITTER_USERNAME = process.env.ADMIN_TWITTER_USERNAME || ''
 
 /**
  * ホワイトリストが有効かどうか
- * ALLOWED_TWITTER_IDS が設定されている場合のみ有効
+ * ADMIN_TWITTER_USERNAME が設定されている場合のみ有効
  */
 const isWhitelistEnabled = (): boolean => {
-  return !!process.env.ALLOWED_TWITTER_IDS
+  return !!ADMIN_TWITTER_USERNAME
+}
+
+/**
+ * X ユーザー名がホワイトリストに含まれているかチェック
+ * @param twitterUsername - X のユーザー名（@ なし）
+ * @returns 許可されている場合は true
+ */
+const isAllowedUser = async (twitterUsername: string): Promise<boolean> => {
+  // 管理者は常に許可
+  if (twitterUsername.toLowerCase() === ADMIN_TWITTER_USERNAME.toLowerCase()) {
+    return true
+  }
+
+  // DB のホワイトリストをチェック
+  const allowed = await db
+    .select()
+    .from(schema.allowedUser)
+    .where(eq(schema.allowedUser.twitterUsername, twitterUsername.toLowerCase()))
+    .limit(1)
+
+  return allowed.length > 0
 }
 
 /**
@@ -41,40 +57,45 @@ export const auth = betterAuth({
     twitter: {
       clientId: process.env.TWITTER_CLIENT_ID!,
       clientSecret: process.env.TWITTER_CLIENT_SECRET!,
-    },
-  },
+      // Twitter プロフィールからユーザー情報をマッピング
+      mapProfileToUser: async (profile) => {
+        // Twitter API v2 のプロフィールには username フィールドがある
+        const twitterProfile = profile as { username?: string }
+        const username = twitterProfile.username?.toLowerCase() || ''
 
-  // データベースフック（ユーザー登録時のホワイトリストチェック）
-  databaseHooks: {
-    account: {
-      create: {
-        before: async (account) => {
-          // ホワイトリストが無効の場合はスキップ
-          if (!isWhitelistEnabled()) {
-            return
+        // ホワイトリストが有効な場合、許可されていないユーザーはブロック
+        if (isWhitelistEnabled() && username) {
+          const allowed = await isAllowedUser(username)
+          if (!allowed) {
+            throw new APIError('FORBIDDEN', {
+              message: 'このアカウントはホワイトリストに登録されていません。管理者にお問い合わせください。',
+            })
           }
+        }
 
-          // X (Twitter) アカウントのみチェック
-          if (account.providerId === 'twitter') {
-            const allowedIds = getAllowedTwitterIds()
-            if (!allowedIds.includes(account.accountId)) {
-              throw new APIError('FORBIDDEN', {
-                message: 'このアカウントは登録が許可されていません',
-              })
-            }
-          }
-        },
+        // 管理者の場合は admin ロールを設定
+        const isAdmin = username === ADMIN_TWITTER_USERNAME.toLowerCase()
+
+        return {
+          twitterUsername: username,
+          role: isAdmin ? 'admin' : 'user',
+        }
       },
     },
   },
 
+  // プラグイン
+  plugins: [
+    admin({
+      defaultRole: 'user',
+      adminRoles: ['admin'],
+    }),
+  ],
+
   // セッション設定
   session: {
-    // セッションの有効期限（7日）
-    expiresIn: 60 * 60 * 24 * 7,
-    // セッション更新の閾値（1日）
-    updateAge: 60 * 60 * 24,
-    // Cookie 設定
+    expiresIn: 60 * 60 * 24 * 7, // 7日
+    updateAge: 60 * 60 * 24, // 1日
     cookieCache: {
       enabled: true,
       maxAge: 60 * 5, // 5分間キャッシュ
@@ -99,7 +120,25 @@ export const auth = betterAuth({
 
     return baseOrigins
   },
+
+  // ユーザー情報のカスタマイズ
+  user: {
+    additionalFields: {
+      twitterUsername: {
+        type: 'string',
+        required: false,
+      },
+      role: {
+        type: 'string',
+        defaultValue: 'user',
+        required: false,
+      },
+    },
+  },
 })
 
 // 型エクスポート
 export type Auth = typeof auth
+
+// ホワイトリスト関連のユーティリティ関数をエクスポート
+export { isAllowedUser, isWhitelistEnabled, ADMIN_TWITTER_USERNAME }

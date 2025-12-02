@@ -19,6 +19,8 @@ export default defineConfig({
         'node_modules',
         'src/**/*.test.{ts,tsx}',
         'src/**/__tests__/**',
+        'app/**/*.test.{ts,tsx}',
+        'app/**/__tests__/**',
         '**/*.d.ts',
       ],
     },

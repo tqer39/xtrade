@@ -3,6 +3,12 @@
 import { signOut, useSession } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import { LoginButton } from './login-button'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+
+interface UserData {
+  role: string
+}
 
 /**
  * ユーザーメニュー
@@ -10,6 +16,20 @@ import { LoginButton } from './login-button'
  */
 export function UserMenu() {
   const { data: session, isPending } = useSession()
+  const [userData, setUserData] = useState<UserData | null>(null)
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetch('/api/admin/me')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.user) {
+            setUserData(data.user)
+          }
+        })
+        .catch(console.error)
+    }
+  }, [session?.user?.id])
 
   if (isPending) {
     return (
@@ -20,6 +40,8 @@ export function UserMenu() {
   if (!session?.user) {
     return <LoginButton />
   }
+
+  const isAdmin = userData?.role === 'admin'
 
   return (
     <div className="flex items-center gap-3">
@@ -32,14 +54,21 @@ export function UserMenu() {
       )}
       <div>
         <div className="font-semibold">{session.user.name}</div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => signOut()}
-          className="text-xs"
-        >
-          ログアウト
-        </Button>
+        <div className="flex gap-2 mt-1">
+          {isAdmin && (
+            <Button variant="default" size="sm" asChild className="text-xs">
+              <Link href="/admin/users">管理画面</Link>
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => signOut()}
+            className="text-xs"
+          >
+            ログアウト
+          </Button>
+        </div>
       </div>
     </div>
   )

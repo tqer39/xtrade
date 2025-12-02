@@ -27,8 +27,8 @@ variable "twitter_client_secret" {
   sensitive   = true
 }
 
-variable "allowed_twitter_ids" {
-  description = "許可された X アカウント ID のカンマ区切りリスト（dev 環境のみ）"
+variable "admin_twitter_username" {
+  description = "管理者の X ユーザー名（@なし）- ホワイトリスト機能の管理者"
   type        = string
   sensitive   = true
   default     = ""
@@ -53,22 +53,17 @@ module "vercel" {
   custom_domain = "${local.env_config.subdomain}.${local.domain}"
 
   # 環境変数（database からの参照）
-  environment_variables = merge(
-    {
-      DATABASE_URL          = data.terraform_remote_state.database.outputs.database_connection_uri_pooled
-      DATABASE_URL_UNPOOLED = data.terraform_remote_state.database.outputs.database_connection_uri
-      NODE_ENV              = "production"
-      BETTER_AUTH_URL       = local.app_url
-      NEXT_PUBLIC_APP_URL   = local.app_url
-      BETTER_AUTH_SECRET    = var.better_auth_secret
-      TWITTER_CLIENT_ID     = var.twitter_client_id
-      TWITTER_CLIENT_SECRET = var.twitter_client_secret
-    },
-    # ホワイトリストが設定されている場合のみ環境変数を追加
-    var.allowed_twitter_ids != "" ? {
-      ALLOWED_TWITTER_IDS = var.allowed_twitter_ids
-    } : {}
-  )
+  environment_variables = {
+    DATABASE_URL           = data.terraform_remote_state.database.outputs.database_connection_uri_pooled
+    DATABASE_URL_UNPOOLED  = data.terraform_remote_state.database.outputs.database_connection_uri
+    NODE_ENV               = "production"
+    BETTER_AUTH_URL        = local.app_url
+    NEXT_PUBLIC_APP_URL    = local.app_url
+    BETTER_AUTH_SECRET     = var.better_auth_secret
+    TWITTER_CLIENT_ID      = var.twitter_client_id
+    TWITTER_CLIENT_SECRET  = var.twitter_client_secret
+    ADMIN_TWITTER_USERNAME = var.admin_twitter_username
+  }
 }
 
 # database の outputs を参照

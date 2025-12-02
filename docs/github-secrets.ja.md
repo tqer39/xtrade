@@ -31,6 +31,19 @@
 - `TWITTER_CLIENT_ID_DEV` / `TWITTER_CLIENT_SECRET_DEV`: [X Developer Portal](https://developer.x.com/en/portal/dashboard) で取得
 - `ALLOWED_TWITTER_IDS_DEV`: 許可する X アカウントの ID をカンマ区切りで指定（例: `123456789,987654321`）。未設定の場合は全ユーザーがログイン可能。
 
+### ホワイトリスト機能
+
+| 変数名 | 説明 | 使用箇所 | 必須 |
+| -------- | ---- | ------ | -------- |
+| `TF_VAR_admin_twitter_username` | 管理者の X ユーザー名（@なし） | Terraform variables | No |
+
+**説明**:
+
+- この値が設定されている場合、ホワイトリスト機能が有効になります
+- 管理者は常にログイン可能で、初回ログイン時に admin ロールが付与されます
+- ホワイトリストに登録されていないユーザーはログインできません
+- GitHub Secrets に `ADMIN_TWITTER_USERNAME_DEV` として設定し、CI/CD で `TF_VAR_admin_twitter_username` として渡す
+
 ### Terraform
 
 | Secret 名 | 説明 | 使用箇所 | 必須 |
