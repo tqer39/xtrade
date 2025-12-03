@@ -32,15 +32,12 @@ describe('LoginButton', () => {
     expect(svg).toBeInTheDocument()
   })
 
-  it('ボタンのスタイルが正しく適用されている', () => {
+  it('ボタンのスタイルクラスが正しく適用されている', () => {
     render(<LoginButton />)
 
     const button = screen.getByRole('button')
-    expect(button).toHaveStyle({
-      backgroundColor: '#000',
-      color: '#fff',
-      borderRadius: '9999px',
-    })
+    expect(button).toHaveClass('rounded-full')
+    expect(button).toHaveClass('gap-2')
   })
 
   it('クリックで signIn.social が呼ばれる', async () => {

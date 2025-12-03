@@ -38,7 +38,7 @@ describe('UserMenu', () => {
 
       render(<UserMenu />)
 
-      const placeholder = document.querySelector('div[style*="animation"]')
+      const placeholder = document.querySelector('.animate-pulse')
       expect(placeholder).toBeInTheDocument()
     })
   })

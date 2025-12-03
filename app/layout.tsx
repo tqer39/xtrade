@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
   title: 'xtrade',
@@ -12,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif' }}>
+      <body className="antialiased">
         {children}
       </body>
     </html>

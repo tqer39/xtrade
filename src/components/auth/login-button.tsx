@@ -1,6 +1,7 @@
 'use client'
 
 import { signIn } from '@/lib/auth-client'
+import { Button } from '@/components/ui/button'
 
 /**
  * X (Twitter) ログインボタン
@@ -14,25 +15,12 @@ export function LoginButton() {
   }
 
   return (
-    <button
+    <Button
       onClick={handleLogin}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '12px 24px',
-        backgroundColor: '#000',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '9999px',
-        fontSize: '16px',
-        fontWeight: '600',
-        cursor: 'pointer',
-      }}
+      className="rounded-full gap-2 px-6 py-5 text-base font-semibold"
     >
-      <XLogo />
-      X でログイン
-    </button>
+      <XLogo />X でログイン
+    </Button>
   )
 }
 
