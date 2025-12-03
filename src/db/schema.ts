@@ -1,4 +1,12 @@
-import { pgTable, text, timestamp, boolean, index } from 'drizzle-orm/pg-core'
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  index,
+  integer,
+  unique,
+} from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 /**
@@ -16,6 +24,11 @@ export const user = pgTable('user', {
   banned: boolean('banned').default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
+  // 信頼スコア関連
+  trustScore: integer('trust_score'), // 0〜100
+  trustGrade: text('trust_grade'), // S/A/B/C/D/U
+  trustScoreUpdatedAt: timestamp('trust_score_updated_at'),
+  trustScoreRefreshRequestedAt: timestamp('trust_score_refresh_requested_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()
@@ -103,6 +116,12 @@ export const verification = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  trustJobs: many(userTrustJob),
+  haveCards: many(userHaveCard),
+  wantCards: many(userWantCard),
+  initiatedTrades: many(trade, { relationName: 'initiatedTrades' }),
+  respondedTrades: many(trade, { relationName: 'respondedTrades' }),
+  offeredTradeItems: many(tradeItem),
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -147,9 +166,286 @@ export const allowedUserRelations = relations(allowedUser, ({ one }) => ({
   }),
 }))
 
+// =====================================
+// 信頼スコア再計算キュー
+// =====================================
+
+/**
+ * 信頼スコア再計算ジョブテーブル
+ * X API のレートリミット対策として非同期でキュー処理
+ */
+export const userTrustJob = pgTable(
+  'user_trust_job',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    status: text('status').notNull().default('queued'), // queued | running | succeeded | failed
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    startedAt: timestamp('started_at'),
+    finishedAt: timestamp('finished_at'),
+    errorMessage: text('error_message'),
+  },
+  (table) => [
+    index('user_trust_job_user_id_idx').on(table.userId),
+    index('user_trust_job_status_idx').on(table.status),
+    index('user_trust_job_created_at_idx').on(table.createdAt),
+  ]
+)
+
+export const userTrustJobRelations = relations(userTrustJob, ({ one }) => ({
+  user: one(user, {
+    fields: [userTrustJob.userId],
+    references: [user.id],
+  }),
+}))
+
+// =====================================
+// カード関連テーブル
+// =====================================
+
+/**
+ * カードマスターテーブル
+ * ユーザーがマニュアルで登録可能、他ユーザーも検索・選択可能
+ */
+export const card = pgTable(
+  'card',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    category: text('category').notNull(),
+    rarity: text('rarity'),
+    imageUrl: text('image_url'),
+    createdByUserId: text('created_by_user_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('card_name_idx').on(table.name),
+    index('card_category_idx').on(table.category),
+  ]
+)
+
+export const cardRelations = relations(card, ({ one, many }) => ({
+  createdBy: one(user, {
+    fields: [card.createdByUserId],
+    references: [user.id],
+  }),
+  haveCards: many(userHaveCard),
+  wantCards: many(userWantCard),
+  tradeItems: many(tradeItem),
+}))
+
+/**
+ * ユーザーが持っているカードテーブル
+ */
+export const userHaveCard = pgTable(
+  'user_have_card',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    cardId: text('card_id')
+      .notNull()
+      .references(() => card.id, { onDelete: 'cascade' }),
+    quantity: integer('quantity').default(1).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('user_have_card_user_id_idx').on(table.userId),
+    index('user_have_card_card_id_idx').on(table.cardId),
+    unique('user_have_card_user_card_unique').on(table.userId, table.cardId),
+  ]
+)
+
+export const userHaveCardRelations = relations(userHaveCard, ({ one }) => ({
+  user: one(user, {
+    fields: [userHaveCard.userId],
+    references: [user.id],
+  }),
+  card: one(card, {
+    fields: [userHaveCard.cardId],
+    references: [card.id],
+  }),
+}))
+
+/**
+ * ユーザーが欲しいカードテーブル
+ */
+export const userWantCard = pgTable(
+  'user_want_card',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    cardId: text('card_id')
+      .notNull()
+      .references(() => card.id, { onDelete: 'cascade' }),
+    priority: integer('priority').default(0),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('user_want_card_user_id_idx').on(table.userId),
+    index('user_want_card_card_id_idx').on(table.cardId),
+    unique('user_want_card_user_card_unique').on(table.userId, table.cardId),
+  ]
+)
+
+export const userWantCardRelations = relations(userWantCard, ({ one }) => ({
+  user: one(user, {
+    fields: [userWantCard.userId],
+    references: [user.id],
+  }),
+  card: one(card, {
+    fields: [userWantCard.cardId],
+    references: [card.id],
+  }),
+}))
+
+// =====================================
+// トレード関連テーブル
+// =====================================
+
+/**
+ * トレードテーブル
+ * ステートマシン: draft → proposed → agreed → completed/disputed/canceled/expired
+ */
+export const trade = pgTable(
+  'trade',
+  {
+    id: text('id').primaryKey(),
+    roomSlug: text('room_slug').notNull().unique(),
+    initiatorUserId: text('initiator_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    responderUserId: text('responder_user_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    status: text('status').notNull().default('draft'), // draft|proposed|agreed|completed|disputed|canceled|expired
+    proposedExpiredAt: timestamp('proposed_expired_at'), // 出品者が仮設定する期限
+    agreedExpiredAt: timestamp('agreed_expired_at'), // 合意後の確定期限
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('trade_room_slug_idx').on(table.roomSlug),
+    index('trade_initiator_idx').on(table.initiatorUserId),
+    index('trade_responder_idx').on(table.responderUserId),
+    index('trade_status_idx').on(table.status),
+  ]
+)
+
+export const tradeRelations = relations(trade, ({ one, many }) => ({
+  initiator: one(user, {
+    fields: [trade.initiatorUserId],
+    references: [user.id],
+    relationName: 'initiatedTrades',
+  }),
+  responder: one(user, {
+    fields: [trade.responderUserId],
+    references: [user.id],
+    relationName: 'respondedTrades',
+  }),
+  items: many(tradeItem),
+  history: many(tradeHistory),
+}))
+
+/**
+ * トレードアイテムテーブル
+ * オファー内容を保存
+ */
+export const tradeItem = pgTable(
+  'trade_item',
+  {
+    id: text('id').primaryKey(),
+    tradeId: text('trade_id')
+      .notNull()
+      .references(() => trade.id, { onDelete: 'cascade' }),
+    offeredByUserId: text('offered_by_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    cardId: text('card_id')
+      .notNull()
+      .references(() => card.id, { onDelete: 'cascade' }),
+    quantity: integer('quantity').default(1).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('trade_item_trade_id_idx').on(table.tradeId),
+    index('trade_item_offered_by_idx').on(table.offeredByUserId),
+  ]
+)
+
+export const tradeItemRelations = relations(tradeItem, ({ one }) => ({
+  trade: one(trade, {
+    fields: [tradeItem.tradeId],
+    references: [trade.id],
+  }),
+  offeredBy: one(user, {
+    fields: [tradeItem.offeredByUserId],
+    references: [user.id],
+  }),
+  card: one(card, {
+    fields: [tradeItem.cardId],
+    references: [card.id],
+  }),
+}))
+
+/**
+ * トレード状態履歴テーブル
+ * 状態遷移の監査ログ
+ */
+export const tradeHistory = pgTable(
+  'trade_history',
+  {
+    id: text('id').primaryKey(),
+    tradeId: text('trade_id')
+      .notNull()
+      .references(() => trade.id, { onDelete: 'cascade' }),
+    fromStatus: text('from_status'),
+    toStatus: text('to_status').notNull(),
+    changedByUserId: text('changed_by_user_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    reason: text('reason'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('trade_history_trade_id_idx').on(table.tradeId)]
+)
+
+export const tradeHistoryRelations = relations(tradeHistory, ({ one }) => ({
+  trade: one(trade, {
+    fields: [tradeHistory.tradeId],
+    references: [trade.id],
+  }),
+  changedBy: one(user, {
+    fields: [tradeHistory.changedByUserId],
+    references: [user.id],
+  }),
+}))
+
+// =====================================
+// User リレーション拡張
+// =====================================
+
 // TODO(DBAgent): 今後、以下のテーブルを追加予定
-// - trades: トレード情報テーブル
-// - rooms: トレーディングルームテーブル
-// - trade_items: トレードアイテムテーブル
-// - room_members: ルームメンバーテーブル
 // - reports: 通報テーブル
