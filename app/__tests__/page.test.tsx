@@ -26,16 +26,14 @@ describe('Home Page', () => {
     expect(screen.getByTestId('user-menu')).toBeInTheDocument()
   })
 
-  it('main 要素が中央揃えスタイルを持つ', () => {
+  it('main 要素が中央揃えのクラスを持つ', () => {
     render(<Home />)
 
     const main = screen.getByRole('main')
-    expect(main).toHaveStyle({
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-    })
+    expect(main).toHaveClass('min-h-screen')
+    expect(main).toHaveClass('flex')
+    expect(main).toHaveClass('flex-col')
+    expect(main).toHaveClass('items-center')
+    expect(main).toHaveClass('justify-center')
   })
 })
