@@ -1,9 +1,14 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "github>tqer39/renovate-config"
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['github>tqer39/renovate-config'],
+  platformAutomerge: true,
+  automerge: true,
+  automergeType: 'pr',
+  packageRules: [
+    {
+      matchPackageNames: ['next'],
+      allowedVersions: '<16.0.0',
+      description: 'Next.js 16 へのアップグレードを一時的に無効化',
+    },
   ],
-  "platformAutomerge": true,
-  "automerge": true,
-  "automergeType": "pr"
 }
