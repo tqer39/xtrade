@@ -62,7 +62,7 @@ brew bundle install
 # 3. 開発環境のセットアップ
 just setup
 
-# 4. 環境変数の設定ｗ
+# 4. 環境変数の設定
 cp .env.example .env.local
 # .env.local を編集して、必要な値を設定
 ```
@@ -218,22 +218,46 @@ just status
 
 ```text
 xtrade/
-├── app/              # Next.js App Router（フロントエンド + API）
-├── src/              # 共通ライブラリ、DB、ドメインサービス、認証
-│   ├── lib/          # 共通ユーティリティ
-│   ├── db/           # データベース接続とスキーマ
-│   ├── modules/      # ドメインモジュール
-│   └── components/   # 共通 UI コンポーネント
+├── app/                    # Next.js App Router
+│   ├── admin/              # 管理画面
+│   ├── api/                # Route Handlers（API）
+│   │   ├── auth/           # BetterAuth エンドポイント
+│   │   ├── trades/         # トレード API
+│   │   ├── cards/          # カード API
+│   │   ├── matches/        # マッチング API
+│   │   ├── me/             # ユーザー自身の API
+│   │   ├── admin/          # 管理 API
+│   │   └── cron/           # Cron ジョブ
+│   ├── layout.tsx          # ルートレイアウト
+│   └── page.tsx            # トップページ
+├── src/                    # 共通ライブラリ
+│   ├── lib/                # ユーティリティ（auth, utils）
+│   ├── db/                 # データベース接続とスキーマ
+│   ├── modules/            # ドメインモジュール
+│   │   ├── trades/         # トレードドメイン
+│   │   ├── cards/          # カードドメイン
+│   │   ├── matches/        # マッチングドメイン
+│   │   └── trust/          # 信頼スコアドメイン
+│   └── components/         # 共通 UI コンポーネント
 ├── infra/
-│   └── terraform/    # インフラ構成（IaC）
+│   └── terraform/          # インフラ構成（IaC）
 │       ├── config.yml      # 共通設定ファイル
 │       ├── modules/        # 再利用可能な Terraform モジュール
-│       ├── envs/           # 環境ごとの設定（dev / prod）
-│       └── global/         # グローバルリソース（DNS など）
-├── docs/             # ドキュメント
-├── .github/          # GitHub Actions、CODEOWNERS、PR テンプレート
-├── .claude/          # Claude Code Agent 設定
-└── scripts/          # 開発用スクリプト
+│       │   ├── cloudflare/ # CloudFlare DNS
+│       │   ├── vercel/     # Vercel プロジェクト
+│       │   ├── neon/       # Neon DB
+│       │   └── deploy-role/# デプロイ用 IAM ロール
+│       └── envs/           # 環境ごとの設定
+│           └── dev/        # dev 環境
+│               ├── bootstrap/  # 初期セットアップ
+│               ├── database/   # Neon データベース
+│               ├── frontend/   # Vercel プロジェクト
+│               └── dns/        # CloudFlare DNS
+├── e2e/                    # E2E テスト（Playwright）
+├── docs/                   # ドキュメント
+├── .github/                # GitHub Actions、CODEOWNERS
+├── .claude/                # Claude Code Agent 設定
+└── scripts/                # 開発用スクリプト
 ```
 
 詳細なアーキテクチャについては [docs/architecture.md](docs/architecture.md) を参照してください。
@@ -268,12 +292,14 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 
 ### Agent 一覧
 
-- **ArchAgent**: アーキテクチャ設計・規約管理
-- **DBAgent**: データベース・スキーマ管理
-- **AuthAgent**: 認証・セッション管理
-- **APIAgent**: API・ビジネスロジック
-- **UIAgent**: UI・UX
-- **TestAgent**: テスト・品質保証
+- **ArchAgent** 🧠: アーキテクチャ設計・規約管理
+- **DBAgent** 🗃: データベース・スキーマ管理（Drizzle）
+- **AuthAgent** 🔐: 認証・セッション管理（BetterAuth）
+- **APIAgent** 🛠: API・ビジネスロジック
+- **UIAgent** 🎨: UI・UX
+- **TestAgent** 🧪: テスト・品質保証
+- **SecurityAgent** 🔒: セキュリティチェック・脆弱性検出
+- **DocAgent** 📝: ドキュメント管理
 
 詳細は [CLAUDE.md](CLAUDE.md#xtrade-開発用-agent-構成) を参照してください。
 
