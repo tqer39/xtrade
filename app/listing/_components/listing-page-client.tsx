@@ -14,8 +14,19 @@ import Link from 'next/link'
 
 export function ListingPageClient() {
   const { data: session, isPending: isSessionPending } = useSession()
-  const { haveCards, wantCards, isLoading, error, addHaveCard, addWantCard, refetch } =
-    useMyCards()
+  const {
+    haveCards,
+    wantCards,
+    isLoading,
+    error,
+    addHaveCard,
+    addWantCard,
+    updateHaveCard,
+    updateWantCard,
+    deleteHaveCard,
+    deleteWantCard,
+    refetch,
+  } = useMyCards()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'have' | 'want'>('have')
 
@@ -104,7 +115,13 @@ export function ListingPageClient() {
           ) : (
             <div className="space-y-3">
               {haveCards.map((item) => (
-                <CardListItem key={item.id} item={item} type="have" />
+                <CardListItem
+                  key={item.id}
+                  item={item}
+                  type="have"
+                  onUpdate={updateHaveCard}
+                  onDelete={deleteHaveCard}
+                />
               ))}
             </div>
           )}
@@ -129,7 +146,13 @@ export function ListingPageClient() {
           ) : (
             <div className="space-y-3">
               {wantCards.map((item) => (
-                <CardListItem key={item.id} item={item} type="want" />
+                <CardListItem
+                  key={item.id}
+                  item={item}
+                  type="want"
+                  onUpdate={updateWantCard}
+                  onDelete={deleteWantCard}
+                />
               ))}
             </div>
           )}
