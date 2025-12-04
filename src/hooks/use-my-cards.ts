@@ -10,10 +10,6 @@ interface UseMyCardsReturn {
   error: Error | null
   addHaveCard: (cardId: string, quantity?: number) => Promise<void>
   addWantCard: (cardId: string, priority?: number) => Promise<void>
-  updateHaveCard: (cardId: string, quantity: number) => Promise<void>
-  updateWantCard: (cardId: string, priority: number) => Promise<void>
-  deleteHaveCard: (cardId: string) => Promise<void>
-  deleteWantCard: (cardId: string) => Promise<void>
   refetch: () => Promise<void>
 }
 
@@ -77,68 +73,6 @@ export function useMyCards(): UseMyCardsReturn {
     [fetchCards]
   )
 
-  const updateHaveCard = useCallback(
-    async (cardId: string, quantity: number) => {
-      const res = await fetch('/api/me/cards/have', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cardId, quantity }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to update card')
-      }
-      await fetchCards()
-    },
-    [fetchCards]
-  )
-
-  const updateWantCard = useCallback(
-    async (cardId: string, priority: number) => {
-      const res = await fetch('/api/me/cards/want', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cardId, priority }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to update card')
-      }
-      await fetchCards()
-    },
-    [fetchCards]
-  )
-
-  const deleteHaveCard = useCallback(
-    async (cardId: string) => {
-      const res = await fetch('/api/me/cards/have', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cardId, quantity: 0 }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to delete card')
-      }
-      await fetchCards()
-    },
-    [fetchCards]
-  )
-
-  const deleteWantCard = useCallback(
-    async (cardId: string) => {
-      const res = await fetch(`/api/me/cards/want?cardId=${encodeURIComponent(cardId)}`, {
-        method: 'DELETE',
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to delete card')
-      }
-      await fetchCards()
-    },
-    [fetchCards]
-  )
-
   return {
     haveCards,
     wantCards,
@@ -146,10 +80,6 @@ export function useMyCards(): UseMyCardsReturn {
     error,
     addHaveCard,
     addWantCard,
-    updateHaveCard,
-    updateWantCard,
-    deleteHaveCard,
-    deleteWantCard,
     refetch: fetchCards,
   }
 }
