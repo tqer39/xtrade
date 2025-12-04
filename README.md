@@ -1,9 +1,11 @@
 # xtrade
 
-[![codecov](https://codecov.io/gh/tqer39/xtrade/graph/badge.svg)](https://codecov.io/gh/tqer39/xtrade)
-[![Test](https://github.com/tqer39/xtrade/actions/workflows/test.yml/badge.svg)](https://github.com/tqer39/xtrade/actions/workflows/test.yml)
-[![Terraform Dev](https://github.com/tqer39/xtrade/actions/workflows/terraform-dev.yml/badge.svg)](https://github.com/tqer39/xtrade/actions/workflows/terraform-dev.yml)
-[![DB Migrate Dev](https://github.com/tqer39/xtrade/actions/workflows/db-migrate-dev.yml/badge.svg)](https://github.com/tqer39/xtrade/actions/workflows/db-migrate-dev.yml)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![codecov](https://img.shields.io/codecov/c/github/tqer39/xtrade?style=for-the-badge&logo=codecov&logoColor=white)](https://codecov.io/gh/tqer39/xtrade)
+[![Test](https://img.shields.io/github/actions/workflow/status/tqer39/xtrade/test.yml?branch=main&style=for-the-badge&logo=github&label=tests)](https://github.com/tqer39/xtrade/actions/workflows/test.yml)
+[![Terraform](https://img.shields.io/github/actions/workflow/status/tqer39/xtrade/terraform-dev.yml?branch=main&style=for-the-badge&logo=terraform&label=terraform)](https://github.com/tqer39/xtrade/actions/workflows/terraform-dev.yml)
+[![DB Migrate](https://img.shields.io/github/actions/workflow/status/tqer39/xtrade/db-migrate-dev.yml?branch=main&style=for-the-badge&logo=postgresql&label=db%20migrate)](https://github.com/tqer39/xtrade/actions/workflows/db-migrate-dev.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 
 X を利用した toC 向けソーシャルトレーディングサービス
 
