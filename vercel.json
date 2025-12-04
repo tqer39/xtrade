@@ -8,5 +8,11 @@
       "hotfix/*": false,
       "renovate/*": false
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/trust-worker",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }

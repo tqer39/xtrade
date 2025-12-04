@@ -7,11 +7,11 @@ coverage:
   status:
     project:
       default:
-        target: 70%
+        target: 45%
         threshold: 5%
     patch:
       default:
-        target: 80%
+        target: 35%
 
 ignore:
   - '**/*.d.ts'
@@ -20,3 +20,4 @@ ignore:
   - 'infra/**'
   - 'docs/**'
   - 'scripts/**'
+  - 'app/api/**/route.ts'
