@@ -128,24 +128,19 @@ export function CardListItem({ item, type, onUpdate, onDelete }: CardListItemPro
             )}
             {!isHave && wantItem && (
               <Select
-                value={wantItem.priority?.toString() ?? '5'}
+                value={wantItem.priority?.toString() ?? '3'}
                 onValueChange={handlePriorityChange}
                 disabled={isUpdating}
               >
-                <SelectTrigger className="w-24" aria-label="優先度">
+                <SelectTrigger className="w-28" aria-label="優先度">
                   <SelectValue placeholder="優先度" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1 (低)</SelectItem>
-                  <SelectItem value="2">2</SelectItem>
-                  <SelectItem value="3">3</SelectItem>
-                  <SelectItem value="4">4</SelectItem>
-                  <SelectItem value="5">5 (中)</SelectItem>
-                  <SelectItem value="6">6</SelectItem>
-                  <SelectItem value="7">7</SelectItem>
-                  <SelectItem value="8">8</SelectItem>
-                  <SelectItem value="9">9</SelectItem>
-                  <SelectItem value="10">10 (高)</SelectItem>
+                  <SelectItem value="1">あれば</SelectItem>
+                  <SelectItem value="2">ほしい</SelectItem>
+                  <SelectItem value="3">かなり</SelectItem>
+                  <SelectItem value="4">超ほしい</SelectItem>
+                  <SelectItem value="5">激求</SelectItem>
                 </SelectContent>
               </Select>
             )}
