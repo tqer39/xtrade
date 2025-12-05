@@ -63,3 +63,84 @@ export interface AddWantCardInput {
   cardId: string
   priority?: number
 }
+
+// =====================================
+// カードセット関連
+// =====================================
+
+/**
+ * カードセットの基本情報
+ */
+export interface CardSet {
+  id: string
+  userId: string
+  name: string
+  description: string | null
+  isPublic: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * カード情報（簡易版、一覧表示用）
+ */
+export interface CardSummary {
+  id: string
+  name: string
+  category: string
+  rarity: string | null
+  imageUrl: string | null
+}
+
+/**
+ * カードセット内のアイテム
+ */
+export interface CardSetItem {
+  id: string
+  setId: string
+  cardId: string
+  quantity: number
+  createdAt: Date
+  card?: CardSummary
+}
+
+/**
+ * カードセット（アイテム含む）
+ */
+export interface CardSetWithItems extends CardSet {
+  items: CardSetItem[]
+}
+
+/**
+ * カードセット（カード数・サムネイル含む、一覧表示用）
+ */
+export interface CardSetWithCount extends CardSet {
+  itemCount: number
+  thumbnails: string[] // 最初の数枚のカード画像URL
+}
+
+/**
+ * セット作成の入力
+ */
+export interface CreateCardSetInput {
+  name: string
+  description?: string
+  isPublic?: boolean
+}
+
+/**
+ * セット更新の入力
+ */
+export interface UpdateCardSetInput {
+  name?: string
+  description?: string
+  isPublic?: boolean
+}
+
+/**
+ * セットにカード追加の入力
+ */
+export interface AddCardToSetInput {
+  cardId: string
+  quantity?: number
+}

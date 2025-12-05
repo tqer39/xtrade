@@ -20,7 +20,7 @@ import { Search, Plus, Loader2 } from 'lucide-react'
 interface CardSearchModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  mode: 'have' | 'want'
+  mode: 'have' | 'want' | 'set'
   onAddCard: (cardId: string) => Promise<void>
 }
 
@@ -88,7 +88,8 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
     onOpenChange(false)
   }
 
-  const modeLabel = mode === 'have' ? '持っているカード' : '欲しいカード'
+  const modeLabel =
+    mode === 'have' ? '持っているカード' : mode === 'want' ? '欲しいカード' : 'セットにカード'
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
