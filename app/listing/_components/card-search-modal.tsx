@@ -1,95 +1,95 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useCardSearch } from '@/hooks/use-card-search'
+import { Loader2, Plus, Search } from 'lucide-react';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Search, Plus, Loader2 } from 'lucide-react'
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useCardSearch } from '@/hooks/use-card-search';
 
 interface CardSearchModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  mode: 'have' | 'want' | 'set'
-  onAddCard: (cardId: string) => Promise<void>
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: 'have' | 'want' | 'set';
+  onAddCard: (cardId: string) => Promise<void>;
 }
 
 export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSearchModalProps) {
   const { searchResults, isSearching, searchError, search, createCard, clearResults } =
-    useCardSearch()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showNewCardForm, setShowNewCardForm] = useState(false)
-  const [newCardName, setNewCardName] = useState('')
-  const [newCardCategory, setNewCardCategory] = useState('')
-  const [newCardRarity, setNewCardRarity] = useState('')
-  const [isAdding, setIsAdding] = useState(false)
-  const [addError, setAddError] = useState<string | null>(null)
+    useCardSearch();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showNewCardForm, setShowNewCardForm] = useState(false);
+  const [newCardName, setNewCardName] = useState('');
+  const [newCardCategory, setNewCardCategory] = useState('');
+  const [newCardRarity, setNewCardRarity] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   const handleSearchChange = (value: string) => {
-    setSearchQuery(value)
-    search(value)
-    setShowNewCardForm(false)
-  }
+    setSearchQuery(value);
+    search(value);
+    setShowNewCardForm(false);
+  };
 
   const handleSelectCard = async (cardId: string) => {
-    setIsAdding(true)
-    setAddError(null)
+    setIsAdding(true);
+    setAddError(null);
     try {
-      await onAddCard(cardId)
-      handleClose()
+      await onAddCard(cardId);
+      handleClose();
     } catch (err) {
-      setAddError(err instanceof Error ? err.message : 'エラーが発生しました')
+      setAddError(err instanceof Error ? err.message : 'エラーが発生しました');
     } finally {
-      setIsAdding(false)
+      setIsAdding(false);
     }
-  }
+  };
 
   const handleCreateAndAdd = async () => {
     if (!newCardName.trim() || !newCardCategory.trim()) {
-      setAddError('名前とカテゴリは必須です')
-      return
+      setAddError('名前とカテゴリは必須です');
+      return;
     }
 
-    setIsAdding(true)
-    setAddError(null)
+    setIsAdding(true);
+    setAddError(null);
     try {
       const card = await createCard({
         name: newCardName.trim(),
         category: newCardCategory.trim(),
         rarity: newCardRarity.trim() || undefined,
-      })
-      await onAddCard(card.id)
-      handleClose()
+      });
+      await onAddCard(card.id);
+      handleClose();
     } catch (err) {
-      setAddError(err instanceof Error ? err.message : 'エラーが発生しました')
+      setAddError(err instanceof Error ? err.message : 'エラーが発生しました');
     } finally {
-      setIsAdding(false)
+      setIsAdding(false);
     }
-  }
+  };
 
   const handleClose = () => {
-    setSearchQuery('')
-    setShowNewCardForm(false)
-    setNewCardName('')
-    setNewCardCategory('')
-    setNewCardRarity('')
-    setAddError(null)
-    clearResults()
-    onOpenChange(false)
-  }
+    setSearchQuery('');
+    setShowNewCardForm(false);
+    setNewCardName('');
+    setNewCardCategory('');
+    setNewCardRarity('');
+    setAddError(null);
+    clearResults();
+    onOpenChange(false);
+  };
 
   const modeLabel =
-    mode === 'have' ? '持っているカード' : mode === 'want' ? '欲しいカード' : 'セットにカード'
+    mode === 'have' ? '持っているカード' : mode === 'want' ? '欲しいカード' : 'セットにカード';
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -164,8 +164,8 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
               variant="outline"
               className="w-full"
               onClick={() => {
-                setShowNewCardForm(true)
-                setNewCardName(searchQuery)
+                setShowNewCardForm(true);
+                setNewCardName(searchQuery);
               }}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -218,5 +218,5 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

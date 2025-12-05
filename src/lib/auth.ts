@@ -1,24 +1,24 @@
-import { betterAuth } from 'better-auth'
-import { APIError } from 'better-auth/api'
-import { admin } from 'better-auth/plugins'
-import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { db } from '@/db/drizzle'
-import * as schema from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { APIError } from 'better-auth/api';
+import { admin } from 'better-auth/plugins';
+import { eq } from 'drizzle-orm';
+import { db } from '@/db/drizzle';
+import * as schema from '@/db/schema';
 
 /**
  * 管理者の X ユーザー名（環境変数から取得）
  * このユーザーは常にログイン可能で、初回ログイン時に admin ロールが付与される
  */
-const ADMIN_TWITTER_USERNAME = process.env.ADMIN_TWITTER_USERNAME || ''
+const ADMIN_TWITTER_USERNAME = process.env.ADMIN_TWITTER_USERNAME || '';
 
 /**
  * ホワイトリストが有効かどうか
  * ADMIN_TWITTER_USERNAME が設定されている場合のみ有効
  */
 const isWhitelistEnabled = (): boolean => {
-  return !!ADMIN_TWITTER_USERNAME
-}
+  return !!ADMIN_TWITTER_USERNAME;
+};
 
 /**
  * X ユーザー名がホワイトリストに含まれているかチェック
@@ -28,7 +28,7 @@ const isWhitelistEnabled = (): boolean => {
 const isAllowedUser = async (twitterUsername: string): Promise<boolean> => {
   // 管理者は常に許可
   if (twitterUsername.toLowerCase() === ADMIN_TWITTER_USERNAME.toLowerCase()) {
-    return true
+    return true;
   }
 
   // DB のホワイトリストをチェック
@@ -36,10 +36,10 @@ const isAllowedUser = async (twitterUsername: string): Promise<boolean> => {
     .select()
     .from(schema.allowedUser)
     .where(eq(schema.allowedUser.twitterUsername, twitterUsername.toLowerCase()))
-    .limit(1)
+    .limit(1);
 
-  return allowed.length > 0
-}
+  return allowed.length > 0;
+};
 
 /**
  * BetterAuth サーバー設定
@@ -60,26 +60,27 @@ export const auth = betterAuth({
       // Twitter プロフィールからユーザー情報をマッピング
       mapProfileToUser: async (profile) => {
         // Twitter API v2 のプロフィールには username フィールドがある
-        const twitterProfile = profile as { username?: string }
-        const username = twitterProfile.username?.toLowerCase() || ''
+        const twitterProfile = profile as { username?: string };
+        const username = twitterProfile.username?.toLowerCase() || '';
 
         // ホワイトリストが有効な場合、許可されていないユーザーはブロック
         if (isWhitelistEnabled() && username) {
-          const allowed = await isAllowedUser(username)
+          const allowed = await isAllowedUser(username);
           if (!allowed) {
             throw new APIError('FORBIDDEN', {
-              message: 'このアカウントはホワイトリストに登録されていません。管理者にお問い合わせください。',
-            })
+              message:
+                'このアカウントはホワイトリストに登録されていません。管理者にお問い合わせください。',
+            });
           }
         }
 
         // 管理者の場合は admin ロールを設定
-        const isAdmin = username === ADMIN_TWITTER_USERNAME.toLowerCase()
+        const isAdmin = username === ADMIN_TWITTER_USERNAME.toLowerCase();
 
         return {
           twitterUsername: username,
           role: isAdmin ? 'admin' : 'user',
-        }
+        };
       },
     },
   },
@@ -104,21 +105,21 @@ export const auth = betterAuth({
 
   // 信頼する Origin（CSRF 対策）
   trustedOrigins: (request) => {
-    const origin = request.headers.get('origin') || ''
+    const origin = request.headers.get('origin') || '';
     const baseOrigins = [
       process.env.BETTER_AUTH_URL,
       process.env.NEXT_PUBLIC_APP_URL,
       'https://xtrade-dev.tqer39.dev',
       'https://xtrade.tqer39.dev',
       'http://localhost:3000',
-    ].filter(Boolean) as string[]
+    ].filter(Boolean) as string[];
 
     // Vercel プレビュー URL を動的に追加
     if (origin.endsWith('.vercel.app')) {
-      return [...baseOrigins, origin]
+      return [...baseOrigins, origin];
     }
 
-    return baseOrigins
+    return baseOrigins;
   },
 
   // ユーザー情報のカスタマイズ
@@ -135,10 +136,10 @@ export const auth = betterAuth({
       },
     },
   },
-})
+});
 
 // 型エクスポート
-export type Auth = typeof auth
+export type Auth = typeof auth;
 
 // ホワイトリスト関連のユーティリティ関数をエクスポート
-export { isAllowedUser, isWhitelistEnabled, ADMIN_TWITTER_USERNAME }
+export { isAllowedUser, isWhitelistEnabled, ADMIN_TWITTER_USERNAME };

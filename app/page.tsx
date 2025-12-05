@@ -1,6 +1,6 @@
-import { UserMenu } from '@/components/auth'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
+import Link from 'next/link';
+import { UserMenu } from '@/components/auth';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
   return (
@@ -12,5 +12,5 @@ export default function Home() {
         <Link href="/listing">カードを出品する</Link>
       </Button>
     </main>
-  )
+  );
 }

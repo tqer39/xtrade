@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
-import { headers } from 'next/headers'
-import { auth } from '@/lib/auth'
-import { db } from '@/db/drizzle'
-import * as schema from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm';
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { db } from '@/db/drizzle';
+import * as schema from '@/db/schema';
+import { auth } from '@/lib/auth';
 
 /**
  * GET: 現在のユーザー情報を取得（role を含む）
@@ -11,10 +11,10 @@ import { eq } from 'drizzle-orm'
 export async function GET() {
   const session = await auth.api.getSession({
     headers: await headers(),
-  })
+  });
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const user = await db
@@ -28,11 +28,11 @@ export async function GET() {
     })
     .from(schema.user)
     .where(eq(schema.user.id, session.user.id))
-    .limit(1)
+    .limit(1);
 
   if (!user[0]) {
-    return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ user: user[0] })
+  return NextResponse.json({ user: user[0] });
 }

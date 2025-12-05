@@ -3,58 +3,58 @@
  */
 export interface TrustScoreInput {
   /** アカウント作成からの日数 */
-  accountAgeDays: number
+  accountAgeDays: number;
   /** 総ツイート数 */
-  tweetCount: number
+  tweetCount: number;
   /** フォロワー数 */
-  followersCount: number
+  followersCount: number;
   /** プロフィール画像があるか */
-  hasProfileImage: boolean
+  hasProfileImage: boolean;
   /** 自己紹介があるか */
-  hasDescription: boolean
+  hasDescription: boolean;
   /** 認証済みか（有料 or 旧認証） */
-  verified: boolean
+  verified: boolean;
   /** 鍵垢か */
-  isProtected: boolean
+  isProtected: boolean;
 }
 
 /**
  * 信頼スコアのグレード
  * S: 80+, A: 65-79, B: 50-64, C: 35-49, D: 0-34, U: 未評価
  */
-export type TrustGrade = 'S' | 'A' | 'B' | 'C' | 'D' | 'U'
+export type TrustGrade = 'S' | 'A' | 'B' | 'C' | 'D' | 'U';
 
 /**
  * 信頼スコア計算の結果
  */
 export interface TrustScoreResult {
   /** スコア（0〜100） */
-  score: number
+  score: number;
   /** グレード */
-  grade: TrustGrade
+  grade: TrustGrade;
 }
 
 /**
  * X API から取得するユーザープロフィール
  */
 export interface XUserProfile {
-  id: string
-  username: string
-  name: string
-  created_at: string // ISO 8601
-  description: string | null
-  profile_image_url: string | null
-  protected: boolean
-  verified: boolean
+  id: string;
+  username: string;
+  name: string;
+  created_at: string; // ISO 8601
+  description: string | null;
+  profile_image_url: string | null;
+  protected: boolean;
+  verified: boolean;
   public_metrics: {
-    followers_count: number
-    following_count: number
-    tweet_count: number
-    listed_count: number
-  }
+    followers_count: number;
+    following_count: number;
+    tweet_count: number;
+    listed_count: number;
+  };
 }
 
 /**
  * 信頼スコアジョブのステータス
  */
-export type TrustJobStatus = 'queued' | 'running' | 'succeeded' | 'failed'
+export type TrustJobStatus = 'queued' | 'running' | 'succeeded' | 'failed';

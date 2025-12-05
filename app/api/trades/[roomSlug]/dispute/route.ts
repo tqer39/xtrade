@@ -1,63 +1,51 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { headers } from 'next/headers'
-import { auth } from '@/lib/auth'
-import {
-  getTradeByRoomSlug,
-  transitionTrade,
-  TradeTransitionError,
-} from '@/modules/trades'
+import { headers } from 'next/headers';
+import { type NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { getTradeByRoomSlug, TradeTransitionError, transitionTrade } from '@/modules/trades';
 
-type Params = Promise<{ roomSlug: string }>
+type Params = Promise<{ roomSlug: string }>;
 
 /**
  * POST: トレードの紛争を報告する（agreed → disputed）
  *
  * Body: { reason?: string }
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Params }
-) {
+export async function POST(request: NextRequest, { params }: { params: Params }) {
   const session = await auth.api.getSession({
     headers: await headers(),
-  })
+  });
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { roomSlug } = await params
-  const trade = await getTradeByRoomSlug(roomSlug)
+  const { roomSlug } = await params;
+  const trade = await getTradeByRoomSlug(roomSlug);
 
   if (!trade) {
-    return NextResponse.json({ error: 'Trade not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Trade not found' }, { status: 404 });
   }
 
-  let body: { reason?: string } = {}
+  let body: { reason?: string } = {};
   try {
-    const text = await request.text()
+    const text = await request.text();
     if (text) {
-      body = JSON.parse(text)
+      body = JSON.parse(text);
     }
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
   try {
     await transitionTrade(trade, 'disputed', session.user.id, {
       reason: body.reason,
-    })
-    return NextResponse.json({ success: true, status: 'disputed' })
+    });
+    return NextResponse.json({ success: true, status: 'disputed' });
   } catch (error) {
     if (error instanceof TradeTransitionError) {
-      const statusCode =
-        error.code === 'UNAUTHORIZED'
-          ? 403
-          : error.code === 'EXPIRED'
-            ? 410
-            : 400
-      return NextResponse.json({ error: error.message }, { status: statusCode })
+      const statusCode = error.code === 'UNAUTHORIZED' ? 403 : error.code === 'EXPIRED' ? 410 : 400;
+      return NextResponse.json({ error: error.message }, { status: statusCode });
     }
-    throw error
+    throw error;
   }
 }

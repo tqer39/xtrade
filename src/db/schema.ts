@@ -1,13 +1,5 @@
-import {
-  pgTable,
-  text,
-  timestamp,
-  boolean,
-  index,
-  integer,
-  unique,
-} from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
+import { relations } from 'drizzle-orm';
+import { boolean, index, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
 
 /**
  * BetterAuth が使用するユーザーテーブル
@@ -34,7 +26,7 @@ export const user = pgTable('user', {
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
-})
+});
 
 /**
  * BetterAuth が使用するセッションテーブル
@@ -58,7 +50,7 @@ export const session = pgTable(
       .references(() => user.id, { onDelete: 'cascade' }),
   },
   (table) => [index('session_userId_idx').on(table.userId)]
-)
+);
 
 /**
  * BetterAuth が使用する OAuth アカウントテーブル
@@ -87,7 +79,7 @@ export const account = pgTable(
       .notNull(),
   },
   (table) => [index('account_userId_idx').on(table.userId)]
-)
+);
 
 /**
  * BetterAuth が使用する検証テーブル
@@ -107,7 +99,7 @@ export const verification = pgTable(
       .notNull(),
   },
   (table) => [index('verification_identifier_idx').on(table.identifier)]
-)
+);
 
 // =====================================
 // Drizzle ORM Relations
@@ -123,21 +115,21 @@ export const userRelations = relations(user, ({ many }) => ({
   initiatedTrades: many(trade, { relationName: 'initiatedTrades' }),
   respondedTrades: many(trade, { relationName: 'respondedTrades' }),
   offeredTradeItems: many(tradeItem),
-}))
+}));
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
     fields: [session.userId],
     references: [user.id],
   }),
-}))
+}));
 
 export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, {
     fields: [account.userId],
     references: [user.id],
   }),
-}))
+}));
 
 // =====================================
 // xtrade 独自のテーブル
@@ -158,14 +150,14 @@ export const allowedUser = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [index('allowed_user_twitter_username_idx').on(table.twitterUsername)]
-)
+);
 
 export const allowedUserRelations = relations(allowedUser, ({ one }) => ({
   addedByUser: one(user, {
     fields: [allowedUser.addedBy],
     references: [user.id],
   }),
-}))
+}));
 
 // =====================================
 // 信頼スコア再計算キュー
@@ -193,14 +185,14 @@ export const userTrustJob = pgTable(
     index('user_trust_job_status_idx').on(table.status),
     index('user_trust_job_created_at_idx').on(table.createdAt),
   ]
-)
+);
 
 export const userTrustJobRelations = relations(userTrustJob, ({ one }) => ({
   user: one(user, {
     fields: [userTrustJob.userId],
     references: [user.id],
   }),
-}))
+}));
 
 // =====================================
 // カード関連テーブル
@@ -227,11 +219,8 @@ export const card = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [
-    index('card_name_idx').on(table.name),
-    index('card_category_idx').on(table.category),
-  ]
-)
+  (table) => [index('card_name_idx').on(table.name), index('card_category_idx').on(table.category)]
+);
 
 export const cardRelations = relations(card, ({ one, many }) => ({
   createdBy: one(user, {
@@ -242,7 +231,7 @@ export const cardRelations = relations(card, ({ one, many }) => ({
   wantCards: many(userWantCard),
   cardSetItems: many(cardSetItem),
   tradeItems: many(tradeItem),
-}))
+}));
 
 /**
  * ユーザーが持っているカードテーブル
@@ -269,7 +258,7 @@ export const userHaveCard = pgTable(
     index('user_have_card_card_id_idx').on(table.cardId),
     unique('user_have_card_user_card_unique').on(table.userId, table.cardId),
   ]
-)
+);
 
 export const userHaveCardRelations = relations(userHaveCard, ({ one }) => ({
   user: one(user, {
@@ -280,7 +269,7 @@ export const userHaveCardRelations = relations(userHaveCard, ({ one }) => ({
     fields: [userHaveCard.cardId],
     references: [card.id],
   }),
-}))
+}));
 
 /**
  * ユーザーが欲しいカードテーブル
@@ -307,7 +296,7 @@ export const userWantCard = pgTable(
     index('user_want_card_card_id_idx').on(table.cardId),
     unique('user_want_card_user_card_unique').on(table.userId, table.cardId),
   ]
-)
+);
 
 export const userWantCardRelations = relations(userWantCard, ({ one }) => ({
   user: one(user, {
@@ -318,7 +307,7 @@ export const userWantCardRelations = relations(userWantCard, ({ one }) => ({
     fields: [userWantCard.cardId],
     references: [card.id],
   }),
-}))
+}));
 
 // =====================================
 // カードセット関連テーブル
@@ -423,7 +412,7 @@ export const trade = pgTable(
     index('trade_responder_idx').on(table.responderUserId),
     index('trade_status_idx').on(table.status),
   ]
-)
+);
 
 export const tradeRelations = relations(trade, ({ one, many }) => ({
   initiator: one(user, {
@@ -438,7 +427,7 @@ export const tradeRelations = relations(trade, ({ one, many }) => ({
   }),
   items: many(tradeItem),
   history: many(tradeHistory),
-}))
+}));
 
 /**
  * トレードアイテムテーブル
@@ -464,7 +453,7 @@ export const tradeItem = pgTable(
     index('trade_item_trade_id_idx').on(table.tradeId),
     index('trade_item_offered_by_idx').on(table.offeredByUserId),
   ]
-)
+);
 
 export const tradeItemRelations = relations(tradeItem, ({ one }) => ({
   trade: one(trade, {
@@ -479,7 +468,7 @@ export const tradeItemRelations = relations(tradeItem, ({ one }) => ({
     fields: [tradeItem.cardId],
     references: [card.id],
   }),
-}))
+}));
 
 /**
  * トレード状態履歴テーブル
@@ -501,7 +490,7 @@ export const tradeHistory = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [index('trade_history_trade_id_idx').on(table.tradeId)]
-)
+);
 
 export const tradeHistoryRelations = relations(tradeHistory, ({ one }) => ({
   trade: one(trade, {
@@ -512,7 +501,7 @@ export const tradeHistoryRelations = relations(tradeHistory, ({ one }) => ({
     fields: [tradeHistory.changedByUserId],
     references: [user.id],
   }),
-}))
+}));
 
 // =====================================
 // User リレーション拡張

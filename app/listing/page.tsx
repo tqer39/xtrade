@@ -1,5 +1,5 @@
-import { ListingPageClient } from './_components/listing-page-client'
+import { ListingPageClient } from './_components/listing-page-client';
 
 export default function ListingPage() {
-  return <ListingPageClient />
+  return <ListingPageClient />;
 }

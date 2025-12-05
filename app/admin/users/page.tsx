@@ -1,34 +1,34 @@
-'use client'
+'use client';
 
-import { useSession } from '@/lib/auth-client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import { useSession } from '@/lib/auth-client';
 
 interface AllowedUser {
-  id: string
-  twitterUsername: string
-  addedBy: string
-  createdAt: string
+  id: string;
+  twitterUsername: string;
+  addedBy: string;
+  createdAt: string;
 }
 
 interface UserData {
-  id: string
-  name: string
-  email: string
-  image: string | null
-  twitterUsername: string | null
-  role: string
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  twitterUsername: string | null;
+  role: string;
 }
 
 export default function AdminUsersPage() {
-  const { data: session, isPending } = useSession()
-  const router = useRouter()
-  const [allowedUsers, setAllowedUsers] = useState<AllowedUser[]>([])
-  const [newUsername, setNewUsername] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const [userData, setUserData] = useState<UserData | null>(null)
+  const { data: session, isPending } = useSession();
+  const router = useRouter();
+  const [allowedUsers, setAllowedUsers] = useState<AllowedUser[]>([]);
+  const [newUsername, setNewUsername] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   // ユーザー情報を取得
   useEffect(() => {
@@ -37,93 +37,93 @@ export default function AdminUsersPage() {
         .then((res) => res.json())
         .then((data) => {
           if (data.user) {
-            setUserData(data.user)
+            setUserData(data.user);
           }
         })
-        .catch(console.error)
+        .catch(console.error);
     }
-  }, [session?.user?.id])
+  }, [session?.user?.id]);
+
+  const fetchAllowedUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/admin/allowed-users');
+      if (!res.ok) {
+        if (res.status === 403) {
+          setError('管理者権限が必要です');
+          return;
+        }
+        throw new Error('Failed to fetch');
+      }
+      const data = await res.json();
+      setAllowedUsers(data.allowedUsers);
+      setError(null);
+    } catch {
+      setError('ホワイトリストの取得に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // ホワイトリスト取得
   useEffect(() => {
     if (!isPending && session?.user) {
-      fetchAllowedUsers()
+      fetchAllowedUsers();
     }
-  }, [isPending, session])
-
-  const fetchAllowedUsers = async () => {
-    try {
-      setLoading(true)
-      const res = await fetch('/api/admin/allowed-users')
-      if (!res.ok) {
-        if (res.status === 403) {
-          setError('管理者権限が必要です')
-          return
-        }
-        throw new Error('Failed to fetch')
-      }
-      const data = await res.json()
-      setAllowedUsers(data.allowedUsers)
-      setError(null)
-    } catch {
-      setError('ホワイトリストの取得に失敗しました')
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [isPending, session, fetchAllowedUsers]);
 
   const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newUsername.trim() || submitting) return
+    e.preventDefault();
+    if (!newUsername.trim() || submitting) return;
 
-    setSubmitting(true)
-    setError(null)
+    setSubmitting(true);
+    setError(null);
 
     try {
       const res = await fetch('/api/admin/allowed-users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ twitterUsername: newUsername }),
-      })
+      });
 
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to add user')
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to add user');
       }
 
-      setNewUsername('')
-      await fetchAllowedUsers()
+      setNewUsername('');
+      await fetchAllowedUsers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '追加に失敗しました')
+      setError(err instanceof Error ? err.message : '追加に失敗しました');
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const handleDelete = async (id: string, username: string) => {
-    if (!confirm(`@${username} をホワイトリストから削除しますか？`)) return
+    if (!confirm(`@${username} をホワイトリストから削除しますか？`)) return;
 
     try {
       const res = await fetch(`/api/admin/allowed-users?id=${id}`, {
         method: 'DELETE',
-      })
+      });
 
       if (!res.ok) {
-        throw new Error('Failed to delete')
+        throw new Error('Failed to delete');
       }
 
-      await fetchAllowedUsers()
+      await fetchAllowedUsers();
     } catch {
-      setError('削除に失敗しました')
+      setError('削除に失敗しました');
     }
-  }
+  };
 
   if (isPending) {
     return (
       <div style={styles.container}>
         <div style={styles.loading}>読み込み中...</div>
       </div>
-    )
+    );
   }
 
   if (!session?.user) {
@@ -132,12 +132,12 @@ export default function AdminUsersPage() {
         <div style={styles.card}>
           <h1 style={styles.title}>管理画面</h1>
           <p style={styles.error}>ログインが必要です</p>
-          <button onClick={() => router.push('/')} style={styles.button}>
+          <button type="button" onClick={() => router.push('/')} style={styles.button}>
             トップに戻る
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   // admin ロールチェック（userData から取得）
@@ -147,12 +147,12 @@ export default function AdminUsersPage() {
         <div style={styles.card}>
           <h1 style={styles.title}>アクセス拒否</h1>
           <p style={styles.error}>管理者権限が必要です</p>
-          <button onClick={() => router.push('/')} style={styles.button}>
+          <button type="button" onClick={() => router.push('/')} style={styles.button}>
             トップに戻る
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -160,7 +160,7 @@ export default function AdminUsersPage() {
       <div style={styles.card}>
         <div style={styles.header}>
           <h1 style={styles.title}>ユーザー管理</h1>
-          <button onClick={() => router.push('/')} style={styles.backButton}>
+          <button type="button" onClick={() => router.push('/')} style={styles.backButton}>
             戻る
           </button>
         </div>
@@ -180,7 +180,11 @@ export default function AdminUsersPage() {
                 disabled={submitting}
               />
             </div>
-            <button type="submit" style={styles.submitButton} disabled={submitting || !newUsername.trim()}>
+            <button
+              type="submit"
+              style={styles.submitButton}
+              disabled={submitting || !newUsername.trim()}
+            >
               {submitting ? '追加中...' : '追加'}
             </button>
           </form>
@@ -200,8 +204,14 @@ export default function AdminUsersPage() {
               {allowedUsers.map((user) => (
                 <li key={user.id} style={styles.listItem}>
                   <span style={styles.username}>@{user.twitterUsername}</span>
-                  <span style={styles.date}>{new Date(user.createdAt).toLocaleDateString('ja-JP')}</span>
-                  <button onClick={() => handleDelete(user.id, user.twitterUsername)} style={styles.deleteButton}>
+                  <span style={styles.date}>
+                    {new Date(user.createdAt).toLocaleDateString('ja-JP')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(user.id, user.twitterUsername)}
+                    style={styles.deleteButton}
+                  >
                     削除
                   </button>
                 </li>
@@ -211,7 +221,7 @@ export default function AdminUsersPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -352,4 +362,4 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '16px',
     fontSize: '14px',
   },
-}
+};
