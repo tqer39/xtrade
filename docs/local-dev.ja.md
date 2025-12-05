@@ -86,9 +86,24 @@ docker-compose up -d
 # マイグレーションを実行
 npm run db:migrate
 
+# シードデータを投入（開発用のサンプルデータ）
+npm run db:seed
+
+# または、マイグレーション + シードを一括実行
+just db-setup
+
 # Drizzle Studio を開く（オプション）
 npm run db:studio
 ```
+
+**シードデータについて：**
+
+シード機能はローカル環境でのみ実行可能です。以下のサンプルデータが投入されます：
+
+- テストユーザー（3名: 一般ユーザー2名 + 管理者1名）
+- サンプルカード（15件: ポケモン、遊戯王、MTG、ワンピース）
+- サンプルトレード（3件: 異なるステータス）
+- その他関連データ（所持カード、欲しいカード、許可ユーザー等）
 
 #### オプション B: 既存の PostgreSQL を使用
 
@@ -140,6 +155,8 @@ curl http://localhost:3000/api/health
 | `npm run db:generate` | スキーマからマイグレーションファイルを生成 |
 | `npm run db:migrate` | データベースにマイグレーションを適用 |
 | `npm run db:studio` | Drizzle Studio を開く（データベース GUI） |
+| `npm run db:seed` | シードデータを投入（ローカル環境のみ） |
+| `npm run db:setup` | マイグレーション + シードを一括実行 |
 
 ### コード品質
 
@@ -157,6 +174,8 @@ curl http://localhost:3000/api/health
 | `just setup-env` | テンプレートから .env.local を作成 |
 | `just setup-deps` | npm 依存関係をインストール |
 | `just setup-db` | ローカルデータベースをセットアップ |
+| `just db-seed` | シードデータを投入（ローカル環境のみ） |
+| `just db-setup` | マイグレーション + シードを一括実行 |
 | `just lint` | prek チェックを実行 |
 | `just fix` | 一般的な問題を自動修正 |
 
