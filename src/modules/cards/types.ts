@@ -112,10 +112,11 @@ export interface CardSetWithItems extends CardSet {
 }
 
 /**
- * カードセット（カード数含む、一覧表示用）
+ * カードセット（カード数・サムネイル含む、一覧表示用）
  */
 export interface CardSetWithCount extends CardSet {
   itemCount: number
+  thumbnails: string[] // 最初の数枚のカード画像URL
 }
 
 /**

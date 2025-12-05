@@ -14,10 +14,11 @@ import type {
 import { getCardById } from './service'
 
 /**
- * ユーザーのセット一覧を取得（カード数含む）
+ * ユーザーのセット一覧を取得（カード数・サムネイル含む）
  */
 export async function getUserSets(userId: string): Promise<CardSetWithCount[]> {
-  const sets = await db
+  // セット一覧とカード数を取得
+  const setsWithCount = await db
     .select({
       id: schema.cardSet.id,
       userId: schema.cardSet.userId,
@@ -34,7 +35,37 @@ export async function getUserSets(userId: string): Promise<CardSetWithCount[]> {
     .groupBy(schema.cardSet.id)
     .orderBy(schema.cardSet.createdAt)
 
-  return sets
+  // 各セットのサムネイル（最初の3枚）を取得
+  const setIds = setsWithCount.map((s) => s.id)
+  if (setIds.length === 0) {
+    return []
+  }
+
+  const thumbnailData = await db
+    .select({
+      setId: schema.cardSetItem.setId,
+      imageUrl: schema.card.imageUrl,
+    })
+    .from(schema.cardSetItem)
+    .innerJoin(schema.card, eq(schema.cardSetItem.cardId, schema.card.id))
+    .where(sql`${schema.cardSetItem.setId} IN ${setIds}`)
+    .orderBy(schema.cardSetItem.createdAt)
+
+  // セットIDごとにサムネイルをグループ化（最大3枚）
+  const thumbnailsBySetId = new Map<string, string[]>()
+  for (const item of thumbnailData) {
+    if (!item.imageUrl) continue
+    const existing = thumbnailsBySetId.get(item.setId) || []
+    if (existing.length < 3) {
+      existing.push(item.imageUrl)
+      thumbnailsBySetId.set(item.setId, existing)
+    }
+  }
+
+  return setsWithCount.map((set) => ({
+    ...set,
+    thumbnails: thumbnailsBySetId.get(set.id) || [],
+  }))
 }
 
 /**
