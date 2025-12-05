@@ -1,7 +1,10 @@
-'use client';
+'use client'
 
-import { ChevronRight, Eye, EyeOff, Layers, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState } from 'react'
+import type { CardSet } from '@/modules/cards/types'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,76 +15,42 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import type { CardSetWithCount } from '@/modules/cards/types';
+} from '@/components/ui/alert-dialog'
+import { Trash2, Eye, EyeOff, ChevronRight } from 'lucide-react'
 
 interface SetListItemProps {
-  set: CardSetWithCount;
-  onSelect: (setId: string) => void;
-  onDelete: (setId: string) => Promise<void>;
+  set: CardSet
+  onSelect: (setId: string) => void
+  onDelete: (setId: string) => Promise<void>
 }
 
 export function SetListItem({ set, onSelect, onDelete }: SetListItemProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
-    setIsDeleting(true);
+    setIsDeleting(true)
     try {
-      await onDelete(set.id);
+      await onDelete(set.id)
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(false)
     }
-  };
+  }
 
   return (
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
-          {/* サムネイル */}
-          <button
-            type="button"
-            className="relative w-16 h-16 flex-shrink-0 cursor-pointer bg-transparent border-none p-0"
-            onClick={() => onSelect(set.id)}
-          >
-            {set.thumbnails.length > 0 ? (
-              <div className="relative w-full h-full">
-                {set.thumbnails.slice(0, 3).map((url, index) => (
-                  <img
-                    key={url}
-                    src={url}
-                    alt=""
-                    className="absolute w-12 h-12 object-cover rounded border bg-muted"
-                    style={{
-                      left: `${index * 6}px`,
-                      top: `${index * 4}px`,
-                      zIndex: 3 - index,
-                    }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="w-12 h-12 rounded border bg-muted flex items-center justify-center">
-                <Layers className="h-6 w-6 text-muted-foreground" />
-              </div>
-            )}
-          </button>
-          <button
-            type="button"
-            className="flex-1 min-w-0 cursor-pointer bg-transparent border-none p-0 text-left"
+          <div
+            className="flex-1 min-w-0 cursor-pointer"
             onClick={() => onSelect(set.id)}
           >
             <div className="font-semibold truncate">{set.name}</div>
             {set.description && (
-              <div className="text-sm text-muted-foreground truncate mt-1">{set.description}</div>
+              <div className="text-sm text-muted-foreground truncate mt-1">
+                {set.description}
+              </div>
             )}
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant="outline" className="text-xs">
-                <Layers className="h-3 w-3 mr-1" />
-                {set.itemCount} 枚
-              </Badge>
               <Badge variant={set.isPublic ? 'default' : 'secondary'} className="text-xs">
                 {set.isPublic ? (
                   <>
@@ -96,7 +65,7 @@ export function SetListItem({ set, onSelect, onDelete }: SetListItemProps) {
                 )}
               </Badge>
             </div>
-          </button>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -136,5 +105,5 @@ export function SetListItem({ set, onSelect, onDelete }: SetListItemProps) {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
