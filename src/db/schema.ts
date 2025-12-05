@@ -195,6 +195,109 @@ export const userTrustJobRelations = relations(userTrustJob, ({ one }) => ({
 }));
 
 // =====================================
+// フォトカードマスターデータ
+// =====================================
+
+/**
+ * メンバーマスターテーブル
+ * アイドルグループのメンバー情報を管理
+ */
+export const memberMaster = pgTable(
+  'member_master',
+  {
+    id: text('id').primaryKey(),
+    groupName: text('group_name').notNull(), // グループ名（例: "INI"）
+    name: text('name').notNull(), // メンバー名
+    nameReading: text('name_reading'), // ひらがな読み
+    nameRomaji: text('name_romaji'), // ローマ字
+    debutRank: integer('debut_rank'), // デビュー順位
+    imageUrl: text('image_url'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('member_master_group_name_idx').on(table.groupName),
+    index('member_master_name_idx').on(table.name),
+  ]
+);
+
+/**
+ * シリーズマスターテーブル
+ * CD・アルバム・ライブなどのシリーズ情報を管理
+ */
+export const seriesMaster = pgTable(
+  'series_master',
+  {
+    id: text('id').primaryKey(),
+    groupName: text('group_name').notNull(), // グループ名
+    name: text('name').notNull(), // シリーズ名
+    releaseType: text('release_type'), // album/single/live_goods
+    releaseDate: text('release_date'), // リリース日（YYYY-MM-DD）
+    cardCount: integer('card_count'), // トレカ枚数
+    sourceUrl: text('source_url'), // 参照元URL
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('series_master_group_name_idx').on(table.groupName),
+    index('series_master_name_idx').on(table.name),
+  ]
+);
+
+/**
+ * フォトカードマスターテーブル
+ * トレカの公式データを管理、ユーザーのカード登録時に候補として使用
+ */
+export const photocardMaster = pgTable(
+  'photocard_master',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(), // カード名
+    normalizedName: text('normalized_name'), // 検索用正規化名
+    groupName: text('group_name'), // グループ名（例: "INI"）
+    memberName: text('member_name'), // メンバー名
+    memberNameReading: text('member_name_reading'), // ひらがな読み
+    series: text('series'), // シリーズ名
+    releaseType: text('release_type'), // album/single/live_goods
+    releaseDate: text('release_date'), // リリース日
+    rarity: text('rarity'), // レアリティ
+    imageUrl: text('image_url'),
+    source: text('source').default('seed'), // seed/user/scrape
+    sourceUrl: text('source_url'), // 参照元URL
+    verified: boolean('verified').default(false), // 検証済みフラグ
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('photocard_master_name_idx').on(table.name),
+    index('photocard_master_group_idx').on(table.groupName),
+    index('photocard_master_member_idx').on(table.memberName),
+    index('photocard_master_series_idx').on(table.series),
+  ]
+);
+
+export const memberMasterRelations = relations(memberMaster, ({ many }) => ({
+  photocards: many(photocardMaster),
+}));
+
+export const seriesMasterRelations = relations(seriesMaster, ({ many }) => ({
+  photocards: many(photocardMaster),
+}));
+
+export const photocardMasterRelations = relations(photocardMaster, ({ many }) => ({
+  cards: many(card),
+}));
+
+// =====================================
 // カード関連テーブル
 // =====================================
 
@@ -213,19 +316,31 @@ export const card = pgTable(
     createdByUserId: text('created_by_user_id').references(() => user.id, {
       onDelete: 'set null',
     }),
+    // フォトカードマスターへの参照（マスターから選択した場合に設定）
+    photocardMasterId: text('photocard_master_id').references(() => photocardMaster.id, {
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index('card_name_idx').on(table.name), index('card_category_idx').on(table.category)]
+  (table) => [
+    index('card_name_idx').on(table.name),
+    index('card_category_idx').on(table.category),
+    index('card_photocard_master_id_idx').on(table.photocardMasterId),
+  ]
 );
 
 export const cardRelations = relations(card, ({ one, many }) => ({
   createdBy: one(user, {
     fields: [card.createdByUserId],
     references: [user.id],
+  }),
+  photocardMaster: one(photocardMaster, {
+    fields: [card.photocardMasterId],
+    references: [photocardMaster.id],
   }),
   haveCards: many(userHaveCard),
   wantCards: many(userWantCard),
