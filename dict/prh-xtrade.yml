@@ -1,0 +1,82 @@
+version: 1
+
+# xtrade プロジェクト固有の表記ルール
+# https://github.com/prh/prh を参照
+
+rules:
+  # --- 長音統一 ---
+  - expected: ユーザー
+    pattern: /ユーザ(?!ー)/
+
+  - expected: サーバー
+    pattern: /サーバ(?!ー)/
+
+  - expected: パラメーター
+    pattern: /パラメータ(?!ー)/
+
+  - expected: コンピューター
+    pattern: /コンピュータ(?!ー)/
+
+  # --- プロジェクト固有用語 ---
+  - expected: 信頼スコア
+    patterns:
+      - トラストスコア
+
+  - expected: マッチング検索
+    pattern: マッチ検索
+
+  - expected: マッチング機能
+    pattern: マッチ機能
+
+  - expected: マッチング条件
+    pattern: マッチ条件
+
+  # --- 製品名・サービス名 ---
+  - expected: BetterAuth
+    patterns:
+      - Better Auth
+      - betterauth
+
+  - expected: shadcn/ui
+    patterns:
+      - ShadcnUI
+      - Shadcn UI
+
+  - expected: GitHub Actions
+    patterns:
+      - Github Actions
+      - github actions
+      - GitHub actions
+
+  # --- 技術用語 ---
+  - expected: OAuth
+    patterns:
+      - Oauth
+
+  # --- 日本語表現（ひらがな推奨） ---
+  - expected: および
+    pattern: 及び
+
+  - expected: または
+    pattern: 又は
+
+  - expected: ならびに
+    pattern: 並びに
+
+  - expected: あらかじめ
+    pattern: 予め
+
+  - expected: すでに
+    pattern: 既に
+
+  - expected: ただし
+    pattern: 但し
+
+  - expected: ください
+    pattern: 下さい
+
+  - expected: いただく
+    pattern: 頂く
+
+  - expected: できる
+    pattern: 出来る

@@ -79,7 +79,7 @@
 | -------- | ---- | ------ | -------- |
 | `CODECOV_TOKEN` | Codecov へのカバレッジアップロード用トークン | `test.yml` | Yes |
 
-**取得方法**: [Codecov](https://codecov.io/) → リポジトリ設定 → Upload Token
+**取得方法**: [Codecov](https://codecov.io/) → リポジトリ設定 → Upload Token をコピーしてください。
 
 ### AI/LLM
 
@@ -138,11 +138,11 @@ Secrets が適切に設定されているか確認するには：
 
 **エラー**: `Error: Input required and not supplied: [secret-name]`
 
-**解決策**: リポジトリ設定で Secret が正確な名前で設定されているか確認。
+**解決策**: リポジトリ設定にて Secret が正確な名前で設定されているか確認してください。
 
 ### 無効な Secret 値
 
-**エラー**: 認証または接続の失敗
+**エラー**: 認証または接続が失敗しました。
 
 **解決策**:
 

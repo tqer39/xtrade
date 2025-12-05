@@ -95,6 +95,7 @@ fix:
     prek run end-of-file-fixer --all-files
     prek run trailing-whitespace --all-files
     prek run markdownlint-cli2 --all-files
+    npx textlint --fix "docs/**/*.md" ".claude/**/*.md" "*.md" "infra/**/*.md"
 
 # Clean prek cache
 clean:

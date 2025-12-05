@@ -11,7 +11,7 @@
 - 環境変数設定（DATABASE_URL など）
 - デプロイメント設定
 
-これらのリソースは Next.js アプリケーションを Vercel にデプロイするために使用されます。
+Next.js アプリケーションを Vercel へデプロイするために使用されます。
 
 ## リソース
 
@@ -176,7 +176,7 @@ Vercel プロジェクトに自動的に設定される環境変数：
 環境変数を変更した場合：
 
 1. `terraform apply` を実行
-2. Vercel で再デプロイが必要な場合があります
+2. Vercel で再デプロイが必要になることがあります
 
 ## トラブルシューティング
 
@@ -186,7 +186,7 @@ Vercel プロジェクトに自動的に設定される環境変数：
 Error: error getting vercel client: missing API token
 ```
 
-→ `VERCEL_API_TOKEN` 環境変数が設定されているか確認してください
+→ `VERCEL_API_TOKEN` 環境変数が設定されているか確認してください。
 
 ### データベース接続エラー
 
@@ -194,7 +194,7 @@ Error: error getting vercel client: missing API token
 Error: data.terraform_remote_state.database: no outputs found
 ```
 
-→ database モジュールを先に `terraform apply` してください
+→ database モジュールを先に `terraform apply` してください。
 
 ### GitHub リポジトリ連携エラー
 
@@ -202,4 +202,4 @@ Error: data.terraform_remote_state.database: no outputs found
 Error: repository not found
 ```
 
-→ Vercel アカウントに GitHub リポジトリへのアクセス権限があるか確認してください
+→ Vercel アカウントに GitHub リポジトリへのアクセス権限があるか確認してください。

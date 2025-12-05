@@ -22,7 +22,7 @@ language: ja
 
 ## 役割
 
-xtrade のドメイン API（trades, rooms, reports）の実装と保守を行い、ビジネスロジックを service 層に集約する。
+xtrade のドメイン API（trades, rooms, reports）の実装・保守を担当し、ビジネスロジックを service 層に集約する。
 
 ## APIAgent ガイドライン
 

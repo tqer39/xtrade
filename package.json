@@ -61,6 +61,11 @@
     "@vitest/coverage-v8": "4.0.15",
     "drizzle-kit": "0.31.7",
     "jsdom": "27.2.0",
+    "textlint": "^15.4.1",
+    "textlint-filter-rule-comments": "^1.2.2",
+    "textlint-rule-preset-ja-technical-writing": "^12.0.2",
+    "textlint-rule-preset-smarthr": "^1.36.1",
+    "textlint-rule-prh": "^6.1.0",
     "vitest": "4.0.15"
   },
   "overrides": {

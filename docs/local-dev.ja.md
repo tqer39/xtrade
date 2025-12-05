@@ -307,7 +307,7 @@ node --version
    npm run db:migrate
    ```
 
-### 問題: ポートが既に使用中
+### 問題: ポートがすでに使用中
 
 **エラー：** `Error: listen EADDRINUSE: address already in use :::3000`
 
@@ -378,7 +378,7 @@ cf-vault add xtrade
 cf-vault exec xtrade -- env | grep CLOUDFLARE
 ```
 
-**エラー：** `CLOUDFLARE_API_TOKEN` または `CLOUDFLARE_ACCOUNT_ID` が見つからない
+**エラー：** `CLOUDFLARE_API_TOKEN` または `CLOUDFLARE_ACCOUNT_ID` が見つかりません。
 
 **解決策：**
 

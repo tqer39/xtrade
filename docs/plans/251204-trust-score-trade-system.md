@@ -6,18 +6,18 @@
 
 ## 概要
 
-X アカウントでログインするトレードマッチングアプリの基盤機能を実装する。
+Xアカウントでログインするトレードマッチングアプリの基盤機能を実装する。
 信頼スコアシステム、カード管理、マッチング、トレード機能を含む。
 
 ## 前提条件
 
-- [x] X OAuth 認証設定済み（BetterAuth）
-- [x] Neon データベース接続済み
-- [x] Drizzle ORM 設定済み
+- [x] X OAuth認証設定済み（BetterAuth）
+- [x] Neonデータベース接続済み
+- [x] Drizzle ORM設定済み
 
 ## 主要機能
 
-1. **信頼スコアシステム**: X プロフィール情報から信頼度を計算（0-100, S/A/B/C/D/U グレード）
+1. **信頼スコアシステム**: Xプロフィール情報から信頼度を計算（0-100, S/A/B/C/D/Uグレード）
 2. **カード管理**: ユーザーが持っている/欲しいカードを登録
 3. **マッチング**: 信頼スコアを考慮したトレード相手の検索
 4. **トレード**: ステートマシンベースの取引管理
@@ -36,12 +36,12 @@ X アカウントでログインするトレードマッチングアプリの基
 | --- | --- |
 | `user` (拡張) | `trustScore`, `trustGrade`, `trustScoreUpdatedAt`, `trustScoreRefreshRequestedAt` |
 | `user_trust_job` | 信頼スコア再計算キュー |
-| `card` | カードマスター |
+| `card` | カードマスターデータ |
 | `user_have_card` | ユーザーが持っているカード |
 | `user_want_card` | ユーザーが欲しいカード |
 | `trade` | トレード情報 |
 | `trade_item` | トレードアイテム |
-| `trade_history` | 状態遷移履歴 |
+| `trade_history` | 状態移動履歴 |
 
 **成果物**:
 
@@ -117,19 +117,19 @@ X アカウントでログインするトレードマッチングアプリの基
 
 #### 処理フロー
 
-1. Vercel Cron 認証チェック（`CRON_SECRET`）
-2. queued ジョブを created_at 順で最大 5 件取得
-3. 各ジョブを running に更新
-4. X API 呼び出し
+1. Vercel Cron認証チェック（`CRON_SECRET`）
+2. queuedジョブをcreated_at順で最大5件取得
+3. 各ジョブをrunningに更新
+4. X API呼び出し
 5. `calcTrustScore` でスコア計算
-6. users テーブル更新、ジョブを succeeded/failed に
-7. 429 エラー時は queued に戻して処理中断
+6. usersテーブル更新、ジョブをsucceeded/failedに
+7. 429エラー時はqueuedに戻して処理中断
 
 **成果物**:
 
 - `app/api/cron/trust-worker/route.ts`
 - `src/modules/trust/x-api-client.ts`
-- `vercel.json` - Cron 設定追加
+- `vercel.json` - Cron設定追加
 
 ---
 
@@ -139,7 +139,7 @@ X アカウントでログインするトレードマッチングアプリの基
 
 | エンドポイント | メソッド | 説明 |
 | --- | --- | --- |
-| `/api/cards` | GET | カードマスター検索 |
+| `/api/cards` | GET | カードマスターデータ検索 |
 | `/api/cards` | POST | カード新規登録 |
 | `/api/me/cards` | GET | 自分のカード一覧 |
 | `/api/me/cards/have` | POST | 持っているカード追加/更新 |
@@ -162,9 +162,9 @@ X アカウントでログインするトレードマッチングアプリの基
 
 #### マッチング条件
 
-1. 自分の want_cards を相手が持っている
-2. 相手の want_cards を自分が持っている
-3. 相手の trust_grade が指定値以上
+1. 自分のwant_cardsを相手が持っている
+2. 相手のwant_cardsを自分が持っている
+3. 相手のtrust_gradeが指定値以上
 
 | エンドポイント | メソッド | 説明 |
 | --- | --- | --- |
@@ -297,7 +297,7 @@ app/api/
 
 ### BetterAuth OAuth スコープ
 
-X API でプロフィール情報を取得するには `users.read` スコープが必要。
+X APIでプロフィール情報を取得するには `users.read` スコープが必要。
 
 ---
 
@@ -307,9 +307,9 @@ X API でプロフィール情報を取得するには `users.read` スコープ
 2. [x] 再計算キューが正しく動作する
 3. [x] カードの登録・検索ができる
 4. [x] マッチング検索が正しく動作する
-5. [x] トレードのステートマシンが正しく遷移する
+5. [x] トレードのステートマシンが正しく移動する
 6. [x] すべてのテストがパスする
-7. [x] lint がパスする
+7. [x] lintがパスする
 
 ---
 

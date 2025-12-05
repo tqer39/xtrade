@@ -246,7 +246,7 @@ npx shadcn@latest add avatar dropdown-menu
 
 現在インストール済み：
 
-- `Button` - ボタン（6 バリアント: default, destructive, outline, secondary, ghost, link）
+- `Button` - ボタン（6 バリアント対応）
 
 よく使うコンポーネント（必要に応じて追加）：
 
