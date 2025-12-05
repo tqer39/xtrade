@@ -4,359 +4,181 @@
 [![codecov](https://img.shields.io/codecov/c/github/tqer39/xtrade?style=for-the-badge&logo=codecov&logoColor=white)](https://codecov.io/gh/tqer39/xtrade)
 [![Test](https://img.shields.io/github/actions/workflow/status/tqer39/xtrade/test.yml?branch=main&style=for-the-badge&logo=github&label=tests)](https://github.com/tqer39/xtrade/actions/workflows/test.yml)
 [![Terraform](https://img.shields.io/github/actions/workflow/status/tqer39/xtrade/terraform-dev.yml?branch=main&style=for-the-badge&logo=terraform&label=terraform)](https://github.com/tqer39/xtrade/actions/workflows/terraform-dev.yml)
-[![DB Migrate](https://img.shields.io/github/actions/workflow/status/tqer39/xtrade/db-migrate-dev.yml?branch=main&style=for-the-badge&logo=postgresql&label=db%20migrate)](https://github.com/tqer39/xtrade/actions/workflows/db-migrate-dev.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 
-X を利用した toC 向けソーシャルトレーディングサービスです。
+[🇯🇵 日本語版](docs/README.ja.md)
 
-## 概要
+> **Social trading platform powered by X (Twitter) — Trade cards with people you trust**
 
-xtrade は、X (旧 Twitter) のソーシャルグラフを活用したリアルタイムトレーディングサービスです。
-ユーザーは X アカウントでログインし、トレーディングルームに参加して取引できます。
+## 🎯 What is xtrade
 
-## 特徴
+xtrade is a **trust-based card trading platform** that leverages X (Twitter) social connections.
 
-- **X ログイン**: BetterAuth による X (Twitter) OAuth 認証
-- **リアルタイムトレーディング**: Next.js App Router + Route Handlers によるリアルタイム取引
-- **モノレポ構成**: フロントエンド・バックエンド・インフラを一元管理
-- **IaC 管理**: Terraform によるインフラのコード化
-- **Agent 駆動開発**: Claude Code の Sub Agent による責務分離
+Traditional online card trading comes with risks — scams, no-shows, and disputes with strangers. xtrade solves this by **utilizing your X social graph** to help you trade only with people you know or trust.
 
-## 技術スタック
+- 🔐 **Trade with confidence** — Your X followers and connections become your trusted trading partners
+- 📊 **Trust scores** — Built on real social relationships, not anonymous reputation
+- 🎴 **Seamless matching** — Find trading partners who have what you want and want what you have
 
-- **フロントエンド**: Next.js 15 (App Router)
-- **バックエンド**: Next.js Route Handlers
-- **データベース**: Neon (Serverless PostgreSQL)
-- **ORM**: Drizzle ORM
-- **認証**: BetterAuth + X OAuth
-- **インフラ**: Vercel + CloudFlare DNS (Terraform 管理)
-- **開発ツール**: mise, just, prek
+## ✨ Key Features
 
-## 環境構成
+| Feature | Description |
+| --- | --- |
+| 🤝 **Trust-based Trading** | Leverage your X social graph for safe trades with trust scores |
+| 🐦 **X Login** | One-click authentication via X OAuth |
+| 🎴 **Card Management** | Manage your collection — cards you own and cards you want |
+| 🔄 **Smart Matching** | Automatically find users who match your trade criteria |
+| 📝 **Trade Tracking** | Full history of your trades and their status |
+| 🏗️ **Infrastructure as Code** | Fully managed with Terraform |
 
-xtrade は local / dev / prod の 3 環境で運用します。
+## 📊 How It Works
 
-| 環境 | APP URL | 備考 |
-| --- | --- | --- |
-| local | `http://localhost:3000` | 開発用 |
-| dev | `https://xtrade-dev.tqer39.dev` | ステージング・動作確認 |
-| prod | `https://xtrade.tqer39.dev` | 本番 |
+```mermaid
+flowchart LR
+    A[🐦 Login with X] --> B[🎴 Register Cards]
+    B --> C[🔍 Find Matches]
+    C --> D[🤝 Trade]
+    D --> E[⭐ Build Trust]
+    E --> C
+```
 
-## クイックスタート
+### User Flow
 
-### 前提条件
+1. **Login** — Authenticate with your X account
+2. **Register Cards** — Add cards you own and cards you're looking for
+3. **Find Matches** — Discover users who have what you want
+4. **Trade** — Connect with trusted users and complete trades
+5. **Build Trust** — Successful trades boost your trust score
 
-以下のツールが必要です：
+## 🏛️ Architecture
 
-- **Homebrew**: システムレベルの開発ツール
-- **mise**: プログラミング言語のバージョン管理
-- **just**: タスク自動化とコマンドランナー
+```mermaid
+graph TB
+    subgraph Client
+        A[Next.js Frontend]
+    end
 
-### セットアップ
+    subgraph Backend
+        B[Next.js Route Handlers]
+        C[BetterAuth]
+    end
+
+    subgraph Database
+        D[(Neon PostgreSQL)]
+    end
+
+    subgraph External
+        E[X OAuth API]
+        F[CloudFlare DNS]
+    end
+
+    subgraph Infrastructure
+        G[Vercel]
+        H[Terraform]
+    end
+
+    A --> B
+    B --> C
+    C --> E
+    B --> D
+    A --> G
+    H --> D
+    H --> F
+    H --> G
+```
+
+## 🛠 Tech Stack
+
+| Category | Technology |
+| --- | --- |
+| **Frontend** | Next.js 15 (App Router), React, TypeScript |
+| **Backend** | Next.js Route Handlers |
+| **Database** | Neon (Serverless PostgreSQL), Drizzle ORM |
+| **Authentication** | BetterAuth + X OAuth |
+| **Infrastructure** | Vercel, CloudFlare DNS, Terraform |
+| **Development** | mise, just, prek |
+
+## 🚀 Quick Start
 
 ```bash
-# 1. Homebrew のインストール（未インストールの場合）
+# 1. Clone the repository
+git clone https://github.com/tqer39/xtrade.git
+cd xtrade
+
+# 2. Install development tools (first time only)
 make bootstrap
 
-# 2. すべての開発ツールをインストール
-brew bundle install
-
-# 3. 開発環境のセットアップ
+# 3. Setup everything
 just setup
 
-# 4. 環境変数の設定
-cp .env.example .env.local
-# .env.local を編集して、必要な値を設定
+# 4. Start development server
+npm run dev
 ```
 
-**ワンコマンドセットアップ**（Homebrew がインストール済みの場合）：
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-```bash
-just setup
-```
+📖 **For detailed setup instructions**, see [Local Development Guide](docs/local-dev.md).
 
-### AWS と環境変数の設定（Terraform 利用時）
-
-Terraform で AWS をバックエンドに使用する場合：
-
-```bash
-# 1. direnv の設定
-just setup-direnv
-# .envrc を編集して AWS プロファイルと Neon API キーを設定
-
-# 2. direnv を有効化
-just direnv-allow
-
-# 3. aws-vault でプロファイルを追加
-just aws-add xtrade-dev
-```
-
-### 開発サーバーの起動
-
-```bash
-# ローカルデータベースの起動（Docker Compose）
-just db-start
-
-# データベースのマイグレーション実行
-just db-migrate
-
-# 開発サーバー起動
-just dev
-```
-
-ブラウザで `http://localhost:3000` を開くと、アプリケーションが起動します。
-
-## 利用可能なコマンド
-
-### 開発環境セットアップ
-
-```bash
-# すべての利用可能なタスクを表示
-just help
-
-# 初回セットアップ（環境構築）
-just setup
-
-# 環境変数ファイルのみセットアップ
-just setup-env
-
-# Node.js 依存関係のインストール
-just setup-deps
-
-# direnv セットアップ
-just setup-direnv
-
-# direnv を有効化
-just direnv-allow
-```
-
-### 開発サーバー
-
-```bash
-# 開発サーバー起動
-just dev
-
-# 本番ビルド
-just build
-
-# 本番サーバー起動
-just start
-```
-
-### AWS と Terraform
-
-```bash
-# AWS プロファイル追加
-just aws-add <profile-name>
-
-# AWS プロファイル一覧
-just aws-list
-
-# AWS 認証情報でコマンド実行
-just aws-exec <profile> <command>
-
-# Terraform コマンド（-chdir で環境を指定）
-just tf -chdir=infra/terraform/envs/dev/bootstrap init
-just tf -chdir=infra/terraform/envs/dev/bootstrap plan
-just tf -chdir=infra/terraform/envs/dev/bootstrap apply
-just tf -chdir=infra/terraform/envs/dev/bootstrap output
-just tf -chdir=infra/terraform/envs/dev/bootstrap destroy
-
-# Terraform バージョン確認
-just tf version
-```
-
-### データベース管理
-
-```bash
-# ローカルデータベースの起動
-just db-start
-
-# ローカルデータベースの停止
-just db-stop
-
-# データベースログの表示
-just db-logs
-
-# マイグレーション実行
-just db-migrate
-
-# マイグレーションファイル生成
-just db-generate
-
-# Drizzle Studio 起動（GUI）
-just db-studio
-
-# データベースリセット（全データ削除）
-just db-reset
-```
-
-### コード品質チェック
-
-```bash
-# コード品質チェック
-just lint
-
-# 一般的なフォーマット問題の修正
-just fix
-
-# prek キャッシュのクリーン
-just clean
-```
-
-### ツール更新
-
-```bash
-# 開発ツールの更新
-just update-brew  # Homebrew パッケージを更新
-just update       # mise 管理ツールを更新
-just update-hooks # prek フックを更新
-
-# mise ステータス表示
-just status
-```
-
-## プロジェクト構成
+## 📁 Project Structure
 
 ```text
 xtrade/
 ├── app/                    # Next.js App Router
-│   ├── admin/              # 管理画面
-│   ├── api/                # Route Handlers（API）
-│   │   ├── auth/           # BetterAuth エンドポイント
-│   │   ├── trades/         # トレード API
-│   │   ├── cards/          # カード API
-│   │   ├── matches/        # マッチング API
-│   │   ├── me/             # ユーザー自身の API
-│   │   ├── admin/          # 管理 API
-│   │   └── cron/           # Cron ジョブ
-│   ├── layout.tsx          # ルートレイアウト
-│   └── page.tsx            # トップページ
-├── src/                    # 共通ライブラリ
-│   ├── lib/                # ユーティリティ（auth, utils）
-│   ├── db/                 # データベース接続とスキーマ
-│   ├── modules/            # ドメインモジュール
-│   │   ├── trades/         # トレードドメイン
-│   │   ├── cards/          # カードドメイン
-│   │   ├── matches/        # マッチングドメイン
-│   │   └── trust/          # 信頼スコアドメイン
-│   └── components/         # 共通 UI コンポーネント
-├── infra/
-│   └── terraform/          # インフラ構成（IaC）
-│       ├── config.yml      # 共通設定ファイル
-│       ├── modules/        # 再利用可能な Terraform モジュール
-│       │   ├── cloudflare/ # CloudFlare DNS
-│       │   ├── vercel/     # Vercel プロジェクト
-│       │   ├── neon/       # Neon DB
-│       │   └── deploy-role/# デプロイ用 IAM ロール
-│       └── envs/           # 環境ごとの設定
-│           └── dev/        # dev 環境
-│               ├── bootstrap/  # 初期セットアップ
-│               ├── database/   # Neon データベース
-│               ├── frontend/   # Vercel プロジェクト
-│               └── dns/        # CloudFlare DNS
-├── e2e/                    # E2E テスト（Playwright）
-├── docs/                   # ドキュメント
-├── .github/                # GitHub Actions、CODEOWNERS
-├── .claude/                # Claude Code Agent 設定
-└── scripts/                # 開発用スクリプト
+│   ├── api/                # Route Handlers (API)
+│   └── (pages)/            # Page components
+├── src/
+│   ├── lib/                # Utilities (auth, utils)
+│   ├── db/                 # Database connection & schema
+│   ├── modules/            # Domain modules
+│   │   ├── trades/         # Trade domain
+│   │   ├── cards/          # Card domain
+│   │   ├── matches/        # Matching domain
+│   │   └── trust/          # Trust score domain
+│   └── components/         # Shared UI components
+├── infra/terraform/        # Infrastructure as Code
+├── docs/                   # Documentation
+└── e2e/                    # E2E tests (Playwright)
 ```
 
-詳細なアーキテクチャについては [docs/architecture.md](docs/architecture.md) を参照してください。
+📖 **For detailed structure**, see [Directory Structure](docs/directory-structure.md).
 
-## MCP サーバー
+## 📖 Documentation
 
-Claude Code の能力を拡張するため、以下の MCP サーバーを導入しています：
+| Document | Description |
+| --- | --- |
+| [Local Development](docs/local-dev.md) | Full setup guide with troubleshooting |
+| [Architecture](docs/architecture.md) | System design and technical decisions |
+| [Directory Structure](docs/directory-structure.md) | Codebase organization |
+| [Deployment](docs/deployment.md) | Deployment workflows and environments |
+| [Security](docs/security.md) | Security design and authentication |
+| [GitHub Secrets](docs/github-secrets.md) | CI/CD secrets configuration |
+| [Terraform Variables](docs/terraform-environment-variables.md) | Infrastructure environment setup |
 
-### 導入済み MCP サーバー
+## 🤖 AI-Powered Development
 
-- **Context7**: 最新のライブラリドキュメントとコード例を提供
-  - Terraform、AWS SDK などの公式ドキュメントをリアルタイムで取得
-  - 古い情報やハルシネーションを排除
-- **Serena**: セマンティックコード検索と編集機能を提供
-  - IDE のようなコード理解と編集機能を LLM に追加
-  - プロジェクト全体のコンテキストを活用した開発支援
+xtrade uses Claude Code with specialized sub-agents for focused development:
 
-### MCP サーバーのセットアップ
+| Agent | Role |
+| --- | --- |
+| 🧠 **ArchAgent** | Architecture design & conventions |
+| 🗃 **DBAgent** | Database & schema management (Drizzle) |
+| 🔐 **AuthAgent** | Authentication & sessions (BetterAuth) |
+| 🛠 **APIAgent** | API & business logic |
+| 🎨 **UIAgent** | UI & UX |
+| 🧪 **TestAgent** | Testing & quality assurance |
+| 🔒 **SecurityAgent** | Security checks & vulnerability detection |
+| 📝 **DocAgent** | Documentation management |
 
-MCP サーバーはすでに設定済みです。Claude Code を再起動すると自動的に有効化されます。
+📖 **For agent details**, see [CLAUDE.md](CLAUDE.md).
 
-```bash
-# 設定を確認（~/.claude.json に保存されています）
-cat ~/.claude.json
-```
+## 🌍 Environments
 
-詳細は [Context7 公式ドキュメント](https://github.com/upstash/context7) と [Serena 公式ドキュメント](https://github.com/oraios/serena) を参照してください。
+| Environment | URL | Description |
+| --- | --- | --- |
+| Local | `http://localhost:3000` | Development |
+| Dev | `https://xtrade-dev.tqer39.dev` | Staging |
+| Prod | `https://xtrade.tqer39.dev` | Production |
 
-## Agent 構成
+## 📄 License
 
-xtrade では Claude Code の Sub Agent を活用して責務を分離し開発しています。
-
-### Agent 一覧
-
-- **ArchAgent** 🧠: アーキテクチャ設計・規約管理
-- **DBAgent** 🗃: データベース・スキーマ管理（Drizzle）
-- **AuthAgent** 🔐: 認証・セッション管理（BetterAuth）
-- **APIAgent** 🛠: API・ビジネスロジック
-- **UIAgent** 🎨: UI・UX
-- **TestAgent** 🧪: テスト・品質保証
-- **SecurityAgent** 🔒: セキュリティチェック・脆弱性検出
-- **DocAgent** 📝: ドキュメント管理
-
-詳細は [CLAUDE.md](CLAUDE.md#xtrade-開発用-agent-構成) を参照してください。
-
-## インフラ管理（Terraform）
-
-### Bootstrap（初回デプロイ）
-
-Dev 環境の初回セットアップ時に実行：
-
-```bash
-# 1. AWS と環境変数のセットアップ
-just setup-direnv
-# .envrc を編集して NEON_API_KEY と AWS_VAULT_PROFILE を設定
-just direnv-allow
-
-# 2. AWS プロファイル追加
-just aws-add xtrade-dev
-
-# 3. Terraform 実行
-just tf -chdir=infra/terraform/envs/dev/bootstrap init
-just tf -chdir=infra/terraform/envs/dev/bootstrap plan
-just tf -chdir=infra/terraform/envs/dev/bootstrap apply
-
-# 4. 接続情報確認
-just tf -chdir=infra/terraform/envs/dev/bootstrap output
-```
-
-詳細は [infra/terraform/envs/dev/bootstrap/README.md](infra/terraform/envs/dev/bootstrap/README.md) を参照してください。
-
-## ドキュメント
-
-- [アーキテクチャ設計書](docs/architecture.md)
-- [AI ルール](docs/AI_RULES.ja.md)
-- [Claude Code 利用ガイド](docs/CLAUDE.ja.md)
-- [Terraform Bootstrap](infra/terraform/envs/dev/bootstrap/README.md)
-
-## ライセンス
-
-このプロジェクトは [LICENSE](LICENSE) ファイルに基づいてライセンスされています。
-
-## ツールの責務
-
-このセットアップでは、ツールの責務を明確に分離しています：
-
-- **brew**: システムレベルの開発ツール
-  - git, mise, just, uv
-  - aws-vault（AWS 認証情報管理）
-  - direnv（ディレクトリごとの環境変数管理）
-- **mise**: プログラミング言語とツールのバージョン管理
-  - Node.js 24
-  - Terraform 1.14.0
-  - prek (latest) - Git hooks フレームワーク
-- **uv**: Python パッケージとプロジェクト管理
-- **prek**: すべてのリンティングツールを自動処理（Rust 製で高速、pre-commit の完全互換）
-- **aws-vault**: Terraform state の AWS S3 バックエンド用の安全な認証情報管理
-- **direnv**: プロジェクトディレクトリごとの環境変数自動ロード
-
-このアプローチにより、懸念事項の明確な分離と、システムツールと言語固有バージョン間の競合を回避します。
+This project is licensed under the [MIT License](LICENSE).
