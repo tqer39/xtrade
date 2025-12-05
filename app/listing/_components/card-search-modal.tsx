@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,6 +43,7 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
   const [newCardName, setNewCardName] = useState('');
   const [newCardCategory, setNewCardCategory] = useState('');
   const [newCardRarity, setNewCardRarity] = useState('');
+  const [newCardImageUrl, setNewCardImageUrl] = useState<string | undefined>();
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
@@ -98,6 +100,7 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
         name: newCardName.trim(),
         category: newCardCategory.trim(),
         rarity: newCardRarity.trim() || undefined,
+        imageUrl: newCardImageUrl,
       });
       await onAddCard(card.id);
       handleClose();
@@ -114,6 +117,7 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
     setNewCardName('');
     setNewCardCategory('');
     setNewCardRarity('');
+    setNewCardImageUrl(undefined);
     setAddError(null);
     clearResults();
     clearPhotocardResults();
@@ -293,6 +297,14 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
                   value={newCardRarity}
                   onChange={(e) => setNewCardRarity(e.target.value)}
                   placeholder="例: SR、UR、レア"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>カード画像 (任意)</Label>
+                <ImageUpload
+                  value={newCardImageUrl}
+                  onChange={setNewCardImageUrl}
+                  disabled={isAdding}
                 />
               </div>
               <div className="flex gap-2">
