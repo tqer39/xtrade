@@ -119,6 +119,7 @@ export const userRelations = relations(user, ({ many }) => ({
   trustJobs: many(userTrustJob),
   haveCards: many(userHaveCard),
   wantCards: many(userWantCard),
+  cardSets: many(cardSet),
   initiatedTrades: many(trade, { relationName: 'initiatedTrades' }),
   respondedTrades: many(trade, { relationName: 'respondedTrades' }),
   offeredTradeItems: many(tradeItem),
@@ -239,6 +240,7 @@ export const cardRelations = relations(card, ({ one, many }) => ({
   }),
   haveCards: many(userHaveCard),
   wantCards: many(userWantCard),
+  cardSetItems: many(cardSetItem),
   tradeItems: many(tradeItem),
 }))
 
@@ -314,6 +316,75 @@ export const userWantCardRelations = relations(userWantCard, ({ one }) => ({
   }),
   card: one(card, {
     fields: [userWantCard.cardId],
+    references: [card.id],
+  }),
+}))
+
+// =====================================
+// カードセット関連テーブル
+// =====================================
+
+/**
+ * カードセットマスターテーブル
+ * ユーザーが作成・管理するカードセット（複数カードをグループ化）
+ */
+export const cardSet = pgTable(
+  'card_set',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    description: text('description'),
+    isPublic: boolean('is_public').default(false).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index('card_set_user_id_idx').on(table.userId)]
+)
+
+export const cardSetRelations = relations(cardSet, ({ one, many }) => ({
+  user: one(user, {
+    fields: [cardSet.userId],
+    references: [user.id],
+  }),
+  items: many(cardSetItem),
+}))
+
+/**
+ * カードセット内のアイテムテーブル
+ * セット内のカードと数量を管理
+ */
+export const cardSetItem = pgTable(
+  'card_set_item',
+  {
+    id: text('id').primaryKey(),
+    setId: text('set_id')
+      .notNull()
+      .references(() => cardSet.id, { onDelete: 'cascade' }),
+    cardId: text('card_id')
+      .notNull()
+      .references(() => card.id, { onDelete: 'cascade' }),
+    quantity: integer('quantity').default(1).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('card_set_item_set_id_idx').on(table.setId),
+    unique('card_set_item_set_card_unique').on(table.setId, table.cardId),
+  ]
+)
+
+export const cardSetItemRelations = relations(cardSetItem, ({ one }) => ({
+  set: one(cardSet, {
+    fields: [cardSetItem.setId],
+    references: [cardSet.id],
+  }),
+  card: one(card, {
+    fields: [cardSetItem.cardId],
     references: [card.id],
   }),
 }))

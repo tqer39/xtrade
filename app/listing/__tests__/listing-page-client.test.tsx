@@ -5,6 +5,7 @@ import { ListingPageClient } from '../_components/listing-page-client'
 // モック設定
 const mockUseSession = vi.fn()
 const mockUseMyCards = vi.fn()
+const mockUseMySets = vi.fn()
 
 vi.mock('@/lib/auth-client', () => ({
   useSession: () => mockUseSession(),
@@ -12,6 +13,10 @@ vi.mock('@/lib/auth-client', () => ({
 
 vi.mock('@/hooks/use-my-cards', () => ({
   useMyCards: () => mockUseMyCards(),
+}))
+
+vi.mock('@/hooks/use-my-sets', () => ({
+  useMySets: () => mockUseMySets(),
 }))
 
 vi.mock('next/link', () => ({
@@ -28,9 +33,23 @@ vi.mock('@/components/auth', () => ({
   LoginButton: () => <button>ログイン</button>,
 }))
 
+const defaultSetsReturn = {
+  sets: [],
+  isLoading: false,
+  error: null,
+  createSet: vi.fn(),
+  updateSet: vi.fn(),
+  deleteSet: vi.fn(),
+  getSetDetail: vi.fn(),
+  addCardToSet: vi.fn(),
+  removeCardFromSet: vi.fn(),
+  refetch: vi.fn(),
+}
+
 describe('ListingPageClient', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseMySets.mockReturnValue(defaultSetsReturn)
   })
 
   describe('ローディング状態', () => {
@@ -122,8 +141,9 @@ describe('ListingPageClient', () => {
       render(<ListingPageClient />)
 
       expect(screen.getByText('カード出品')).toBeInTheDocument()
-      expect(screen.getByText('持っているカード (1)')).toBeInTheDocument()
-      expect(screen.getByText('欲しいカード (0)')).toBeInTheDocument()
+      expect(screen.getByText('持っている (1)')).toBeInTheDocument()
+      expect(screen.getByText('欲しい (0)')).toBeInTheDocument()
+      expect(screen.getByText('セット (0)')).toBeInTheDocument()
       expect(screen.getByText('Test Card')).toBeInTheDocument()
     })
 
