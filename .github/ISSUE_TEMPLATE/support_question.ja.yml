@@ -26,7 +26,7 @@ body:
     attributes:
       label: 相談内容
       description: 知りたいこと、背景、困っている状況を具体的に記載してください。
-      placeholder: 例）MathQuestのステージ設定で、問題の難易度を固定する方法はありますか？
+      placeholder: 例）xtradeでカードの価格アラートを設定する方法はありますか？
     validations:
       required: true
   - type: textarea

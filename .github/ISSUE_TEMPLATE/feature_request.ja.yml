@@ -8,12 +8,14 @@ body:
       value: |
         ## ✨ 目指す体験
         アイデアの背景や実現したい姿を共有してください。利用者にどんな価値を届けたいかがポイントです。
+
+        **提案前に** [既存の Issue](https://github.com/tqer39/xtrade/issues) を検索して、同様のリクエストがないか確認してください。
   - type: input
     id: summary
     attributes:
       label: 提案の概要
       description: どのような機能・改善かを一文でまとめてください。
-      placeholder: 例）ステージごとの進捗率を可視化するサマリーカード
+      placeholder: 例）出品カードの価格推移グラフを追加
     validations:
       required: true
   - type: textarea
@@ -21,7 +23,7 @@ body:
     attributes:
       label: ユーザーストーリー
       description: '「誰が・何のために・どうしたいか」を「〜として、〜したい。なぜなら〜だからだ。」の形式で記載してください。'
-      placeholder: 例）小学生の保護者として、子どもの学習状況を一目で把握したい。なぜなら復習のサポートをしたいからだ。
+      placeholder: 例）カードコレクターとして、価格推移を一目で確認したい。なぜなら適切な売買判断をしたいからだ。
     validations:
       required: true
   - type: textarea
@@ -29,7 +31,7 @@ body:
     attributes:
       label: 詳細アイデア
       description: 具体的な画面案、シナリオ、必要なデータなどを記載してください。図やリンクを添付しても構いません。
-      placeholder: 例）ダッシュボードに進捗リングと直近の達成ミッション一覧を表示する
+      placeholder: 例）カード詳細ページに価格履歴の折れ線グラフを表示する
     validations:
       required: true
   - type: dropdown
@@ -49,13 +51,13 @@ body:
     attributes:
       label: 成功指標・評価方法
       description: 実装後に効果を測る指標や、ユーザーからのフィードバック方法を教えてください。
-      placeholder: 例）ステージ完了率が10%向上する、保護者アンケートの満足度
+      placeholder: 例）カード詳細ページの滞在時間が15%向上、ユーザーからのポジティブなフィードバック
   - type: textarea
     id: related
     attributes:
       label: 関連する情報
       description: 参考リンク、既存のIssue、調査資料などがあれば記載してください。
-      placeholder: '例）#256（学習履歴API整備）、Figmaモック: https://...'
+      placeholder: '例）#256（価格API）、Figmaモック: https://...'
   - type: checkboxes
     id: collaboration
     attributes:

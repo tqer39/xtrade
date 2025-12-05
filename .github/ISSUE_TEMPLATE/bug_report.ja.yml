@@ -8,12 +8,16 @@ body:
       value: |
         ## 🧭 概要
         問題の内容と影響範囲がひと目でわかるように、以下の項目を埋めてください。
+
+        **報告前に** [既存の Issue](https://github.com/tqer39/xtrade/issues) を検索して、同じ問題が報告されていないか確認してください。
+
+        ヒント: 「〜したとき、〜を期待したが、〜が起こった」の形式で概要を書くとわかりやすいです。
   - type: input
     id: summary
     attributes:
       label: バグの概要
       description: 何が起きているのかを一言で教えてください。
-      placeholder: 例）ステージ選択画面で科目名が表示されない
+      placeholder: 例）カード出品フォームの送信時に保存されない
     validations:
       required: true
   - type: dropdown
@@ -33,7 +37,7 @@ body:
     attributes:
       label: 本来期待する挙動
       description: 正常な場合にどう動くべきか、画面の状態やメッセージも含めて記載してください。
-      placeholder: 例）ステージ選択カードに学年名とサブタイトルが表示される
+      placeholder: 例）カードが保存され、出品一覧に表示される
     validations:
       required: true
   - type: textarea
@@ -41,7 +45,7 @@ body:
     attributes:
       label: 実際の挙動
       description: 実際に何が起こっているのか、スクリーンショットやログがあれば添付してください。
-      placeholder: 例）サブタイトルが空白で、ブラウザコンソールにエラーが表示される
+      placeholder: 例）送信ボタンを押してもハングし、ブラウザコンソールにエラーが表示される
     validations:
       required: true
   - type: textarea
@@ -50,20 +54,29 @@ body:
       label: 再現手順
       description: 発生手順を番号付きで記載してください。スクリーンショットや動画リンクがあると助かります。
       placeholder: |
-        1. MathQuest にログイン
-        2. ステージ2-3を選択
-        3. 「スタート」をクリック
+        1. xtrade にログイン
+        2. カード出品ページに移動
+        3. フォームを入力し「出品する」をクリック
         4. エラーが表示される
     validations:
       required: true
-  - type: textarea
-    id: environment
+  - type: input
+    id: browser
     attributes:
-      label: 発生環境
-      description: ブラウザやOS、接続環境などを記載してください。
-      placeholder: 例）Chrome 124 / macOS 14.3 / 回線：家庭用Wi-Fi
+      label: ブラウザ
+      description: 使用しているブラウザを教えてください。
+      placeholder: 例）Chrome 124, Safari 17.5, Firefox 128
     validations:
       required: true
+  - type: checkboxes
+    id: os
+    attributes:
+      label: オペレーティングシステム
+      description: 問題が発生した OS を選択してください。
+      options:
+        - label: macOS
+        - label: Windows
+        - label: Linux
   - type: checkboxes
     id: checks
     attributes:
