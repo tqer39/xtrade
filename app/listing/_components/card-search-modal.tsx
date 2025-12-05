@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Plus, Search } from 'lucide-react';
+import { Loader2, Plus, Search, Star } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCardSearch } from '@/hooks/use-card-search';
+import { usePhotocardSearch } from '@/hooks/use-photocard-search';
 
 interface CardSearchModalProps {
   open: boolean;
@@ -27,6 +28,12 @@ interface CardSearchModalProps {
 export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSearchModalProps) {
   const { searchResults, isSearching, searchError, search, createCard, clearResults } =
     useCardSearch();
+  const {
+    searchResults: photocardResults,
+    isSearching: isPhotocardSearching,
+    search: searchPhotocard,
+    clearResults: clearPhotocardResults,
+  } = usePhotocardSearch();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [newCardName, setNewCardName] = useState('');
@@ -38,7 +45,28 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     search(value);
+    searchPhotocard(value); // マスターデータも検索
     setShowNewCardForm(false);
+  };
+
+  // フォトカードマスターを選択してカードを作成
+  const handleSelectPhotocard = async (photocard: (typeof photocardResults)[0]) => {
+    setIsAdding(true);
+    setAddError(null);
+    try {
+      // フォトカードマスターからカードを作成
+      const card = await createCard({
+        name: photocard.name,
+        category: photocard.groupName || 'INI',
+        rarity: photocard.rarity || undefined,
+      });
+      await onAddCard(card.id);
+      handleClose();
+    } catch (err) {
+      setAddError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const handleSelectCard = async (cardId: string) => {
@@ -85,6 +113,7 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
     setNewCardRarity('');
     setAddError(null);
     clearResults();
+    clearPhotocardResults();
     onOpenChange(false);
   };
 
@@ -118,43 +147,97 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
           )}
 
           {/* 検索結果 */}
-          {isSearching ? (
+          {isSearching || isPhotocardSearching ? (
             <div className="space-y-2">
               <Skeleton className="h-16 w-full" />
               <Skeleton className="h-16 w-full" />
             </div>
-          ) : searchQuery && searchResults.length > 0 ? (
-            <div className="max-h-60 overflow-y-auto space-y-2">
-              {searchResults.map((card) => (
-                <Card
-                  key={card.id}
-                  className="cursor-pointer hover:bg-accent transition-colors"
-                  onClick={() => !isAdding && handleSelectCard(card.id)}
-                >
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{card.name}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" className="text-xs">
-                            {card.category}
-                          </Badge>
-                          {card.rarity && (
-                            <Badge variant="outline" className="text-xs">
-                              {card.rarity}
-                            </Badge>
-                          )}
+          ) : searchQuery ? (
+            <div className="max-h-60 space-y-2 overflow-y-auto">
+              {/* フォトカードマスターの候補 */}
+              {photocardResults.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground">
+                    <Star className="h-3 w-3" />
+                    <span>おすすめ候補</span>
+                  </div>
+                  {photocardResults.map((photocard) => (
+                    <Card
+                      key={`master-${photocard.id}`}
+                      className="cursor-pointer border-primary/20 transition-colors hover:bg-accent"
+                      onClick={() => !isAdding && handleSelectPhotocard(photocard)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium">{photocard.name}</div>
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              {photocard.groupName && (
+                                <Badge variant="default" className="text-xs">
+                                  {photocard.groupName}
+                                </Badge>
+                              )}
+                              {photocard.memberName && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {photocard.memberName}
+                                </Badge>
+                              )}
+                              {photocard.series && (
+                                <Badge variant="outline" className="text-xs">
+                                  {photocard.series}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Plus className="h-4 w-4 text-muted-foreground" />
                         </div>
-                      </div>
-                      <Plus className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : searchQuery && searchResults.length === 0 && !isSearching ? (
-            <div className="text-center py-4 text-muted-foreground">
-              「{searchQuery}」に一致するカードが見つかりません
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              )}
+
+              {/* 既存のカード */}
+              {searchResults.length > 0 && (
+                <>
+                  <div className="mt-2 flex items-center gap-2 py-1 text-sm text-muted-foreground">
+                    <span>登録済みカード</span>
+                  </div>
+                  {searchResults.map((card) => (
+                    <Card
+                      key={card.id}
+                      className="cursor-pointer transition-colors hover:bg-accent"
+                      onClick={() => !isAdding && handleSelectCard(card.id)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium">{card.name}</div>
+                            <div className="mt-1 flex items-center gap-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {card.category}
+                              </Badge>
+                              {card.rarity && (
+                                <Badge variant="outline" className="text-xs">
+                                  {card.rarity}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Plus className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              )}
+
+              {/* 結果なし */}
+              {photocardResults.length === 0 && searchResults.length === 0 && (
+                <div className="py-4 text-center text-muted-foreground">
+                  「{searchQuery}」に一致するカードが見つかりません
+                </div>
+              )}
             </div>
           ) : null}
 
@@ -168,14 +251,14 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
                 setNewCardName(searchQuery);
               }}
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               新しいカードを登録
             </Button>
           )}
 
           {/* 新規登録フォーム */}
           {showNewCardForm && (
-            <div className="space-y-3 p-4 border rounded-lg">
+            <div className="space-y-3 rounded-lg border p-4">
               <h4 className="font-medium">新しいカードを登録</h4>
               <div className="space-y-2">
                 <Label htmlFor="new-card-name">カード名 *</Label>
@@ -209,7 +292,7 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
                   キャンセル
                 </Button>
                 <Button onClick={handleCreateAndAdd} disabled={isAdding}>
-                  {isAdding && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {isAdding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   登録して追加
                 </Button>
               </div>

@@ -1,0 +1,93 @@
+[
+  {
+    "name": "A",
+    "releaseType": "single",
+    "releaseDate": "2021-11-03",
+    "cardCount": 33,
+    "sourceUrl": "https://ini-official.com/discography/a/"
+  },
+  {
+    "name": "I",
+    "releaseType": "single",
+    "releaseDate": "2022-02-09",
+    "cardCount": 33,
+    "sourceUrl": "https://ini-official.com/discography/i/"
+  },
+  {
+    "name": "M",
+    "releaseType": "single",
+    "releaseDate": "2022-05-25",
+    "cardCount": 33,
+    "sourceUrl": "https://ini-official.com/discography/m/"
+  },
+  {
+    "name": "Awakening",
+    "releaseType": "album",
+    "releaseDate": "2022-08-24",
+    "cardCount": 44,
+    "sourceUrl": "https://ini-official.com/discography/awakening/"
+  },
+  {
+    "name": "CALL 119",
+    "releaseType": "single",
+    "releaseDate": "2022-11-30",
+    "cardCount": 33,
+    "sourceUrl": "https://ini-official.com/discography/call-119/"
+  },
+  {
+    "name": "FANFARE",
+    "releaseType": "single",
+    "releaseDate": "2023-05-24",
+    "cardCount": 33,
+    "sourceUrl": "https://ini-official.com/discography/fanfare/"
+  },
+  {
+    "name": "Runway",
+    "releaseType": "album",
+    "releaseDate": "2023-08-23",
+    "cardCount": 44,
+    "sourceUrl": "https://ini-official.com/discography/runway/"
+  },
+  {
+    "name": "DROP That",
+    "releaseType": "single",
+    "releaseDate": "2023-11-22",
+    "cardCount": 33,
+    "sourceUrl": "https://ini-official.com/discography/drop-that/"
+  },
+  {
+    "name": "THE FRAME",
+    "releaseType": "single",
+    "releaseDate": "2024-05-29",
+    "cardCount": 33,
+    "sourceUrl": "https://ini-official.com/discography/the-frame/"
+  },
+  {
+    "name": "RESONATE",
+    "releaseType": "album",
+    "releaseDate": "2024-08-21",
+    "cardCount": 44,
+    "sourceUrl": "https://ini-official.com/discography/resonate/"
+  },
+  {
+    "name": "1ST ARENA LIVE TOUR [READY TO POP!]",
+    "releaseType": "live_goods",
+    "releaseDate": "2023-03-01",
+    "cardCount": 55,
+    "sourceUrl": null
+  },
+  {
+    "name": "2ND ARENA LIVE TOUR [DESTINATION]",
+    "releaseType": "live_goods",
+    "releaseDate": "2023-11-01",
+    "cardCount": 55,
+    "sourceUrl": null
+  },
+  {
+    "name": "3RD ARENA LIVE TOUR [BREAK THE CODE]",
+    "releaseType": "live_goods",
+    "releaseDate": "2024-09-01",
+    "cardCount": 55,
+    "sourceUrl": null
+  }
+]
