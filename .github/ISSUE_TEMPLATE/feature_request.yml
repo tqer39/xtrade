@@ -1,5 +1,5 @@
 name: '🚀 Feature Request'
-description: Propose new features or improvements for EduQuest.
+description: Propose new features or improvements for xtrade.
 labels: [enhancement]
 title: '[Feature] '
 body:
@@ -8,12 +8,14 @@ body:
       value: |
         ## ✨ Desired Experience
         Share your idea and the value it would bring to users.
+
+        **Before submitting**, please search [existing issues](https://github.com/tqer39/xtrade/issues) to check if this feature has already been requested.
   - type: input
     id: summary
     attributes:
       label: Feature Summary
       description: Summarize the feature or improvement in one sentence.
-      placeholder: 'Example: Progress summary card showing completion rate per stage'
+      placeholder: 'Example: Add price history chart for listed cards'
     validations:
       required: true
   - type: textarea
@@ -21,7 +23,7 @@ body:
     attributes:
       label: User Story
       description: 'Describe "who, why, and what" in the format: "As a [user type], I want [goal] because [reason]."'
-      placeholder: "Example: As a parent of an elementary student, I want to see my child's learning progress at a glance because I want to support their review sessions."
+      placeholder: 'Example: As a card collector, I want to see price trends at a glance because I want to make informed trading decisions.'
     validations:
       required: true
   - type: textarea
@@ -29,7 +31,7 @@ body:
     attributes:
       label: Detailed Idea
       description: Provide specifics like screen mockups, scenarios, or required data. Diagrams and links are welcome.
-      placeholder: 'Example: Display a progress ring and recent achievement list on the dashboard'
+      placeholder: 'Example: Display a line chart showing price history on the card detail page'
     validations:
       required: true
   - type: dropdown
@@ -49,13 +51,13 @@ body:
     attributes:
       label: Success Metrics
       description: How will we measure success? What user feedback should we look for?
-      placeholder: 'Example: Stage completion rate increases by 10%, positive parent survey feedback'
+      placeholder: 'Example: User engagement with card detail pages increases by 15%, positive user feedback'
   - type: textarea
     id: related
     attributes:
       label: Related Information
       description: Reference links, existing issues, or research materials.
-      placeholder: 'Example: #256 (Learning history API), Figma mockup: https://...'
+      placeholder: 'Example: #256 (Price API), Figma mockup: https://...'
   - type: checkboxes
     id: collaboration
     attributes:

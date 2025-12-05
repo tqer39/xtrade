@@ -26,7 +26,7 @@ body:
     attributes:
       label: Your Question
       description: Describe what you want to know, including background and current difficulties.
-      placeholder: 'Example: Is there a way to fix problem difficulty in EduQuest stage settings?'
+      placeholder: 'Example: How can I set up card price alerts in xtrade?'
     validations:
       required: true
   - type: textarea

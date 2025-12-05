@@ -1,5 +1,5 @@
 name: '🐞 Bug Report'
-description: Report a bug to help us improve EduQuest.
+description: Report a bug to help us improve xtrade.
 labels: [bug]
 title: '[Bug] '
 body:
@@ -8,12 +8,16 @@ body:
       value: |
         ## 🧭 Overview
         Please fill out the following information to help us understand and fix the issue.
+
+        **Before submitting**, please search [existing issues](https://github.com/tqer39/xtrade/issues) to avoid duplicates.
+
+        Tip: Use this format for the summary: "When I ____, I expected ____ but ____ happened instead."
   - type: input
     id: summary
     attributes:
       label: Bug Summary
       description: Briefly describe what's happening.
-      placeholder: 'Example: Subject name not displayed on stage selection screen'
+      placeholder: 'Example: Card listing fails to save when submitting the form'
     validations:
       required: true
   - type: dropdown
@@ -33,7 +37,7 @@ body:
     attributes:
       label: Expected Behavior
       description: Describe what should happen normally, including screen state and messages.
-      placeholder: 'Example: Stage selection card should display grade name and subtitle'
+      placeholder: 'Example: Card listing should be saved and appear in my listings'
     validations:
       required: true
   - type: textarea
@@ -41,7 +45,7 @@ body:
     attributes:
       label: Actual Behavior
       description: Describe what actually happens. Include screenshots or logs if available.
-      placeholder: 'Example: Subtitle is blank and browser console shows errors'
+      placeholder: 'Example: Form submission hangs and browser console shows an error'
     validations:
       required: true
   - type: textarea
@@ -50,20 +54,29 @@ body:
       label: Steps to Reproduce
       description: List the steps to reproduce the issue. Screenshots or video links are helpful.
       placeholder: |
-        1. Log in to EduQuest
-        2. Select Stage 2-3
-        3. Click "Start"
+        1. Log in to xtrade
+        2. Go to card listing page
+        3. Fill in the form and click "Submit"
         4. Error appears
     validations:
       required: true
-  - type: textarea
-    id: environment
+  - type: input
+    id: browser
     attributes:
-      label: Environment
-      description: Specify browser, OS, and network conditions.
-      placeholder: 'Example: Chrome 124 / macOS 14.3 / Network: Home Wi-Fi'
+      label: Browser
+      description: Which browser are you using?
+      placeholder: 'Example: Chrome 124, Safari 17.5, Firefox 128'
     validations:
       required: true
+  - type: checkboxes
+    id: os
+    attributes:
+      label: Operating System
+      description: Select all operating systems where this issue occurs.
+      options:
+        - label: macOS
+        - label: Windows
+        - label: Linux
   - type: checkboxes
     id: checks
     attributes:
