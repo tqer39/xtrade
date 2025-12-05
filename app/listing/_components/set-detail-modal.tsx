@@ -1,20 +1,7 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import type { CardSetWithItems } from '@/modules/cards/types'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { Switch } from '@/components/ui/switch'
-import { Skeleton } from '@/components/ui/skeleton'
+import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,20 +12,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react'
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import type { CardSetWithItems } from '@/modules/cards/types';
 
 interface SetDetailModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  setId: string | null
-  getSetDetail: (setId: string) => Promise<CardSetWithItems | null>
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  setId: string | null;
+  getSetDetail: (setId: string) => Promise<CardSetWithItems | null>;
   updateSet: (
     setId: string,
     data: { name?: string; description?: string; isPublic?: boolean }
-  ) => Promise<void>
-  removeCardFromSet: (setId: string, cardId: string) => Promise<void>
-  onAddCard: (setId: string) => void
+  ) => Promise<void>;
+  removeCardFromSet: (setId: string, cardId: string) => Promise<void>;
+  onAddCard: (setId: string) => void;
 }
 
 export function SetDetailModal({
@@ -50,69 +45,69 @@ export function SetDetailModal({
   removeCardFromSet,
   onAddCard,
 }: SetDetailModalProps) {
-  const [set, setSet] = useState<CardSetWithItems | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [editName, setEditName] = useState('')
-  const [editDescription, setEditDescription] = useState('')
-  const [editIsPublic, setEditIsPublic] = useState(false)
-  const [hasChanges, setHasChanges] = useState(false)
+  const [set, setSet] = useState<CardSetWithItems | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editIsPublic, setEditIsPublic] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     if (open && setId) {
-      setIsLoading(true)
+      setIsLoading(true);
       getSetDetail(setId)
         .then((data) => {
-          setSet(data)
+          setSet(data);
           if (data) {
-            setEditName(data.name)
-            setEditDescription(data.description || '')
-            setEditIsPublic(data.isPublic)
+            setEditName(data.name);
+            setEditDescription(data.description || '');
+            setEditIsPublic(data.isPublic);
           }
-          setHasChanges(false)
+          setHasChanges(false);
         })
-        .finally(() => setIsLoading(false))
+        .finally(() => setIsLoading(false));
     }
-  }, [open, setId, getSetDetail])
+  }, [open, setId, getSetDetail]);
 
   const handleSave = async () => {
-    if (!setId || !set) return
-    setIsSaving(true)
+    if (!setId || !set) return;
+    setIsSaving(true);
     try {
       await updateSet(setId, {
         name: editName,
         description: editDescription || undefined,
         isPublic: editIsPublic,
-      })
-      setHasChanges(false)
+      });
+      setHasChanges(false);
       // Refresh set data
-      const updatedSet = await getSetDetail(setId)
-      setSet(updatedSet)
+      const updatedSet = await getSetDetail(setId);
+      setSet(updatedSet);
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleRemoveCard = async (cardId: string) => {
-    if (!setId) return
-    await removeCardFromSet(setId, cardId)
+    if (!setId) return;
+    await removeCardFromSet(setId, cardId);
     // Refresh set data
-    const updatedSet = await getSetDetail(setId)
-    setSet(updatedSet)
-  }
+    const updatedSet = await getSetDetail(setId);
+    setSet(updatedSet);
+  };
 
-  const handleFieldChange = () => {
-    if (!set) return
+  const handleFieldChange = useCallback(() => {
+    if (!set) return;
     const changed =
       editName !== set.name ||
       editDescription !== (set.description || '') ||
-      editIsPublic !== set.isPublic
-    setHasChanges(changed)
-  }
+      editIsPublic !== set.isPublic;
+    setHasChanges(changed);
+  }, [set, editName, editDescription, editIsPublic]);
 
   useEffect(() => {
-    handleFieldChange()
-  }, [editName, editDescription, editIsPublic])
+    handleFieldChange();
+  }, [handleFieldChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -161,11 +156,7 @@ export function SetDetailModal({
               </div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="set-public">公開する</Label>
-                <Switch
-                  id="set-public"
-                  checked={editIsPublic}
-                  onCheckedChange={setEditIsPublic}
-                />
+                <Switch id="set-public" checked={editIsPublic} onCheckedChange={setEditIsPublic} />
               </div>
               {hasChanges && (
                 <Button onClick={handleSave} disabled={isSaving} className="w-full gap-2">
@@ -208,9 +199,7 @@ export function SetDetailModal({
                             />
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate text-sm">
-                              {item.card?.name}
-                            </div>
+                            <div className="font-medium truncate text-sm">{item.card?.name}</div>
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary" className="text-xs">
                                 {item.card?.category}
@@ -242,9 +231,7 @@ export function SetDetailModal({
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleRemoveCard(item.cardId)}
-                                >
+                                <AlertDialogAction onClick={() => handleRemoveCard(item.cardId)}>
                                   削除
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -259,11 +246,9 @@ export function SetDetailModal({
             </div>
           </div>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            セットが見つかりません
-          </div>
+          <div className="text-center py-8 text-muted-foreground">セットが見つかりません</div>
         )}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

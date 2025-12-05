@@ -334,7 +334,7 @@ export const cardSet = pgTable(
       .notNull(),
   },
   (table) => [index('card_set_user_id_idx').on(table.userId)]
-)
+);
 
 export const cardSetRelations = relations(cardSet, ({ one, many }) => ({
   user: one(user, {
@@ -342,7 +342,7 @@ export const cardSetRelations = relations(cardSet, ({ one, many }) => ({
     references: [user.id],
   }),
   items: many(cardSetItem),
-}))
+}));
 
 /**
  * カードセット内のアイテムテーブル
@@ -365,7 +365,7 @@ export const cardSetItem = pgTable(
     index('card_set_item_set_id_idx').on(table.setId),
     unique('card_set_item_set_card_unique').on(table.setId, table.cardId),
   ]
-)
+);
 
 export const cardSetItemRelations = relations(cardSetItem, ({ one }) => ({
   set: one(cardSet, {
@@ -376,7 +376,7 @@ export const cardSetItemRelations = relations(cardSetItem, ({ one }) => ({
     fields: [cardSetItem.cardId],
     references: [card.id],
   }),
-}))
+}));
 
 // =====================================
 // トレード関連テーブル
