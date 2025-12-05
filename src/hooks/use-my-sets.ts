@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { CardSet, CardSetWithItems } from '@/modules/cards/types'
+import type { CardSet, CardSetWithCount, CardSetWithItems } from '@/modules/cards/types'
 
 interface UseMySetsReturn {
-  sets: CardSet[]
+  sets: CardSetWithCount[]
   isLoading: boolean
   error: Error | null
   createSet: (name: string, description?: string, isPublic?: boolean) => Promise<CardSet>
@@ -20,7 +20,7 @@ interface UseMySetsReturn {
 }
 
 export function useMySets(): UseMySetsReturn {
-  const [sets, setSets] = useState<CardSet[]>([])
+  const [sets, setSets] = useState<CardSetWithCount[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 

@@ -112,6 +112,13 @@ export interface CardSetWithItems extends CardSet {
 }
 
 /**
+ * カードセット（カード数含む、一覧表示用）
+ */
+export interface CardSetWithCount extends CardSet {
+  itemCount: number
+}
+
+/**
  * セット作成の入力
  */
 export interface CreateCardSetInput {

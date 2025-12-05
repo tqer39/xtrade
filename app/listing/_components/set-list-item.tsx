@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { CardSet } from '@/modules/cards/types'
+import type { CardSetWithCount } from '@/modules/cards/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,10 +16,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Trash2, Eye, EyeOff, ChevronRight } from 'lucide-react'
+import { Trash2, Eye, EyeOff, ChevronRight, Layers } from 'lucide-react'
 
 interface SetListItemProps {
-  set: CardSet
+  set: CardSetWithCount
   onSelect: (setId: string) => void
   onDelete: (setId: string) => Promise<void>
 }
@@ -51,6 +51,10 @@ export function SetListItem({ set, onSelect, onDelete }: SetListItemProps) {
               </div>
             )}
             <div className="flex items-center gap-2 mt-2">
+              <Badge variant="outline" className="text-xs">
+                <Layers className="h-3 w-3 mr-1" />
+                {set.itemCount} 枚
+              </Badge>
               <Badge variant={set.isPublic ? 'default' : 'secondary'} className="text-xs">
                 {set.isPublic ? (
                   <>

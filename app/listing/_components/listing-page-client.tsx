@@ -50,6 +50,7 @@ export function ListingPageClient() {
   const [newSetName, setNewSetName] = useState('')
   const [isCreatingSet, setIsCreatingSet] = useState(false)
   const [addingToSetId, setAddingToSetId] = useState<string | null>(null)
+  const [setDetailKey, setSetDetailKey] = useState(0)
 
   const handleOpenModal = (mode: 'have' | 'want') => {
     setModalMode(mode)
@@ -62,6 +63,7 @@ export function ListingPageClient() {
       // カード追加後にセット詳細モーダルを再度開く
       setSelectedSetId(addingToSetId)
       setAddingToSetId(null)
+      setSetDetailKey((prev) => prev + 1)
       setIsSetDetailOpen(true)
     } else if (modalMode === 'have') {
       await addHaveCard(cardId)
@@ -270,6 +272,7 @@ export function ListingPageClient() {
       />
 
       <SetDetailModal
+        key={setDetailKey}
         open={isSetDetailOpen}
         onOpenChange={setIsSetDetailOpen}
         setId={selectedSetId}

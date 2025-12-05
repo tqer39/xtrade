@@ -1,11 +1,12 @@
 import { db } from '@/db/drizzle'
 import * as schema from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql, count } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
 import type {
   CardSet,
   CardSetItem,
   CardSetWithItems,
+  CardSetWithCount,
   CreateCardSetInput,
   UpdateCardSetInput,
   AddCardToSetInput,
@@ -13,13 +14,24 @@ import type {
 import { getCardById } from './service'
 
 /**
- * ユーザーのセット一覧を取得
+ * ユーザーのセット一覧を取得（カード数含む）
  */
-export async function getUserSets(userId: string): Promise<CardSet[]> {
+export async function getUserSets(userId: string): Promise<CardSetWithCount[]> {
   const sets = await db
-    .select()
+    .select({
+      id: schema.cardSet.id,
+      userId: schema.cardSet.userId,
+      name: schema.cardSet.name,
+      description: schema.cardSet.description,
+      isPublic: schema.cardSet.isPublic,
+      createdAt: schema.cardSet.createdAt,
+      updatedAt: schema.cardSet.updatedAt,
+      itemCount: sql<number>`cast(count(${schema.cardSetItem.id}) as int)`,
+    })
     .from(schema.cardSet)
+    .leftJoin(schema.cardSetItem, eq(schema.cardSet.id, schema.cardSetItem.setId))
     .where(eq(schema.cardSet.userId, userId))
+    .groupBy(schema.cardSet.id)
     .orderBy(schema.cardSet.createdAt)
 
   return sets
