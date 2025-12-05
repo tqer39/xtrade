@@ -215,6 +215,15 @@ db-reset:
         echo "  ✓ Cancelled"; \
     fi
 
+# Run database seed (local only)
+db-seed:
+    @echo "→ Running database seed..."
+    npm run db:seed
+
+# Setup database with migration and seed
+db-setup: db-migrate db-seed
+    @echo "✅ Database setup complete!"
+
 # Test commands
 
 # Run all unit tests
