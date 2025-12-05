@@ -115,6 +115,8 @@ export const userRelations = relations(user, ({ many }) => ({
   initiatedTrades: many(trade, { relationName: 'initiatedTrades' }),
   respondedTrades: many(trade, { relationName: 'respondedTrades' }),
   offeredTradeItems: many(tradeItem),
+  favoriteCards: many(userFavoriteCard),
+  favoriteUsers: many(userFavoriteUser),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -614,6 +616,76 @@ export const tradeHistoryRelations = relations(tradeHistory, ({ one }) => ({
   }),
   changedBy: one(user, {
     fields: [tradeHistory.changedByUserId],
+    references: [user.id],
+  }),
+}));
+
+// =====================================
+// お気に入り関連テーブル
+// =====================================
+
+/**
+ * ユーザーがお気に入りにしたカードテーブル
+ */
+export const userFavoriteCard = pgTable(
+  'user_favorite_card',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    cardId: text('card_id')
+      .notNull()
+      .references(() => card.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('user_favorite_card_user_id_idx').on(table.userId),
+    index('user_favorite_card_card_id_idx').on(table.cardId),
+    unique('user_favorite_card_user_card_unique').on(table.userId, table.cardId),
+  ]
+);
+
+export const userFavoriteCardRelations = relations(userFavoriteCard, ({ one }) => ({
+  user: one(user, {
+    fields: [userFavoriteCard.userId],
+    references: [user.id],
+  }),
+  card: one(card, {
+    fields: [userFavoriteCard.cardId],
+    references: [card.id],
+  }),
+}));
+
+/**
+ * ユーザーがお気に入りにしたユーザーテーブル
+ */
+export const userFavoriteUser = pgTable(
+  'user_favorite_user',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    favoriteUserId: text('favorite_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('user_favorite_user_user_id_idx').on(table.userId),
+    index('user_favorite_user_favorite_user_id_idx').on(table.favoriteUserId),
+    unique('user_favorite_user_unique').on(table.userId, table.favoriteUserId),
+  ]
+);
+
+export const userFavoriteUserRelations = relations(userFavoriteUser, ({ one }) => ({
+  user: one(user, {
+    fields: [userFavoriteUser.userId],
+    references: [user.id],
+  }),
+  favoriteUser: one(user, {
+    fields: [userFavoriteUser.favoriteUserId],
     references: [user.id],
   }),
 }));

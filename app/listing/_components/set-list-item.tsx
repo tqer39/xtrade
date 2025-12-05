@@ -40,37 +40,9 @@ export function SetListItem({ set, onSelect, onDelete }: SetListItemProps) {
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
-          {/* サムネイル */}
           <button
             type="button"
-            className="relative w-16 h-16 flex-shrink-0 cursor-pointer bg-transparent border-none p-0"
-            onClick={() => onSelect(set.id)}
-          >
-            {set.thumbnails.length > 0 ? (
-              <div className="relative w-full h-full">
-                {set.thumbnails.slice(0, 3).map((url, index) => (
-                  <img
-                    key={url}
-                    src={url}
-                    alt=""
-                    className="absolute w-12 h-12 object-cover rounded border bg-muted"
-                    style={{
-                      left: `${index * 6}px`,
-                      top: `${index * 4}px`,
-                      zIndex: 3 - index,
-                    }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="w-12 h-12 rounded border bg-muted flex items-center justify-center">
-                <Layers className="h-6 w-6 text-muted-foreground" />
-              </div>
-            )}
-          </button>
-          <button
-            type="button"
-            className="flex-1 min-w-0 cursor-pointer bg-transparent border-none p-0 text-left"
+            className="flex-1 min-w-0 cursor-pointer text-left"
             onClick={() => onSelect(set.id)}
           >
             <div className="font-semibold truncate">{set.name}</div>

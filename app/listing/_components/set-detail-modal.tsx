@@ -1,7 +1,8 @@
 'use client';
 
 import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -96,18 +97,14 @@ export function SetDetailModal({
     setSet(updatedSet);
   };
 
-  const handleFieldChange = useCallback(() => {
+  useEffect(() => {
     if (!set) return;
     const changed =
       editName !== set.name ||
       editDescription !== (set.description || '') ||
       editIsPublic !== set.isPublic;
     setHasChanges(changed);
-  }, [set, editName, editDescription, editIsPublic]);
-
-  useEffect(() => {
-    handleFieldChange();
-  }, [handleFieldChange]);
+  }, [editName, editDescription, editIsPublic, set]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -192,9 +189,11 @@ export function SetDetailModal({
                       <CardContent className="p-3">
                         <div className="flex items-center gap-3">
                           {item.card?.imageUrl && (
-                            <img
+                            <Image
                               src={item.card.imageUrl}
                               alt={item.card.name}
+                              width={40}
+                              height={40}
                               className="w-10 h-10 object-cover rounded"
                             />
                           )}
