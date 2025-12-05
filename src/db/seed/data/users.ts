@@ -33,4 +33,4 @@ export const seedUsers = [
     trustScore: 100,
     trustGrade: 'S',
   },
-] as const
+] as const;

@@ -99,4 +99,4 @@ export const seedCards = [
     category: 'ワンピースカード',
     rarity: 'L',
   },
-] as const
+] as const;

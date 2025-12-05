@@ -1,29 +1,29 @@
-import { config } from 'dotenv'
-import { drizzle } from 'drizzle-orm/node-postgres'
-import { sql } from 'drizzle-orm'
-import { Pool } from 'pg'
-import * as schema from '../schema'
-import { assertLocalEnvironment, generateId } from './utils'
-import { seedUsers } from './data/users'
-import { seedCards } from './data/cards'
-import { seedTrades, seedTradeItems, seedTradeHistory } from './data/trades'
+import { config } from 'dotenv';
+import { sql } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import * as schema from '../schema';
+import { seedCards } from './data/cards';
+import { seedTradeHistory, seedTradeItems, seedTrades } from './data/trades';
+import { seedUsers } from './data/users';
+import { assertLocalEnvironment, generateId } from './utils';
 
 // .env.local から環境変数を読み込む
-config({ path: '.env.local' })
+config({ path: '.env.local' });
 
 async function main() {
-  console.log('🌱 シードスクリプトを開始します...')
+  console.log('🌱 シードスクリプトを開始します...');
 
   // 環境チェック（本番環境では実行不可）
-  assertLocalEnvironment()
-  console.log('✅ ローカル環境を確認しました')
+  assertLocalEnvironment();
+  console.log('✅ ローカル環境を確認しました');
 
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-  const db = drizzle(pool, { schema })
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const db = drizzle(pool, { schema });
 
   try {
     // ビジネステーブルをTRUNCATE（外部キー制約を一時的に無効化）
-    console.log('🗑️  テーブルをリセット中...')
+    console.log('🗑️  テーブルをリセット中...');
     await db.execute(sql`
       TRUNCATE TABLE
         trade_history,
@@ -35,15 +35,15 @@ async function main() {
         allowed_user,
         user_trust_job
       CASCADE
-    `)
+    `);
 
     // テストユーザーを削除して再作成（セッションなども CASCADE で削除）
     await db.execute(sql`
       DELETE FROM "user" WHERE id IN ('test-user-1', 'test-user-2', 'test-admin')
-    `)
+    `);
 
     // テストユーザーの作成
-    console.log('👤 テストユーザーを作成中...')
+    console.log('👤 テストユーザーを作成中...');
     for (const userData of seedUsers) {
       await db.insert(schema.user).values({
         id: userData.id,
@@ -54,12 +54,12 @@ async function main() {
         role: userData.role,
         trustScore: userData.trustScore,
         trustGrade: userData.trustGrade,
-      })
+      });
     }
-    console.log(`  ✓ ${seedUsers.length} 件のユーザーを作成しました`)
+    console.log(`  ✓ ${seedUsers.length} 件のユーザーを作成しました`);
 
     // カードマスタの投入
-    console.log('🎴 カードマスタデータを投入中...')
+    console.log('🎴 カードマスタデータを投入中...');
     for (const cardData of seedCards) {
       await db.insert(schema.card).values({
         id: cardData.id,
@@ -67,12 +67,12 @@ async function main() {
         category: cardData.category,
         rarity: cardData.rarity,
         createdByUserId: 'test-admin',
-      })
+      });
     }
-    console.log(`  ✓ ${seedCards.length} 件のカードを作成しました`)
+    console.log(`  ✓ ${seedCards.length} 件のカードを作成しました`);
 
     // 許可ユーザー（ホワイトリスト）
-    console.log('📋 許可ユーザーリストを作成中...')
+    console.log('📋 許可ユーザーリストを作成中...');
     const allowedUsers = [
       { id: generateId(), twitterUsername: 'testuser1', addedBy: 'test-admin' },
       { id: generateId(), twitterUsername: 'testuser2', addedBy: 'test-admin' },
@@ -81,14 +81,14 @@ async function main() {
         twitterUsername: 'testadmin',
         addedBy: 'test-admin',
       },
-    ]
+    ];
     for (const data of allowedUsers) {
-      await db.insert(schema.allowedUser).values(data)
+      await db.insert(schema.allowedUser).values(data);
     }
-    console.log(`  ✓ ${allowedUsers.length} 件の許可ユーザーを作成しました`)
+    console.log(`  ✓ ${allowedUsers.length} 件の許可ユーザーを作成しました`);
 
     // ユーザーが持っているカード
-    console.log('📦 ユーザーカードデータを作成中...')
+    console.log('📦 ユーザーカードデータを作成中...');
     const userHaveCards = [
       // test-user-1 の持っているカード
       {
@@ -135,11 +135,11 @@ async function main() {
         cardId: 'card-mtg-002',
         quantity: 1,
       },
-    ]
+    ];
     for (const data of userHaveCards) {
-      await db.insert(schema.userHaveCard).values(data)
+      await db.insert(schema.userHaveCard).values(data);
     }
-    console.log(`  ✓ ${userHaveCards.length} 件の所持カードを作成しました`)
+    console.log(`  ✓ ${userHaveCards.length} 件の所持カードを作成しました`);
 
     // ユーザーが欲しいカード
     const userWantCards = [
@@ -169,14 +169,14 @@ async function main() {
         cardId: 'card-pokemon-002',
         priority: 2,
       },
-    ]
+    ];
     for (const data of userWantCards) {
-      await db.insert(schema.userWantCard).values(data)
+      await db.insert(schema.userWantCard).values(data);
     }
-    console.log(`  ✓ ${userWantCards.length} 件の欲しいカードを作成しました`)
+    console.log(`  ✓ ${userWantCards.length} 件の欲しいカードを作成しました`);
 
     // トレードの作成
-    console.log('🔄 サンプルトレードを作成中...')
+    console.log('🔄 サンプルトレードを作成中...');
     for (const tradeData of seedTrades) {
       await db.insert(schema.trade).values({
         id: tradeData.id,
@@ -184,9 +184,9 @@ async function main() {
         initiatorUserId: tradeData.initiatorUserId,
         responderUserId: tradeData.responderUserId,
         status: tradeData.status,
-      })
+      });
     }
-    console.log(`  ✓ ${seedTrades.length} 件のトレードを作成しました`)
+    console.log(`  ✓ ${seedTrades.length} 件のトレードを作成しました`);
 
     // トレードアイテムの作成
     for (const itemData of seedTradeItems) {
@@ -196,11 +196,9 @@ async function main() {
         offeredByUserId: itemData.offeredByUserId,
         cardId: itemData.cardId,
         quantity: itemData.quantity,
-      })
+      });
     }
-    console.log(
-      `  ✓ ${seedTradeItems.length} 件のトレードアイテムを作成しました`
-    )
+    console.log(`  ✓ ${seedTradeItems.length} 件のトレードアイテムを作成しました`);
 
     // トレード履歴の作成
     for (const historyData of seedTradeHistory) {
@@ -211,31 +209,29 @@ async function main() {
         toStatus: historyData.toStatus,
         changedByUserId: historyData.changedByUserId,
         reason: historyData.reason,
-      })
+      });
     }
-    console.log(
-      `  ✓ ${seedTradeHistory.length} 件のトレード履歴を作成しました`
-    )
+    console.log(`  ✓ ${seedTradeHistory.length} 件のトレード履歴を作成しました`);
 
-    console.log('')
-    console.log('✅ シードが完了しました！')
-    console.log('')
-    console.log('作成されたデータ:')
-    console.log(`  - ユーザー: ${seedUsers.length} 件`)
-    console.log(`  - カード: ${seedCards.length} 件`)
-    console.log(`  - 許可ユーザー: ${allowedUsers.length} 件`)
-    console.log(`  - 所持カード: ${userHaveCards.length} 件`)
-    console.log(`  - 欲しいカード: ${userWantCards.length} 件`)
-    console.log(`  - トレード: ${seedTrades.length} 件`)
-    console.log(`  - トレードアイテム: ${seedTradeItems.length} 件`)
-    console.log(`  - トレード履歴: ${seedTradeHistory.length} 件`)
+    console.log('');
+    console.log('✅ シードが完了しました！');
+    console.log('');
+    console.log('作成されたデータ:');
+    console.log(`  - ユーザー: ${seedUsers.length} 件`);
+    console.log(`  - カード: ${seedCards.length} 件`);
+    console.log(`  - 許可ユーザー: ${allowedUsers.length} 件`);
+    console.log(`  - 所持カード: ${userHaveCards.length} 件`);
+    console.log(`  - 欲しいカード: ${userWantCards.length} 件`);
+    console.log(`  - トレード: ${seedTrades.length} 件`);
+    console.log(`  - トレードアイテム: ${seedTradeItems.length} 件`);
+    console.log(`  - トレード履歴: ${seedTradeHistory.length} 件`);
   } catch (error) {
-    console.error('❌ シードに失敗しました:', error)
-    process.exit(1)
+    console.error('❌ シードに失敗しました:', error);
+    process.exit(1);
   } finally {
-    await pool.end()
-    process.exit(0)
+    await pool.end();
+    process.exit(0);
   }
 }
 
-main()
+main();

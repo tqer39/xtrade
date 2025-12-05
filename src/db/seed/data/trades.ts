@@ -23,7 +23,7 @@ export const seedTrades = [
     responderUserId: 'test-user-1',
     status: 'completed',
   },
-] as const
+] as const;
 
 /**
  * トレードアイテムのフィクスチャデータ
@@ -60,7 +60,7 @@ export const seedTradeItems = [
     cardId: 'card-onepiece-001',
     quantity: 2,
   },
-] as const
+] as const;
 
 /**
  * トレード履歴のフィクスチャデータ
@@ -98,4 +98,4 @@ export const seedTradeHistory = [
     changedByUserId: 'test-admin',
     reason: '取引完了',
   },
-] as const
+] as const;
