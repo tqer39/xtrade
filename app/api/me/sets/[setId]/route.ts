@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
-import { headers } from 'next/headers'
-import { auth } from '@/lib/auth'
-import { getSetById, updateSet, deleteSet, isSetOwner } from '@/modules/cards/set-service'
-import type { UpdateCardSetInput } from '@/modules/cards/types'
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { deleteSet, getSetById, isSetOwner, updateSet } from '@/modules/cards/set-service';
+import type { UpdateCardSetInput } from '@/modules/cards/types';
 
 interface RouteParams {
-  params: Promise<{ setId: string }>
+  params: Promise<{ setId: string }>;
 }
 
 /**
@@ -14,26 +14,26 @@ interface RouteParams {
 export async function GET(_request: Request, { params }: RouteParams) {
   const session = await auth.api.getSession({
     headers: await headers(),
-  })
+  });
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { setId } = await params
+  const { setId } = await params;
 
   // 所有者確認
-  const isOwner = await isSetOwner(setId, session.user.id)
+  const isOwner = await isSetOwner(setId, session.user.id);
   if (!isOwner) {
-    return NextResponse.json({ error: 'Set not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Set not found' }, { status: 404 });
   }
 
-  const set = await getSetById(setId)
+  const set = await getSetById(setId);
   if (!set) {
-    return NextResponse.json({ error: 'Set not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Set not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ set })
+  return NextResponse.json({ set });
 }
 
 /**
@@ -42,33 +42,33 @@ export async function GET(_request: Request, { params }: RouteParams) {
 export async function PATCH(request: Request, { params }: RouteParams) {
   const session = await auth.api.getSession({
     headers: await headers(),
-  })
+  });
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { setId } = await params
+  const { setId } = await params;
 
   // 所有者確認
-  const isOwner = await isSetOwner(setId, session.user.id)
+  const isOwner = await isSetOwner(setId, session.user.id);
   if (!isOwner) {
-    return NextResponse.json({ error: 'Set not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Set not found' }, { status: 404 });
   }
 
-  const body = (await request.json()) as UpdateCardSetInput
+  const body = (await request.json()) as UpdateCardSetInput;
 
   const updatedSet = await updateSet(setId, {
     name: body.name?.trim(),
     description: body.description?.trim(),
     isPublic: body.isPublic,
-  })
+  });
 
   if (!updatedSet) {
-    return NextResponse.json({ error: 'Set not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Set not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ set: updatedSet })
+  return NextResponse.json({ set: updatedSet });
 }
 
 /**
@@ -77,21 +77,21 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 export async function DELETE(_request: Request, { params }: RouteParams) {
   const session = await auth.api.getSession({
     headers: await headers(),
-  })
+  });
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { setId } = await params
+  const { setId } = await params;
 
   // 所有者確認
-  const isOwner = await isSetOwner(setId, session.user.id)
+  const isOwner = await isSetOwner(setId, session.user.id);
   if (!isOwner) {
-    return NextResponse.json({ error: 'Set not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Set not found' }, { status: 404 });
   }
 
-  await deleteSet(setId)
+  await deleteSet(setId);
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true });
 }

@@ -1,26 +1,21 @@
-import { db } from '@/db/drizzle'
-import * as schema from '@/db/schema'
-import { eq, and, like, sql } from 'drizzle-orm'
-import { randomUUID } from 'crypto'
-import type {
-  Card,
-  CreateCardInput,
-  AddHaveCardInput,
-  AddWantCardInput,
-} from './types'
+import { randomUUID } from 'node:crypto';
+import { and, eq, like, sql } from 'drizzle-orm';
+import { db } from '@/db/drizzle';
+import * as schema from '@/db/schema';
+import type { AddHaveCardInput, AddWantCardInput, Card, CreateCardInput } from './types';
 
 /**
  * カードを検索する
  */
 export async function searchCards(query?: string, category?: string, limit = 50) {
-  let whereConditions = []
+  const whereConditions = [];
 
   if (query) {
-    whereConditions.push(like(schema.card.name, `%${query}%`))
+    whereConditions.push(like(schema.card.name, `%${query}%`));
   }
 
   if (category) {
-    whereConditions.push(eq(schema.card.category, category))
+    whereConditions.push(eq(schema.card.category, category));
   }
 
   const cards = await db
@@ -28,18 +23,15 @@ export async function searchCards(query?: string, category?: string, limit = 50)
     .from(schema.card)
     .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
     .orderBy(schema.card.name)
-    .limit(limit)
+    .limit(limit);
 
-  return cards
+  return cards;
 }
 
 /**
  * カードを作成する
  */
-export async function createCard(
-  input: CreateCardInput,
-  createdByUserId: string
-): Promise<Card> {
+export async function createCard(input: CreateCardInput, createdByUserId: string): Promise<Card> {
   const newCard = {
     id: randomUUID(),
     name: input.name,
@@ -49,24 +41,20 @@ export async function createCard(
     createdByUserId,
     createdAt: new Date(),
     updatedAt: new Date(),
-  }
+  };
 
-  await db.insert(schema.card).values(newCard)
+  await db.insert(schema.card).values(newCard);
 
-  return newCard
+  return newCard;
 }
 
 /**
  * カードIDでカードを取得する
  */
 export async function getCardById(cardId: string) {
-  const cards = await db
-    .select()
-    .from(schema.card)
-    .where(eq(schema.card.id, cardId))
-    .limit(1)
+  const cards = await db.select().from(schema.card).where(eq(schema.card.id, cardId)).limit(1);
 
-  return cards[0] ?? null
+  return cards[0] ?? null;
 }
 
 /**
@@ -92,9 +80,9 @@ export async function getUserHaveCards(userId: string) {
     .from(schema.userHaveCard)
     .innerJoin(schema.card, eq(schema.userHaveCard.cardId, schema.card.id))
     .where(eq(schema.userHaveCard.userId, userId))
-    .orderBy(schema.card.name)
+    .orderBy(schema.card.name);
 
-  return haveCards
+  return haveCards;
 }
 
 /**
@@ -120,9 +108,9 @@ export async function getUserWantCards(userId: string) {
     .from(schema.userWantCard)
     .innerJoin(schema.card, eq(schema.userWantCard.cardId, schema.card.id))
     .where(eq(schema.userWantCard.userId, userId))
-    .orderBy(sql`${schema.userWantCard.priority} DESC NULLS LAST`, schema.card.name)
+    .orderBy(sql`${schema.userWantCard.priority} DESC NULLS LAST`, schema.card.name);
 
-  return wantCards
+  return wantCards;
 }
 
 /**
@@ -130,47 +118,37 @@ export async function getUserWantCards(userId: string) {
  * quantity が 0 の場合は削除
  */
 export async function upsertHaveCard(userId: string, input: AddHaveCardInput) {
-  const { cardId, quantity } = input
+  const { cardId, quantity } = input;
 
   // カードが存在するか確認
-  const card = await getCardById(cardId)
+  const card = await getCardById(cardId);
   if (!card) {
-    throw new Error('Card not found')
+    throw new Error('Card not found');
   }
 
   // quantity が 0 の場合は削除
   if (quantity <= 0) {
     await db
       .delete(schema.userHaveCard)
-      .where(
-        and(
-          eq(schema.userHaveCard.userId, userId),
-          eq(schema.userHaveCard.cardId, cardId)
-        )
-      )
-    return null
+      .where(and(eq(schema.userHaveCard.userId, userId), eq(schema.userHaveCard.cardId, cardId)));
+    return null;
   }
 
   // 既存のレコードを確認
   const existing = await db
     .select()
     .from(schema.userHaveCard)
-    .where(
-      and(
-        eq(schema.userHaveCard.userId, userId),
-        eq(schema.userHaveCard.cardId, cardId)
-      )
-    )
-    .limit(1)
+    .where(and(eq(schema.userHaveCard.userId, userId), eq(schema.userHaveCard.cardId, cardId)))
+    .limit(1);
 
   if (existing[0]) {
     // 更新
     await db
       .update(schema.userHaveCard)
       .set({ quantity, updatedAt: new Date() })
-      .where(eq(schema.userHaveCard.id, existing[0].id))
+      .where(eq(schema.userHaveCard.id, existing[0].id));
 
-    return { ...existing[0], quantity }
+    return { ...existing[0], quantity };
   } else {
     // 新規作成
     const newRecord = {
@@ -180,11 +158,11 @@ export async function upsertHaveCard(userId: string, input: AddHaveCardInput) {
       quantity,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }
+    };
 
-    await db.insert(schema.userHaveCard).values(newRecord)
+    await db.insert(schema.userHaveCard).values(newRecord);
 
-    return newRecord
+    return newRecord;
   }
 }
 
@@ -192,34 +170,29 @@ export async function upsertHaveCard(userId: string, input: AddHaveCardInput) {
  * 欲しいカードを追加/更新
  */
 export async function upsertWantCard(userId: string, input: AddWantCardInput) {
-  const { cardId, priority = 0 } = input
+  const { cardId, priority = 0 } = input;
 
   // カードが存在するか確認
-  const card = await getCardById(cardId)
+  const card = await getCardById(cardId);
   if (!card) {
-    throw new Error('Card not found')
+    throw new Error('Card not found');
   }
 
   // 既存のレコードを確認
   const existing = await db
     .select()
     .from(schema.userWantCard)
-    .where(
-      and(
-        eq(schema.userWantCard.userId, userId),
-        eq(schema.userWantCard.cardId, cardId)
-      )
-    )
-    .limit(1)
+    .where(and(eq(schema.userWantCard.userId, userId), eq(schema.userWantCard.cardId, cardId)))
+    .limit(1);
 
   if (existing[0]) {
     // 更新
     await db
       .update(schema.userWantCard)
       .set({ priority, updatedAt: new Date() })
-      .where(eq(schema.userWantCard.id, existing[0].id))
+      .where(eq(schema.userWantCard.id, existing[0].id));
 
-    return { ...existing[0], priority }
+    return { ...existing[0], priority };
   } else {
     // 新規作成
     const newRecord = {
@@ -229,11 +202,11 @@ export async function upsertWantCard(userId: string, input: AddWantCardInput) {
       priority,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }
+    };
 
-    await db.insert(schema.userWantCard).values(newRecord)
+    await db.insert(schema.userWantCard).values(newRecord);
 
-    return newRecord
+    return newRecord;
   }
 }
 
@@ -243,10 +216,5 @@ export async function upsertWantCard(userId: string, input: AddWantCardInput) {
 export async function removeWantCard(userId: string, cardId: string) {
   await db
     .delete(schema.userWantCard)
-    .where(
-      and(
-        eq(schema.userWantCard.userId, userId),
-        eq(schema.userWantCard.cardId, cardId)
-      )
-    )
+    .where(and(eq(schema.userWantCard.userId, userId), eq(schema.userWantCard.cardId, cardId)));
 }

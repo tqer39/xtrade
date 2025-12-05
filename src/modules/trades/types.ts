@@ -1,4 +1,4 @@
-import type { TrustGrade } from '@/modules/trust'
+import type { TrustGrade } from '@/modules/trust';
 
 /**
  * トレードのステータス
@@ -10,67 +10,67 @@ export type TradeStatus =
   | 'completed'
   | 'disputed'
   | 'canceled'
-  | 'expired'
+  | 'expired';
 
 /**
  * トレードの基本情報
  */
 export interface Trade {
-  id: string
-  roomSlug: string
-  initiatorUserId: string
-  responderUserId: string | null
-  status: TradeStatus
-  proposedExpiredAt: Date | null
-  agreedExpiredAt: Date | null
-  createdAt: Date
-  updatedAt: Date
+  id: string;
+  roomSlug: string;
+  initiatorUserId: string;
+  responderUserId: string | null;
+  status: TradeStatus;
+  proposedExpiredAt: Date | null;
+  agreedExpiredAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /**
  * トレード参加者の情報
  */
 export interface TradeParticipant {
-  id: string
-  name: string
-  twitterUsername: string | null
-  image: string | null
-  trustGrade: TrustGrade | null
+  id: string;
+  name: string;
+  twitterUsername: string | null;
+  image: string | null;
+  trustGrade: TrustGrade | null;
 }
 
 /**
  * トレードアイテム
  */
 export interface TradeItem {
-  cardId: string
-  cardName: string
-  quantity: number
-  offeredByUserId: string
+  cardId: string;
+  cardName: string;
+  quantity: number;
+  offeredByUserId: string;
 }
 
 /**
  * トレード詳細
  */
 export interface TradeDetail {
-  id: string
-  roomSlug: string
-  status: TradeStatus
-  initiator: TradeParticipant
-  responder: TradeParticipant | null
-  initiatorItems: TradeItem[]
-  responderItems: TradeItem[]
-  proposedExpiredAt: string | null
-  agreedExpiredAt: string | null
-  createdAt: string
-  updatedAt: string
+  id: string;
+  roomSlug: string;
+  status: TradeStatus;
+  initiator: TradeParticipant;
+  responder: TradeParticipant | null;
+  initiatorItems: TradeItem[];
+  responderItems: TradeItem[];
+  proposedExpiredAt: string | null;
+  agreedExpiredAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
  * トレード作成の入力
  */
 export interface CreateTradeInput {
-  responderUserId?: string
-  proposedExpiredAt?: Date
+  responderUserId?: string;
+  proposedExpiredAt?: Date;
 }
 
 /**
@@ -78,9 +78,9 @@ export interface CreateTradeInput {
  */
 export interface UpdateOfferInput {
   items: Array<{
-    cardId: string
-    quantity: number
-  }>
+    cardId: string;
+    quantity: number;
+  }>;
 }
 
 /**
@@ -91,7 +91,7 @@ export class TradeTransitionError extends Error {
     message: string,
     public code: 'INVALID_TRANSITION' | 'UNAUTHORIZED' | 'EXPIRED'
   ) {
-    super(message)
-    this.name = 'TradeTransitionError'
+    super(message);
+    this.name = 'TradeTransitionError';
   }
 }

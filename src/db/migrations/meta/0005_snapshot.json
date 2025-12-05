@@ -111,12 +111,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -179,12 +175,8 @@
           "name": "allowed_user_added_by_user_id_fk",
           "tableFrom": "allowed_user",
           "tableTo": "user",
-          "columnsFrom": [
-            "added_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["added_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -194,9 +186,7 @@
         "allowed_user_twitter_username_unique": {
           "name": "allowed_user_twitter_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "twitter_username"
-          ]
+          "columns": ["twitter_username"]
         }
       },
       "policies": {},
@@ -295,12 +285,8 @@
           "name": "card_created_by_user_id_user_id_fk",
           "tableFrom": "card",
           "tableTo": "user",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -383,12 +369,8 @@
           "name": "card_set_user_id_user_id_fk",
           "tableFrom": "card_set",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -458,12 +440,8 @@
           "name": "card_set_item_set_id_card_set_id_fk",
           "tableFrom": "card_set_item",
           "tableTo": "card_set",
-          "columnsFrom": [
-            "set_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["set_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -471,12 +449,8 @@
           "name": "card_set_item_card_id_card_id_fk",
           "tableFrom": "card_set_item",
           "tableTo": "card",
-          "columnsFrom": [
-            "card_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["card_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -486,10 +460,7 @@
         "card_set_item_set_card_unique": {
           "name": "card_set_item_set_card_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "set_id",
-            "card_id"
-          ]
+          "columns": ["set_id", "card_id"]
         }
       },
       "policies": {},
@@ -573,12 +544,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -588,9 +555,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -726,12 +691,8 @@
           "name": "trade_initiator_user_id_user_id_fk",
           "tableFrom": "trade",
           "tableTo": "user",
-          "columnsFrom": [
-            "initiator_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["initiator_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -739,12 +700,8 @@
           "name": "trade_responder_user_id_user_id_fk",
           "tableFrom": "trade",
           "tableTo": "user",
-          "columnsFrom": [
-            "responder_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["responder_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -754,9 +711,7 @@
         "trade_room_slug_unique": {
           "name": "trade_room_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "room_slug"
-          ]
+          "columns": ["room_slug"]
         }
       },
       "policies": {},
@@ -833,12 +788,8 @@
           "name": "trade_history_trade_id_trade_id_fk",
           "tableFrom": "trade_history",
           "tableTo": "trade",
-          "columnsFrom": [
-            "trade_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["trade_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -846,12 +797,8 @@
           "name": "trade_history_changed_by_user_id_user_id_fk",
           "tableFrom": "trade_history",
           "tableTo": "user",
-          "columnsFrom": [
-            "changed_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["changed_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -942,12 +889,8 @@
           "name": "trade_item_trade_id_trade_id_fk",
           "tableFrom": "trade_item",
           "tableTo": "trade",
-          "columnsFrom": [
-            "trade_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["trade_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -955,12 +898,8 @@
           "name": "trade_item_offered_by_user_id_user_id_fk",
           "tableFrom": "trade_item",
           "tableTo": "user",
-          "columnsFrom": [
-            "offered_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["offered_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -968,12 +907,8 @@
           "name": "trade_item_card_id_card_id_fk",
           "tableFrom": "trade_item",
           "tableTo": "card",
-          "columnsFrom": [
-            "card_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["card_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1097,9 +1032,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -1187,12 +1120,8 @@
           "name": "user_have_card_user_id_user_id_fk",
           "tableFrom": "user_have_card",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1200,12 +1129,8 @@
           "name": "user_have_card_card_id_card_id_fk",
           "tableFrom": "user_have_card",
           "tableTo": "card",
-          "columnsFrom": [
-            "card_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["card_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1215,10 +1140,7 @@
         "user_have_card_user_card_unique": {
           "name": "user_have_card_user_card_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "card_id"
-          ]
+          "columns": ["user_id", "card_id"]
         }
       },
       "policies": {},
@@ -1326,12 +1248,8 @@
           "name": "user_trust_job_user_id_user_id_fk",
           "tableFrom": "user_trust_job",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1423,12 +1341,8 @@
           "name": "user_want_card_user_id_user_id_fk",
           "tableFrom": "user_want_card",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1436,12 +1350,8 @@
           "name": "user_want_card_card_id_card_id_fk",
           "tableFrom": "user_want_card",
           "tableTo": "card",
-          "columnsFrom": [
-            "card_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["card_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1451,10 +1361,7 @@
         "user_want_card_user_card_unique": {
           "name": "user_want_card_user_card_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "card_id"
-          ]
+          "columns": ["user_id", "card_id"]
         }
       },
       "policies": {},

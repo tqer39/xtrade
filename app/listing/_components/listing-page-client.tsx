@@ -1,36 +1,25 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useSession } from '@/lib/auth-client'
-import { useMyCards } from '@/hooks/use-my-cards'
-import { useMySets } from '@/hooks/use-my-sets'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
-import { LoginButton } from '@/components/auth'
-import { CardListItem } from './card-list-item'
-import { CardSearchModal } from './card-search-modal'
-import { SetListItem } from './set-list-item'
-import { SetDetailModal } from './set-detail-modal'
-import { Plus } from 'lucide-react'
-import Link from 'next/link'
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { LoginButton } from '@/components/auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useMyCards } from '@/hooks/use-my-cards';
+import { useMySets } from '@/hooks/use-my-sets';
+import { useSession } from '@/lib/auth-client';
+import { CardListItem } from './card-list-item';
+import { CardSearchModal } from './card-search-modal';
+import { SetDetailModal } from './set-detail-modal';
+import { SetListItem } from './set-list-item';
 
 export function ListingPageClient() {
-  const { data: session, isPending: isSessionPending } = useSession()
-  const {
-    haveCards,
-    wantCards,
-    isLoading,
-    error,
-    addHaveCard,
-    addWantCard,
-    updateHaveCard,
-    updateWantCard,
-    deleteHaveCard,
-    deleteWantCard,
-    refetch,
-  } = useMyCards()
+  const { data: session, isPending: isSessionPending } = useSession();
+  const { haveCards, wantCards, isLoading, error, addHaveCard, addWantCard, refetch } =
+    useMyCards();
   const {
     sets,
     isLoading: isSetsLoading,
@@ -42,59 +31,59 @@ export function ListingPageClient() {
     addCardToSet,
     removeCardFromSet,
     refetch: refetchSets,
-  } = useMySets()
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<'have' | 'want'>('have')
-  const [selectedSetId, setSelectedSetId] = useState<string | null>(null)
-  const [isSetDetailOpen, setIsSetDetailOpen] = useState(false)
-  const [newSetName, setNewSetName] = useState('')
-  const [isCreatingSet, setIsCreatingSet] = useState(false)
-  const [addingToSetId, setAddingToSetId] = useState<string | null>(null)
-  const [setDetailKey, setSetDetailKey] = useState(0)
+  } = useMySets();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'have' | 'want'>('have');
+  const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
+  const [isSetDetailOpen, setIsSetDetailOpen] = useState(false);
+  const [newSetName, setNewSetName] = useState('');
+  const [isCreatingSet, setIsCreatingSet] = useState(false);
+  const [addingToSetId, setAddingToSetId] = useState<string | null>(null);
+  const [setDetailKey, setSetDetailKey] = useState(0);
 
   const handleOpenModal = (mode: 'have' | 'want') => {
-    setModalMode(mode)
-    setIsModalOpen(true)
-  }
+    setModalMode(mode);
+    setIsModalOpen(true);
+  };
 
   const handleAddCard = async (cardId: string) => {
     if (addingToSetId) {
-      await addCardToSet(addingToSetId, cardId)
+      await addCardToSet(addingToSetId, cardId);
       // カード追加後にセット詳細モーダルを再度開く
-      setSelectedSetId(addingToSetId)
-      setAddingToSetId(null)
-      setSetDetailKey((prev) => prev + 1)
-      setIsSetDetailOpen(true)
+      setSelectedSetId(addingToSetId);
+      setAddingToSetId(null);
+      setSetDetailKey((prev) => prev + 1);
+      setIsSetDetailOpen(true);
     } else if (modalMode === 'have') {
-      await addHaveCard(cardId)
+      await addHaveCard(cardId);
     } else {
-      await addWantCard(cardId)
+      await addWantCard(cardId);
     }
-  }
+  };
 
   const handleSelectSet = (setId: string) => {
-    setSelectedSetId(setId)
-    setIsSetDetailOpen(true)
-  }
+    setSelectedSetId(setId);
+    setIsSetDetailOpen(true);
+  };
 
   const handleCreateSet = async () => {
-    if (!newSetName.trim()) return
-    setIsCreatingSet(true)
+    if (!newSetName.trim()) return;
+    setIsCreatingSet(true);
     try {
-      const newSet = await createSet(newSetName.trim())
-      setNewSetName('')
-      setSelectedSetId(newSet.id)
-      setIsSetDetailOpen(true)
+      const newSet = await createSet(newSetName.trim());
+      setNewSetName('');
+      setSelectedSetId(newSet.id);
+      setIsSetDetailOpen(true);
     } finally {
-      setIsCreatingSet(false)
+      setIsCreatingSet(false);
     }
-  }
+  };
 
   const handleAddCardToSet = (setId: string) => {
-    setAddingToSetId(setId)
-    setIsSetDetailOpen(false)
-    setIsModalOpen(true)
-  }
+    setAddingToSetId(setId);
+    setIsSetDetailOpen(false);
+    setIsModalOpen(true);
+  };
 
   if (isSessionPending) {
     return (
@@ -107,7 +96,7 @@ export function ListingPageClient() {
           <Skeleton className="h-20 w-full" />
         </div>
       </div>
-    )
+    );
   }
 
   if (!session?.user) {
@@ -119,7 +108,7 @@ export function ListingPageClient() {
           <LoginButton />
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -131,7 +120,7 @@ export function ListingPageClient() {
           <Button onClick={() => refetch()}>再読み込み</Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -169,13 +158,7 @@ export function ListingPageClient() {
           ) : (
             <div className="space-y-3">
               {haveCards.map((item) => (
-                <CardListItem
-                  key={item.id}
-                  item={item}
-                  type="have"
-                  onUpdate={updateHaveCard}
-                  onDelete={deleteHaveCard}
-                />
+                <CardListItem key={item.id} item={item} type="have" />
               ))}
             </div>
           )}
@@ -200,13 +183,7 @@ export function ListingPageClient() {
           ) : (
             <div className="space-y-3">
               {wantCards.map((item) => (
-                <CardListItem
-                  key={item.id}
-                  item={item}
-                  type="want"
-                  onUpdate={updateWantCard}
-                  onDelete={deleteWantCard}
-                />
+                <CardListItem key={item.id} item={item} type="want" />
               ))}
             </div>
           )}
@@ -262,9 +239,9 @@ export function ListingPageClient() {
       <CardSearchModal
         open={isModalOpen}
         onOpenChange={(open) => {
-          setIsModalOpen(open)
+          setIsModalOpen(open);
           if (!open) {
-            setAddingToSetId(null)
+            setAddingToSetId(null);
           }
         }}
         mode={addingToSetId ? 'set' : modalMode}
@@ -282,5 +259,5 @@ export function ListingPageClient() {
         onAddCard={handleAddCardToSet}
       />
     </div>
-  )
+  );
 }

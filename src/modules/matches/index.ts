@@ -1,2 +1,2 @@
-export { findMatches } from './service'
-export type { Match, MatchCard, MatchSearchOptions, MatchUser } from './types'
+export { findMatches } from './service';
+export type { Match, MatchCard, MatchSearchOptions, MatchUser } from './types';

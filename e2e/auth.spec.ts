@@ -1,30 +1,25 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test';
 
 test.describe('Authentication', () => {
   test('should display login button on home page', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/');
 
     // ログインボタンが表示されていることを確認
-    const loginButton = page.getByRole('button', { name: 'X でログイン' })
-    await expect(loginButton).toBeVisible()
-  })
+    const loginButton = page.getByRole('button', { name: 'X でログイン' });
+    await expect(loginButton).toBeVisible();
+  });
 
   // CI 環境では Twitter OAuth の認証情報がないためスキップ
-  test.skip(
-    !!process.env.CI,
-    'Skipped in CI: Twitter OAuth credentials not available'
-  )
-  test('should redirect to Twitter OAuth when clicking login', async ({
-    page,
-  }) => {
-    await page.goto('/')
+  test.skip(!!process.env.CI, 'Skipped in CI: Twitter OAuth credentials not available');
+  test('should redirect to Twitter OAuth when clicking login', async ({ page }) => {
+    await page.goto('/');
 
     // ログインボタンをクリック
-    const loginButton = page.getByRole('button', { name: 'X でログイン' })
-    await loginButton.click()
+    const loginButton = page.getByRole('button', { name: 'X でログイン' });
+    await loginButton.click();
 
     // Twitter の OAuth ページにリダイレクトされることを確認
     // 注意: 実際の OAuth フローはテスト環境では完了しない
-    await page.waitForURL(/twitter\.com|x\.com/, { timeout: 10000 })
-  })
-})
+    await page.waitForURL(/twitter\.com|x\.com/, { timeout: 10000 });
+  });
+});

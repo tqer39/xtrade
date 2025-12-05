@@ -1,10 +1,10 @@
-import { config } from 'dotenv'
-import { defineConfig } from 'drizzle-kit'
+import { config } from 'dotenv';
+import { defineConfig } from 'drizzle-kit';
 
 // .env.local ファイルから環境変数を読み込む
-config({ path: '.env.local' })
+config({ path: '.env.local' });
 
-const isLocal = process.env.DATABASE_URL?.includes('localhost')
+const isLocal = process.env.DATABASE_URL?.includes('localhost');
 
 export default defineConfig({
   // Drizzle スキーマの場所
@@ -28,4 +28,4 @@ export default defineConfig({
   // マイグレーション設定
   verbose: true, // 詳細なログを出力
   strict: true, // 厳密モード（型安全性を強化）
-})
+});

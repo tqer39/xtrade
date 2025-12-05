@@ -2,23 +2,23 @@ export {
   createTrade,
   getTradeByRoomSlug,
   getTradeDetail,
-  updateOffer,
-  transitionTrade,
   setResponder,
-} from './service'
+  transitionTrade,
+  updateOffer,
+} from './service';
 export {
-  canTransition,
-  validateTransition,
-  isFinalStatus,
   canParticipate,
-} from './state-machine'
+  canTransition,
+  isFinalStatus,
+  validateTransition,
+} from './state-machine';
 export type {
+  CreateTradeInput,
   Trade,
-  TradeStatus,
   TradeDetail,
   TradeItem,
   TradeParticipant,
-  CreateTradeInput,
+  TradeStatus,
   UpdateOfferInput,
-} from './types'
-export { TradeTransitionError } from './types'
+} from './types';
+export { TradeTransitionError } from './types';

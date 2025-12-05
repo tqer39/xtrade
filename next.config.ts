@@ -1,4 +1,4 @@
-import type { NextConfig } from 'next'
+import type { NextConfig } from 'next';
 
 const securityHeaders = [
   // XSS 対策: ブラウザの XSS フィルタを有効化
@@ -26,9 +26,14 @@ const securityHeaders = [
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=()',
   },
-]
+];
 
 const nextConfig: NextConfig = {
+  // Biome に移行したため ESLint を無効化
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // セキュリティヘッダーの設定
   async headers() {
     return [
@@ -37,7 +42,7 @@ const nextConfig: NextConfig = {
         source: '/:path*',
         headers: securityHeaders,
       },
-    ]
+    ];
   },
 
   // 外部画像の許可設定（Twitter/X のプロフィール画像用）
@@ -55,6 +60,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

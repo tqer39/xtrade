@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
-import { signOut, useSession } from '@/lib/auth-client'
-import { Button } from '@/components/ui/button'
-import { LoginButton } from './login-button'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { signOut, useSession } from '@/lib/auth-client';
+import { LoginButton } from './login-button';
 
 interface UserData {
-  role: string
+  role: string;
 }
 
 /**
@@ -15,8 +15,8 @@ interface UserData {
  * ログイン状態に応じてユーザー情報またはログインボタンを表示
  */
 export function UserMenu() {
-  const { data: session, isPending } = useSession()
-  const [userData, setUserData] = useState<UserData | null>(null)
+  const { data: session, isPending } = useSession();
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -24,24 +24,22 @@ export function UserMenu() {
         .then((res) => res.json())
         .then((data) => {
           if (data.user) {
-            setUserData(data.user)
+            setUserData(data.user);
           }
         })
-        .catch(console.error)
+        .catch(console.error);
     }
-  }, [session?.user?.id])
+  }, [session?.user?.id]);
 
   if (isPending) {
-    return (
-      <div className="w-30 h-10 bg-muted rounded-lg animate-pulse" />
-    )
+    return <div className="w-30 h-10 bg-muted rounded-lg animate-pulse" />;
   }
 
   if (!session?.user) {
-    return <LoginButton />
+    return <LoginButton />;
   }
 
-  const isAdmin = userData?.role === 'admin'
+  const isAdmin = userData?.role === 'admin';
 
   return (
     <div className="flex items-center gap-3">
@@ -60,16 +58,11 @@ export function UserMenu() {
               <Link href="/admin/users">管理画面</Link>
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => signOut()}
-            className="text-xs"
-          >
+          <Button variant="outline" size="sm" onClick={() => signOut()} className="text-xs">
             ログアウト
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }
