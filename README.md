@@ -7,12 +7,12 @@
 [![DB Migrate](https://img.shields.io/github/actions/workflow/status/tqer39/xtrade/db-migrate-dev.yml?branch=main&style=for-the-badge&logo=postgresql&label=db%20migrate)](https://github.com/tqer39/xtrade/actions/workflows/db-migrate-dev.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 
-X を利用した toC 向けソーシャルトレーディングサービス
+X を利用した toC 向けソーシャルトレーディングサービスです。
 
 ## 概要
 
 xtrade は、X (旧 Twitter) のソーシャルグラフを活用したリアルタイムトレーディングサービスです。
-ユーザーは X アカウントでログインし、トレーディングルームに参加して取引を行います。
+ユーザーは X アカウントでログインし、トレーディングルームに参加して取引できます。
 
 ## 特徴
 
@@ -279,7 +279,7 @@ Claude Code の能力を拡張するため、以下の MCP サーバーを導入
 
 ### MCP サーバーのセットアップ
 
-MCP サーバーは既に設定済みです。Claude Code を再起動すると自動的に有効化されます。
+MCP サーバーはすでに設定済みです。Claude Code を再起動すると自動的に有効化されます。
 
 ```bash
 # 設定を確認（~/.claude.json に保存されています）
@@ -290,7 +290,7 @@ cat ~/.claude.json
 
 ## Agent 構成
 
-xtrade では、Claude Code の Sub Agent を活用して責務を分離した開発を行います。
+xtrade では Claude Code の Sub Agent を活用して責務を分離し開発しています。
 
 ### Agent 一覧
 

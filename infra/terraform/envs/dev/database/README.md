@@ -143,7 +143,7 @@ terraform destroy
 Error: error getting neon client: missing API key
 ```
 
-→ `NEON_API_KEY` 環境変数が設定されているか確認してください
+→ `NEON_API_KEY` 環境変数が設定されているか確認してください。
 
 ### リージョンエラー
 
@@ -151,4 +151,4 @@ Error: error getting neon client: missing API key
 Error: Invalid value for variable
 ```
 
-→ `variables.tf` で有効な Neon リージョンを指定してください
+→ `variables.tf` で有効な Neon リージョンを指定してください。

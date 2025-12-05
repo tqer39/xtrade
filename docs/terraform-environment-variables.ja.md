@@ -244,7 +244,7 @@ just tf -chdir=dev/database apply
 Error: authorization key must be provided
 ```
 
-**原因**: `NEON_API_KEY` 環境変数が設定されていない
+**原因**: `NEON_API_KEY` 環境変数が設定されていません。
 
 **解決策**:
 
@@ -264,7 +264,7 @@ Error: database owner not found; role_name:"xtrade"
 
 **原因**: Terraform のリソース依存関係の問題（ロールが作成される前にデータベースが作成されようとしている）
 
-**解決策**: `infra/terraform/modules/neon/main.tf` で `neon_database` リソースに `depends_on = [neon_role.this]` が設定されていることを確認
+**解決策**: `infra/terraform/modules/neon/main.tf` で `neon_database` リソースに `depends_on = [neon_role.this]` が設定されていることを確認してください。
 
 #### エラー: `ENDPOINTS_LIMIT_EXCEEDED`
 
@@ -272,9 +272,9 @@ Error: database owner not found; role_name:"xtrade"
 Error: read_write endpoint already exists
 ```
 
-**原因**: Neon プロジェクト作成時にデフォルトエンドポイントが自動作成されるため、追加で作成しようとするとエラーになる
+**原因**: Neon プロジェクト作成時、デフォルトエンドポイントが自動作成されるため追加するとエラーになります。
 
-**解決策**: `neon_endpoint` リソースを削除し、`data "neon_branch_endpoints"` でデフォルトエンドポイントを参照するように変更
+**解決策**: `neon_endpoint` リソースを削除し、`data "neon_branch_endpoints"` でデフォルトエンドポイントを参照してください。
 
 ## トラブルシューティング
 

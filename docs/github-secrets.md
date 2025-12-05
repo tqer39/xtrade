@@ -58,7 +58,7 @@ This document lists all the GitHub Secrets required for the xtrade project's CI/
 - Neon: [Neon Console](https://console.neon.tech/) → Account Settings → API Keys
 - Vercel: [Vercel Dashboard](https://vercel.com/account/tokens) → Create Token
 - CloudFlare API Token: [CloudFlare Dashboard](https://dash.cloudflare.com/profile/api-tokens) → Create Token → Use "Edit zone DNS" template
-- CloudFlare Account ID: [CloudFlare Dashboard](https://dash.cloudflare.com/) → Account menu in top right → Account ID, or on the Overview page of any domain
+- CloudFlare Account ID: [CloudFlare Dashboard](https://dash.cloudflare.com/) → Account menu (top right) → Account ID
 - CloudFlare Zone ID: [CloudFlare Dashboard](https://dash.cloudflare.com/) → Select domain → Overview page → "Zone ID" on the right side
 - Slack: [Slack API](https://api.slack.com/messaging/webhooks)
 

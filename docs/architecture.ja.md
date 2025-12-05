@@ -166,7 +166,7 @@ xtrade は以下のレイヤで構成されます：
 
 ## Agent 構成と責務
 
-xtrade では、Claude Code の Sub Agent を活用して責務を分離した開発を行います。
+xtrade では Claude Code の Sub Agent を活用して責務を分離し開発しています。
 
 ### Agent 一覧
 
@@ -208,7 +208,7 @@ xtrade では、Claude Code の Sub Agent を活用して責務を分離した�
 
 **担当範囲**:
 
-- `src/lib/auth.ts`（BetterAuth サーバ設定）
+- `src/lib/auth.ts`（BetterAuth サーバー設定）
 - `src/lib/auth-client.ts`（React クライアント）
 - `app/api/auth/[...all]/route.ts`
 - セッション取得ヘルパー

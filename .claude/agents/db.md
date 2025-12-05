@@ -235,7 +235,7 @@ userStatusIdx: index('trades_user_status_idx').on(table.userId, table.status)
 - [ ] `src/db/schema.ts` を更新したか
 - [ ] マイグレーションを生成したか（`npm run db:generate`）
 - [ ] マイグレーションをローカルで適用したか
-- [ ] 型エラーが出ていないか確認したか
+- [ ] 型エラーがないことを確認したか
 - [ ] インデックスは適切か
 - [ ] 破壊的変更の場合、移行方針を記載したか
 - [ ] APIAgent に影響を通知したか

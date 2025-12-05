@@ -135,7 +135,7 @@ echo $CLOUDFLARE_ACCOUNT_ID
 
 ### Issue: DNS レコードが作成されない
 
-**原因**: `frontend` モジュールの state がない
+**原因**: `frontend` モジュールの state がありません。
 
 **解決策**:
 

@@ -126,7 +126,7 @@ xtrade/
 
 ### domain/ 層
 
-**責務**: ビジネスルール、不変条件、状態遷移
+**責務**: ビジネスルール、不変条件、状態遷移を担当します。
 
 ```typescript
 // modules/trades/domain/model.ts
@@ -158,7 +158,7 @@ export const TradeRules = {
 
 ### app/ 層
 
-**責務**: ユースケース実装、トランザクション制御
+**責務**: ユースケース実装、トランザクション制御を担当します。
 
 ```typescript
 // modules/trades/app/service.ts
@@ -191,7 +191,7 @@ export class TradeService {
 
 ### infra/ 層
 
-**責務**: DB アクセス、外部 API 呼び出し
+**責務**: DB アクセス、外部 API 呼び出しを担当します。
 
 ```typescript
 // modules/trades/infra/repo.ts

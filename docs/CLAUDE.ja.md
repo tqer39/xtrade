@@ -4,7 +4,7 @@
 
 ## リポジトリ概要
 
-これは、基盤となるプロジェクト構造と設定ファイルを提供することを目的とした、ベースボイラープレートテンプレートリポジトリです。このリポジトリは、事前設定された開発ツールとワークフローを備えた新しいプロジェクトの出発点として機能します。
+これはプロジェクト構造や設定ファイルを提供するベースボイラープレートテンプレートリポジトリです。事前設定された開発ツールとワークフローを備えた新しいプロジェクトの出発点として機能します。
 
 ## セットアップと開発環境
 
@@ -23,7 +23,7 @@ brew bundle install
 just setup
 ```
 
-**代替ワンコマンドセットアップ**（Homebrewが既にインストールされている場合）:
+**代替ワンコマンドセットアップ**（Homebrewがすでにインストールされている場合）:
 
 ```bash
 just setup
@@ -133,7 +133,7 @@ pre-commit run --all-files
 
 - **Pre-commit**: mainブランチへのプッシュとプルリクエストで実行
 - **Auto-assign**: kentaro-m/auto-assign-actionを使用してPR作成者を自動割り当て
-- **Labeler**: ファイルパターンに基づいてPRを自動ラベル付け（editorconfig、document、terraform、textlint、yamllint、markdownlint、asdf、actionlint、CODEOWNERSをサポート）
+- **Labeler**: ファイルパターンに基づいて PR を自動ラベル付け（editorconfig、document、terraform など）
 - **ライセンス年更新**: 自動化されたライセンス年のメンテナンス
 
 ## プロジェクト構造
@@ -147,7 +147,7 @@ pre-commit run --all-files
 - `docs/`: ドキュメントファイル
 - `justfile`: タスク自動化定義
 - `Makefile`: Homebrewブートストラップセットアップ
-- `renovate.json5`: 依存関係更新自動化設定
+- `renovate.json5`: Renovate による依存関係の自動更新設定
 
 ## コード所有権
 
@@ -158,5 +158,5 @@ pre-commit run --all-files
 1. pre-commitフックはコミット時に自動実行されます
 2. プルリクエストは作成者に自動割り当てされます
 3. PRは変更されたファイルに基づいて自動ラベル付けされます
-4. マージ前にすべてのpre-commitチェックが通過する必要があります
+4. マージ前にすべての pre-commit チェックを通過する必要があります
 5. Renovateが依存関係更新のPRを自動作成します

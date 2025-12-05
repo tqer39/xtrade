@@ -25,7 +25,7 @@ brew bundle install
 just setup
 ```
 
-**ワンコマンドセットアップ**（Homebrewが既にインストールされている場合）:
+**ワンコマンドセットアップ**（Homebrewがすでにインストールされている場合）:
 
 ```bash
 just setup

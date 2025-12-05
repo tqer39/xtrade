@@ -34,7 +34,7 @@ BetterAuth を用いて X(Twitter) OAuth 認証を実装・維持し、セッシ
 
 ### 認証設定
 
-- `src/lib/auth.ts` - BetterAuth サーバ設定
+- `src/lib/auth.ts` - BetterAuth サーバー設定
 - `src/lib/auth-client.ts` - React クライアント設定
 - `app/api/auth/[...all]/route.ts` - 認証 API ハンドラ
 
@@ -78,7 +78,7 @@ BetterAuth を用いて X(Twitter) OAuth 認証を実装・維持し、セッシ
 
 ## 作業フロー
 
-### 1. BetterAuth サーバ設定
+### 1. BetterAuth サーバー設定
 
 ```typescript
 // src/lib/auth.ts
@@ -238,7 +238,7 @@ export async function GET() {
 
 ### CSRF 対策
 
-BetterAuth が自動的に CSRF トークンを管理
+BetterAuth が自動的に CSRF トークンを管理します。
 
 ### セッション管理
 

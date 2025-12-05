@@ -2,19 +2,19 @@
 
 - **作成日**: 2024-11-29
 - **ステータス**: 計画中
-- **担当 Agent**: ArchAgent（起点）→ 各専門 Agent へエスカレーション
+- **担当 Agent**: ArchAgent（起点）→ 各専門Agentへエスカレーション
 
 ## 概要
 
-xtrade アプリケーションに X（Twitter）OAuth 認証を実装する。
-BetterAuth を使用し、Neon PostgreSQL + Vercel + Next.js App Router の構成で構築する。
+xtradeアプリケーションにX（Twitter）OAuth認証を実装する。
+BetterAuthを使用し、Neon PostgreSQL + Vercel + Next.js App Routerの構成で構築する。
 
 ## 前提条件
 
-- [x] CloudFlare DNS 設定済み
-- [x] Neon データベース作成済み（xtrade-dev）
-- [x] Vercel デプロイ済み（<https://xtrade-dev.tqer39.dev/>）
-- [ ] X Developer Portal アプリ未作成
+- [x] CloudFlare DNS設定済み
+- [x] Neonデータベース作成済み（xtrade-dev）
+- [x] Vercelデプロイ済み（<https://xtrade-dev.tqer39.dev/>）
+- [ ] X Developer Portalアプリ未作成
 
 ## 実装順序
 
@@ -24,7 +24,7 @@ BetterAuth を使用し、Neon PostgreSQL + Vercel + Next.js App Router の構�
 
 1. [X Developer Portal](https://developer.twitter.com/) にアクセス
 2. 新規アプリを作成
-3. OAuth 2.0 を有効化
+3. OAuth 2.0を有効化
 4. 以下を設定:
    - **App permissions**: Read
    - **Type of App**: Web App
@@ -92,7 +92,7 @@ npm install better-auth
 
 **担当**: DBAgent
 
-BetterAuth が必要とするテーブルを Drizzle スキーマで定義。
+BetterAuthが必要とするテーブルをDrizzleスキーマで定義。
 
 #### 必要なテーブル
 
@@ -167,12 +167,12 @@ export const { GET, POST } = toNextJsHandler(auth);
 
 **成果物**:
 
-- `app/api/auth/[...all]/route.ts` - 認証 API ハンドラー
+- `app/api/auth/[...all]/route.ts` - 認証APIハンドラー
 
 自動生成されるエンドポイント:
 
-- `POST /api/auth/signin/twitter` - X ログイン開始
-- `GET /api/auth/callback/twitter` - OAuth コールバック
+- `POST /api/auth/signin/twitter` - Xログイン開始
+- `GET /api/auth/callback/twitter` - OAuthコールバック
 - `POST /api/auth/signout` - ログアウト
 - `GET /api/auth/session` - セッション取得
 
@@ -264,7 +264,7 @@ export const config = {
 **担当**: TestAgent
 
 - [ ] ローカル環境でのログインフロー
-- [ ] dev 環境でのログインフロー
+- [ ] dev環境でのログインフロー
 - [ ] セッション永続化の確認
 - [ ] ログアウト動作確認
 
@@ -292,8 +292,8 @@ ArchAgent（計画・調整）
 
 ## 成功基準
 
-1. ローカル環境で X ログインが動作する
-2. dev 環境（<https://xtrade-dev.tqer39.dev/>）で X ログインが動作する
+1. ローカル環境でXログインが動作する
+2. dev環境（<https://xtrade-dev.tqer39.dev/>）でXログインが動作する
 3. セッションが正しく永続化される
 4. ログアウトが正しく動作する
 

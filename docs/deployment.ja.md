@@ -204,7 +204,7 @@ X Developer Portal で以下のコールバック URL を登録する必要が�
 
 ### 403 Forbidden
 
-原因：`trustedOrigins` の設定問題
+原因：`trustedOrigins` の設定に問題があります。
 
 - `src/lib/auth.ts` の `trustedOrigins` にアクセス元の URL が含まれているか確認
 - Vercel プレビュー URL（`*.vercel.app`）は自動で許可されています
