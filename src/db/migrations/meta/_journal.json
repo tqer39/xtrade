@@ -50,6 +50,13 @@
       "when": 1764899986917,
       "tag": "0006_rapid_butterfly",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1764973266000,
+      "tag": "0007_mushy_winter_soldier",
+      "breakpoints": true
     }
   ]
 }

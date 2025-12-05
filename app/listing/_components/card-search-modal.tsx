@@ -2,6 +2,7 @@
 
 import { Loader2, Plus, Search, Star } from 'lucide-react';
 import { useState } from 'react';
+import { FavoriteButton } from '@/components/favorites';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCardSearch } from '@/hooks/use-card-search';
+import { useFavorites } from '@/hooks/use-favorites';
 import { usePhotocardSearch } from '@/hooks/use-photocard-search';
 
 interface CardSearchModalProps {
@@ -34,6 +36,7 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
     search: searchPhotocard,
     clearResults: clearPhotocardResults,
   } = usePhotocardSearch();
+  const { isCardFavorited, toggleFavoriteCard } = useFavorites();
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [newCardName, setNewCardName] = useState('');
@@ -224,6 +227,11 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
                               )}
                             </div>
                           </div>
+                          <FavoriteButton
+                            isFavorited={isCardFavorited(card.id)}
+                            onToggle={() => toggleFavoriteCard(card.id)}
+                            size="sm"
+                          />
                           <Plus className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </CardContent>
