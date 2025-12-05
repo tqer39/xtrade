@@ -49,6 +49,7 @@ export function ListingPageClient() {
   const [isSetDetailOpen, setIsSetDetailOpen] = useState(false)
   const [newSetName, setNewSetName] = useState('')
   const [isCreatingSet, setIsCreatingSet] = useState(false)
+  const [addingToSetId, setAddingToSetId] = useState<string | null>(null)
 
   const handleOpenModal = (mode: 'have' | 'want') => {
     setModalMode(mode)
@@ -56,7 +57,13 @@ export function ListingPageClient() {
   }
 
   const handleAddCard = async (cardId: string) => {
-    if (modalMode === 'have') {
+    if (addingToSetId) {
+      await addCardToSet(addingToSetId, cardId)
+      // カード追加後にセット詳細モーダルを再度開く
+      setSelectedSetId(addingToSetId)
+      setAddingToSetId(null)
+      setIsSetDetailOpen(true)
+    } else if (modalMode === 'have') {
       await addHaveCard(cardId)
     } else {
       await addWantCard(cardId)
@@ -82,9 +89,9 @@ export function ListingPageClient() {
   }
 
   const handleAddCardToSet = (setId: string) => {
-    // TODO: カード選択モーダルを開いてセットに追加
-    // 今は簡易的に閉じるだけ
+    setAddingToSetId(setId)
     setIsSetDetailOpen(false)
+    setIsModalOpen(true)
   }
 
   if (isSessionPending) {
@@ -252,8 +259,13 @@ export function ListingPageClient() {
 
       <CardSearchModal
         open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        mode={modalMode}
+        onOpenChange={(open) => {
+          setIsModalOpen(open)
+          if (!open) {
+            setAddingToSetId(null)
+          }
+        }}
+        mode={addingToSetId ? 'set' : modalMode}
         onAddCard={handleAddCard}
       />
 
