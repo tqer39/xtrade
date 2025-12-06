@@ -61,7 +61,7 @@
     "@types/pg": "8.15.6",
     "@vitejs/plugin-react": "5.1.1",
     "@vitest/coverage-v8": "4.0.15",
-    "drizzle-kit": "0.31.7",
+    "drizzle-kit": "0.31.8",
     "jsdom": "27.2.0",
     "textlint": "15.4.1",
     "textlint-filter-rule-comments": "1.2.2",
