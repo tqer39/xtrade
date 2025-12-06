@@ -9,7 +9,10 @@
  *   DRY_RUN=true  ドライラン（DBに書き込まない）
  */
 
-import { syncPhotocardData } from './photocard-sync';
+import { config } from 'dotenv';
+
+// .env.local から環境変数を読み込む（DB接続より先に実行）
+config({ path: '.env.local' });
 
 async function main() {
   const args = process.argv.slice(2);
@@ -26,6 +29,8 @@ async function main() {
   }
 
   try {
+    // 動的インポート（環境変数読み込み後に実行）
+    const { syncPhotocardData } = await import('./photocard-sync');
     const stats = await syncPhotocardData({ dryRun, verbose });
 
     console.log('\n================================');

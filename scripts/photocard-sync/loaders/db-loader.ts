@@ -140,3 +140,38 @@ export async function getMemberReadingMap(): Promise<Map<string, string>> {
   }
   return map;
 }
+
+/**
+ * フォトカードの imageUrl を更新
+ */
+export async function updatePhotocardImageUrl(
+  id: string,
+  imageUrl: string,
+  dryRun = false
+): Promise<void> {
+  if (dryRun) {
+    return;
+  }
+
+  await db
+    .update(schema.photocardMaster)
+    .set({ imageUrl })
+    .where(eq(schema.photocardMaster.id, id));
+}
+
+/**
+ * imageUrl が未設定のフォトカードを取得
+ */
+export async function getPhotocardsWithoutImages(): Promise<
+  Array<{ id: string; name: string; memberName: string | null; series: string | null }>
+> {
+  return await db
+    .select({
+      id: schema.photocardMaster.id,
+      name: schema.photocardMaster.name,
+      memberName: schema.photocardMaster.memberName,
+      series: schema.photocardMaster.series,
+    })
+    .from(schema.photocardMaster)
+    .where(eq(schema.photocardMaster.imageUrl, ''));
+}
