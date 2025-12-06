@@ -219,6 +219,26 @@ db-seed:
 db-setup: db-migrate db-seed
     @echo "✅ Database setup complete!"
 
+# Sync photocard master data from external sources
+db-sync-photocard *args:
+    @echo "→ Syncing photocard master data..."
+    npx tsx scripts/sync-photocard-data.ts {{args}}
+
+# Sync photocard data (dry run)
+db-sync-photocard-dry:
+    @echo "→ Syncing photocard master data (dry run)..."
+    npx tsx scripts/sync-photocard-data.ts --dry-run --verbose
+
+# Sync photocard images from external sources to R2
+db-sync-photocard-images *args:
+    @echo "→ Syncing photocard images..."
+    npx tsx scripts/sync-photocard-images.ts {{args}}
+
+# Sync photocard images (dry run)
+db-sync-photocard-images-dry:
+    @echo "→ Syncing photocard images (dry run)..."
+    npx tsx scripts/sync-photocard-images.ts --dry-run --verbose
+
 # Test commands
 
 # Run all unit tests
