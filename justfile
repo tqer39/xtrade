@@ -324,16 +324,32 @@ wt-list:
     @git worktree list
 
 # Remove a worktree
-wt-rm name:
-    @echo "→ Removing worktree: {{name}}"
+wt-rm name="":
+    #!/usr/bin/env bash
+    if [ -z "{{name}}" ]; then
+        echo "Usage: just wt-rm <name>"
+        echo ""
+        echo "Available worktrees:"
+        git worktree list | grep -v "(bare)" | awk '{print $1}' | xargs -I{} basename {} | sed 's/^/  /'
+        exit 1
+    fi
+    echo "→ Removing worktree: {{name}}"
     git worktree remove {{wt_dir}}/{{name}}
-    @echo "✅ Worktree removed"
+    echo "✅ Worktree removed"
 
 # Remove a worktree (force)
-wt-rm-force name:
-    @echo "→ Force removing worktree: {{name}}"
+wt-rm-force name="":
+    #!/usr/bin/env bash
+    if [ -z "{{name}}" ]; then
+        echo "Usage: just wt-rm-force <name>"
+        echo ""
+        echo "Available worktrees:"
+        git worktree list | grep -v "(bare)" | awk '{print $1}' | xargs -I{} basename {} | sed 's/^/  /'
+        exit 1
+    fi
+    echo "→ Force removing worktree: {{name}}"
     git worktree remove --force {{wt_dir}}/{{name}}
-    @echo "✅ Worktree removed"
+    echo "✅ Worktree removed"
 
 # Open worktree in VS Code
 wt-code name:
