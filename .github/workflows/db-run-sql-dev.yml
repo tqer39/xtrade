@@ -1,0 +1,70 @@
+name: DB Run SQL - dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      SQL_FILE:
+        description: '実行するSQLファイル（scripts/db/ 配下）'
+        required: true
+        type: choice
+        options:
+          - sync-migration-history.sql
+      DRY_RUN:
+        description: 'ドライラン（SQLを表示するのみ、実行しない）'
+        required: true
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  db-run-sql-dev:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate SQL file exists
+        id: validate
+        run: |
+          SQL_PATH="scripts/db/${{ inputs.SQL_FILE }}"
+          if [ ! -f "$SQL_PATH" ]; then
+            echo "❌ SQLファイルが見つかりません: $SQL_PATH"
+            exit 1
+          fi
+          echo "sql-path=$SQL_PATH" >> "$GITHUB_OUTPUT"
+          echo "✅ SQLファイルを確認しました: $SQL_PATH"
+
+      - name: Show SQL content (dry run)
+        if: inputs.DRY_RUN == true
+        run: |
+          echo "📄 実行予定のSQL:"
+          echo "---"
+          cat "${{ steps.validate.outputs.sql-path }}"
+          echo "---"
+          echo "⚠️ ドライランモードのため、SQLは実行されませんでした"
+
+      - name: Run SQL
+        if: inputs.DRY_RUN == false
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+        run: |
+          echo "🚀 SQLを実行しています: ${{ inputs.SQL_FILE }}"
+          psql "$DATABASE_URL" -f "${{ steps.validate.outputs.sql-path }}"
+          echo "✅ SQLの実行が完了しました"
+
+      - name: Verify migration history
+        if: inputs.DRY_RUN == false && inputs.SQL_FILE == 'sync-migration-history.sql'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+        run: |
+          echo "📋 マイグレーション履歴を確認しています:"
+          psql "$DATABASE_URL" -c "SELECT * FROM __drizzle_migrations ORDER BY created_at;"
