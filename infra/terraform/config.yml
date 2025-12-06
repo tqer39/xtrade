@@ -70,8 +70,18 @@ vercel:
 # CloudFlare 設定
 cloudflare:
   # Zone ID は環境変数 TF_VAR_cloudflare_zone_id で設定
+  # Account ID は環境変数 TF_VAR_cloudflare_account_id で設定
   # API Token は環境変数 CLOUDFLARE_API_TOKEN で設定
   domain: tqer39.dev
+  r2:
+    dev:
+      bucket_name: xtrade-card-images-dev
+      location: APAC
+      custom_domain: card-images.xtrade-dev.tqer39.dev
+    prod:
+      bucket_name: xtrade-card-images-prod
+      location: APAC
+      custom_domain: card-images.xtrade.tqer39.dev
 
 # タグ設定
 tags:
