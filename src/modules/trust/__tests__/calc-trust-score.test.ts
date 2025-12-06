@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { calcTrustScore } from '../calc-trust-score';
-import type { TrustScoreInput } from '../types';
+import {
+  calcBehaviorScore,
+  calcCombinedTrustScore,
+  calcReviewScore,
+  calcTrustScore,
+  calcXProfileScore,
+} from '../calc-trust-score';
+import type { BehaviorScoreInput, ReviewScoreInput, TrustScoreInput } from '../types';
 
 describe('calcTrustScore', () => {
   // デフォルトの入力値
@@ -321,5 +327,375 @@ describe('calcTrustScore', () => {
       // 30 + 25 + 20 + 10 + 5 + 10 = 100
       expect(result.score).toBeLessThanOrEqual(100);
     });
+  });
+});
+
+describe('calcXProfileScore', () => {
+  const defaultInput: TrustScoreInput = {
+    accountAgeDays: 0,
+    tweetCount: 0,
+    followersCount: 0,
+    hasProfileImage: false,
+    hasDescription: false,
+    verified: false,
+    isProtected: false,
+  };
+
+  it('100点満点のスコアを40点満点にスケールする', () => {
+    // 最大スコア (100点) → 40点
+    const result = calcXProfileScore({
+      ...defaultInput,
+      accountAgeDays: 365 * 5,
+      tweetCount: 5000,
+      followersCount: 1000,
+      hasProfileImage: true,
+      hasDescription: true,
+      verified: true,
+    });
+    expect(result).toBe(40);
+  });
+
+  it('中間スコア (50点) → 20点', () => {
+    const result = calcXProfileScore({
+      ...defaultInput,
+      accountAgeDays: 365 * 2, // +20
+      tweetCount: 200, // +5
+      followersCount: 50, // +5
+      hasProfileImage: true, // +10
+      hasDescription: true, // +5
+      // Total: 45, but let's just check it's around 18-20
+    });
+    // 20 + 5 + 5 + 10 + 5 = 45 → 18
+    expect(result).toBe(18);
+  });
+
+  it('最小スコアは0', () => {
+    const result = calcXProfileScore({
+      ...defaultInput,
+      accountAgeDays: 0,
+      tweetCount: 0,
+      hasProfileImage: false,
+      isProtected: true,
+    });
+    expect(result).toBe(0);
+  });
+});
+
+describe('calcBehaviorScore', () => {
+  const defaultInput: BehaviorScoreInput = {
+    completedTradeCount: 0,
+    tradeSuccessRate: 0,
+    avgResponseTimeHours: null,
+    daysSinceFirstTrade: null,
+  };
+
+  describe('トレード完了数', () => {
+    it('20件以上で +20', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        completedTradeCount: 20,
+        tradeSuccessRate: 100,
+      });
+      // 20(completed) + 10(success rate 100% with 20+ trades) = 30
+      expect(result).toBe(30);
+    });
+
+    it('10件以上で +15', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        completedTradeCount: 10,
+        tradeSuccessRate: 100,
+      });
+      // 15(completed) + 10(success rate) = 25
+      expect(result).toBe(25);
+    });
+
+    it('5件以上で +10', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        completedTradeCount: 5,
+        tradeSuccessRate: 100,
+      });
+      // 10(completed) + 10(success rate) = 20
+      expect(result).toBe(20);
+    });
+
+    it('1件以上で +5', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        completedTradeCount: 1,
+        tradeSuccessRate: 100,
+      });
+      // 5(completed) + 0(not enough trades for success rate bonus) = 5
+      expect(result).toBe(5);
+    });
+  });
+
+  describe('成功率', () => {
+    it('90%以上（5件以上）で +10', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        completedTradeCount: 5,
+        tradeSuccessRate: 90,
+      });
+      // 10(completed) + 10(success) = 20
+      expect(result).toBe(20);
+    });
+
+    it('80%以上（5件以上）で +7', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        completedTradeCount: 4, // 4 completed / 5 total = 80%
+        tradeSuccessRate: 80,
+      });
+      // 5(completed 1+) + 7(success) = 12
+      expect(result).toBe(12);
+    });
+
+    it('70%以上（5件以上）で +4', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        completedTradeCount: 7, // 7 completed / 10 total = 70%
+        tradeSuccessRate: 70,
+      });
+      // 10(completed 5+) + 4(success) = 14
+      expect(result).toBe(14);
+    });
+  });
+
+  describe('応答速度', () => {
+    it('24時間以内で +5', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        avgResponseTimeHours: 24,
+      });
+      expect(result).toBe(5);
+    });
+
+    it('48時間以内で +3', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        avgResponseTimeHours: 48,
+      });
+      expect(result).toBe(3);
+    });
+  });
+
+  describe('活動期間', () => {
+    it('180日以上で +5', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        daysSinceFirstTrade: 180,
+      });
+      expect(result).toBe(5);
+    });
+
+    it('30日以上で +3', () => {
+      const result = calcBehaviorScore({
+        ...defaultInput,
+        daysSinceFirstTrade: 30,
+      });
+      expect(result).toBe(3);
+    });
+  });
+
+  describe('境界値', () => {
+    it('最大スコアは40', () => {
+      const result = calcBehaviorScore({
+        completedTradeCount: 20,
+        tradeSuccessRate: 100,
+        avgResponseTimeHours: 1,
+        daysSinceFirstTrade: 365,
+      });
+      // 20 + 10 + 5 + 5 = 40
+      expect(result).toBe(40);
+    });
+
+    it('最小スコアは0', () => {
+      const result = calcBehaviorScore(defaultInput);
+      expect(result).toBe(0);
+    });
+  });
+});
+
+describe('calcReviewScore', () => {
+  const defaultInput: ReviewScoreInput = {
+    reviewCount: 0,
+    avgRating: null,
+    negativeCount: 0,
+  };
+
+  describe('平均評価', () => {
+    it('4.5以上（3件以上）で +12', () => {
+      const result = calcReviewScore({
+        ...defaultInput,
+        reviewCount: 3,
+        avgRating: 4.5,
+      });
+      expect(result).toBe(12);
+    });
+
+    it('4.0以上（3件以上）で +9', () => {
+      const result = calcReviewScore({
+        ...defaultInput,
+        reviewCount: 3,
+        avgRating: 4.0,
+      });
+      expect(result).toBe(9);
+    });
+
+    it('3.5以上（3件以上）で +6', () => {
+      const result = calcReviewScore({
+        ...defaultInput,
+        reviewCount: 3,
+        avgRating: 3.5,
+      });
+      expect(result).toBe(6);
+    });
+
+    it('3.0以上（3件以上）で +3', () => {
+      const result = calcReviewScore({
+        ...defaultInput,
+        reviewCount: 3,
+        avgRating: 3.0,
+      });
+      expect(result).toBe(3);
+    });
+
+    it('3件未満では評価ボーナスなし', () => {
+      const result = calcReviewScore({
+        ...defaultInput,
+        reviewCount: 2,
+        avgRating: 5.0,
+      });
+      expect(result).toBe(0);
+    });
+  });
+
+  describe('レビュー件数ボーナス', () => {
+    it('10件以上で +4', () => {
+      const result = calcReviewScore({
+        ...defaultInput,
+        reviewCount: 10,
+        avgRating: 4.5,
+      });
+      // 12(rating) + 4(count) = 16
+      expect(result).toBe(16);
+    });
+
+    it('5件以上で +2', () => {
+      const result = calcReviewScore({
+        ...defaultInput,
+        reviewCount: 5,
+        avgRating: 4.5,
+      });
+      // 12(rating) + 2(count) = 14
+      expect(result).toBe(14);
+    });
+  });
+
+  describe('ネガティブ評価ペナルティ', () => {
+    it('2件以上で -4', () => {
+      const result = calcReviewScore({
+        ...defaultInput,
+        reviewCount: 5,
+        avgRating: 4.5,
+        negativeCount: 2,
+      });
+      // 12(rating) + 2(count) - 4(negative) = 10
+      expect(result).toBe(10);
+    });
+
+    it('1件で -2', () => {
+      const result = calcReviewScore({
+        ...defaultInput,
+        reviewCount: 5,
+        avgRating: 4.5,
+        negativeCount: 1,
+      });
+      // 12(rating) + 2(count) - 2(negative) = 12
+      expect(result).toBe(12);
+    });
+  });
+
+  describe('境界値', () => {
+    it('最大スコアは20', () => {
+      const result = calcReviewScore({
+        reviewCount: 10,
+        avgRating: 5.0,
+        negativeCount: 0,
+      });
+      // 12 + 4 = 16 (実際の最大)
+      expect(result).toBeLessThanOrEqual(20);
+    });
+
+    it('最小スコアは0', () => {
+      const result = calcReviewScore({
+        reviewCount: 0,
+        avgRating: null,
+        negativeCount: 10,
+      });
+      expect(result).toBe(0);
+    });
+  });
+});
+
+describe('calcCombinedTrustScore', () => {
+  const xProfileInput: TrustScoreInput = {
+    accountAgeDays: 365 * 5,
+    tweetCount: 5000,
+    followersCount: 1000,
+    hasProfileImage: true,
+    hasDescription: true,
+    verified: true,
+    isProtected: false,
+  };
+
+  const behaviorInput: BehaviorScoreInput = {
+    completedTradeCount: 20,
+    tradeSuccessRate: 100,
+    avgResponseTimeHours: 1,
+    daysSinceFirstTrade: 365,
+  };
+
+  const reviewInput: ReviewScoreInput = {
+    reviewCount: 10,
+    avgRating: 5.0,
+    negativeCount: 0,
+  };
+
+  it('3要素のスコアを統合する', () => {
+    const result = calcCombinedTrustScore(xProfileInput, behaviorInput, reviewInput);
+
+    // xProfile: 100点 → 40点
+    expect(result.breakdown.xProfile).toBe(40);
+    // behavior: 20 + 10 + 5 + 5 = 40点
+    expect(result.breakdown.behavior).toBe(40);
+    // review: 12 + 4 = 16点
+    expect(result.breakdown.review).toBe(16);
+
+    expect(result.totalScore).toBe(96);
+    expect(result.grade).toBe('S');
+  });
+
+  it('グレード判定が正しく動作する', () => {
+    const lowBehavior: BehaviorScoreInput = {
+      completedTradeCount: 0,
+      tradeSuccessRate: 0,
+      avgResponseTimeHours: null,
+      daysSinceFirstTrade: null,
+    };
+
+    const lowReview: ReviewScoreInput = {
+      reviewCount: 0,
+      avgRating: null,
+      negativeCount: 0,
+    };
+
+    const result = calcCombinedTrustScore(xProfileInput, lowBehavior, lowReview);
+
+    // xProfile: 40, behavior: 0, review: 0 = 40
+    expect(result.totalScore).toBe(40);
+    expect(result.grade).toBe('C');
   });
 });

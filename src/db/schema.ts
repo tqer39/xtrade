@@ -17,8 +17,12 @@ export const user = pgTable('user', {
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
   // 信頼スコア関連
-  trustScore: integer('trust_score'), // 0〜100
+  trustScore: integer('trust_score'), // 0〜100（3要素の合計）
   trustGrade: text('trust_grade'), // S/A/B/C/D/U
+  // スコア内訳
+  xProfileScore: integer('x_profile_score'), // 0〜40（Xプロフィールスコア）
+  behaviorScore: integer('behavior_score'), // 0〜40（xtrade行動スコア）
+  reviewScore: integer('review_score'), // 0〜20（レビュースコア）
   trustScoreUpdatedAt: timestamp('trust_score_updated_at'),
   trustScoreRefreshRequestedAt: timestamp('trust_score_refresh_requested_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -105,7 +109,7 @@ export const verification = pgTable(
 // Drizzle ORM Relations
 // =====================================
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ one, many }) => ({
   sessions: many(session),
   accounts: many(account),
   trustJobs: many(userTrustJob),
@@ -117,6 +121,11 @@ export const userRelations = relations(user, ({ many }) => ({
   offeredTradeItems: many(tradeItem),
   favoriteCards: many(userFavoriteCard),
   favoriteUsers: many(userFavoriteUser),
+  // レビュー・統計関連
+  reviewsGiven: many(tradeReview, { relationName: 'reviewsGiven' }),
+  reviewsReceived: many(tradeReview, { relationName: 'reviewsReceived' }),
+  tradeStats: one(userTradeStats),
+  reviewStats: one(userReviewStats),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -544,6 +553,7 @@ export const tradeRelations = relations(trade, ({ one, many }) => ({
   }),
   items: many(tradeItem),
   history: many(tradeHistory),
+  reviews: many(tradeReview),
 }));
 
 /**
@@ -686,6 +696,118 @@ export const userFavoriteUserRelations = relations(userFavoriteUser, ({ one }) =
   }),
   favoriteUser: one(user, {
     fields: [userFavoriteUser.favoriteUserId],
+    references: [user.id],
+  }),
+}));
+
+// =====================================
+// トレードレビュー関連テーブル
+// =====================================
+
+/**
+ * トレードレビューテーブル
+ * トレード完了後に相手ユーザーを評価
+ */
+export const tradeReview = pgTable(
+  'trade_review',
+  {
+    id: text('id').primaryKey(),
+    tradeId: text('trade_id')
+      .notNull()
+      .references(() => trade.id, { onDelete: 'cascade' }),
+    reviewerUserId: text('reviewer_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    revieweeUserId: text('reviewee_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    rating: integer('rating').notNull(), // 1-5
+    comment: text('comment'),
+    isPublic: boolean('is_public').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    unique('trade_review_unique').on(table.tradeId, table.reviewerUserId),
+    index('trade_review_trade_id_idx').on(table.tradeId),
+    index('trade_review_reviewer_idx').on(table.reviewerUserId),
+    index('trade_review_reviewee_idx').on(table.revieweeUserId),
+    index('trade_review_rating_idx').on(table.rating),
+  ]
+);
+
+export const tradeReviewRelations = relations(tradeReview, ({ one }) => ({
+  trade: one(trade, {
+    fields: [tradeReview.tradeId],
+    references: [trade.id],
+  }),
+  reviewer: one(user, {
+    fields: [tradeReview.reviewerUserId],
+    references: [user.id],
+    relationName: 'reviewsGiven',
+  }),
+  reviewee: one(user, {
+    fields: [tradeReview.revieweeUserId],
+    references: [user.id],
+    relationName: 'reviewsReceived',
+  }),
+}));
+
+// =====================================
+// ユーザー統計テーブル（キャッシュ）
+// =====================================
+
+/**
+ * ユーザートレード統計テーブル
+ * トレード完了・キャンセル時に更新されるキャッシュ
+ */
+export const userTradeStats = pgTable('user_trade_stats', {
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  completedCount: integer('completed_count').default(0).notNull(),
+  canceledCount: integer('canceled_count').default(0).notNull(),
+  disputedCount: integer('disputed_count').default(0).notNull(),
+  avgResponseTimeHours: integer('avg_response_time_hours'), // 平均応答時間（時間）
+  firstTradeAt: timestamp('first_trade_at'),
+  lastTradeAt: timestamp('last_trade_at'),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const userTradeStatsRelations = relations(userTradeStats, ({ one }) => ({
+  user: one(user, {
+    fields: [userTradeStats.userId],
+    references: [user.id],
+  }),
+}));
+
+/**
+ * ユーザーレビュー統計テーブル
+ * レビュー作成時に更新されるキャッシュ
+ */
+export const userReviewStats = pgTable('user_review_stats', {
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  reviewCount: integer('review_count').default(0).notNull(),
+  avgRating: integer('avg_rating'), // 平均評価×10（小数点1桁保持、例: 45 = 4.5）
+  positiveCount: integer('positive_count').default(0).notNull(), // rating >= 4
+  negativeCount: integer('negative_count').default(0).notNull(), // rating <= 2
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const userReviewStatsRelations = relations(userReviewStats, ({ one }) => ({
+  user: one(user, {
+    fields: [userReviewStats.userId],
     references: [user.id],
   }),
 }));

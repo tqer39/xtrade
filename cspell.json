@@ -112,6 +112,7 @@
     "pyproject",
     "pytest",
     "recalc",
+    "reviewee",
     "reviewdog",
     "rhodey",
     "RFFAK",

@@ -1,14 +1,16 @@
 import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
 import { auth } from '@/lib/auth';
 
+type Params = Promise<{ userId: string }>;
+
 /**
- * GET: 現在の信頼スコアを取得（内訳・統計付き）
+ * GET: 他ユーザーの信頼スコアを取得
  */
-export async function GET() {
+export async function GET(_request: NextRequest, { params }: { params: Params }) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -17,9 +19,15 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // ユーザー情報とスコア内訳を取得
+  const { userId } = await params;
+
+  // ユーザー情報とスコアを取得
   const users = await db
     .select({
+      id: schema.user.id,
+      name: schema.user.name,
+      twitterUsername: schema.user.twitterUsername,
+      image: schema.user.image,
       trustScore: schema.user.trustScore,
       trustGrade: schema.user.trustGrade,
       xProfileScore: schema.user.xProfileScore,
@@ -28,7 +36,7 @@ export async function GET() {
       trustScoreUpdatedAt: schema.user.trustScoreUpdatedAt,
     })
     .from(schema.user)
-    .where(eq(schema.user.id, session.user.id))
+    .where(eq(schema.user.id, userId))
     .limit(1);
 
   const user = users[0];
@@ -40,14 +48,14 @@ export async function GET() {
   const tradeStats = await db
     .select()
     .from(schema.userTradeStats)
-    .where(eq(schema.userTradeStats.userId, session.user.id))
+    .where(eq(schema.userTradeStats.userId, userId))
     .limit(1);
 
   // レビュー統計を取得
   const reviewStats = await db
     .select()
     .from(schema.userReviewStats)
-    .where(eq(schema.userReviewStats.userId, session.user.id))
+    .where(eq(schema.userReviewStats.userId, userId))
     .limit(1);
 
   const tradeStat = tradeStats[0];
@@ -63,6 +71,12 @@ export async function GET() {
       : null;
 
   return NextResponse.json({
+    user: {
+      id: user.id,
+      name: user.name,
+      twitterUsername: user.twitterUsername,
+      image: user.image,
+    },
     trustScore: user.trustScore,
     trustGrade: user.trustGrade,
     breakdown: {
