@@ -123,9 +123,10 @@ update-brew:
 
 # Development server commands
 
-# Start development server
+# Start development server and Drizzle Studio
 dev:
-    @echo "→ Starting development server..."
+    @echo "→ Starting development server and Drizzle Studio..."
+    npm run db:studio &
     npm run dev
 
 # Build production application
