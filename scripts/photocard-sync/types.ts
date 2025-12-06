@@ -24,6 +24,7 @@ export interface PhotocardSeedData {
   releaseType: 'single' | 'album' | 'live_goods';
   releaseDate: string;
   rarity: string;
+  imageUrl?: string; // 外部画像URL（オプショナル）
 }
 
 /**
@@ -73,4 +74,5 @@ export interface SyncStats {
   members: { created: number; skipped: number };
   series: { created: number; skipped: number };
   photocards: { created: number; skipped: number };
+  images: { uploaded: number; skipped: number; failed: number };
 }

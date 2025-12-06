@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, ImageIcon, Plus, Save, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import {
@@ -188,15 +188,22 @@ export function SetDetailModal({
                     <Card key={item.id}>
                       <CardContent className="p-3">
                         <div className="flex items-center gap-3">
-                          {item.card?.imageUrl && (
-                            <Image
-                              src={item.card.imageUrl}
-                              alt={item.card.name}
-                              width={40}
-                              height={40}
-                              className="w-10 h-10 object-cover rounded"
-                            />
-                          )}
+                          {/* サムネイル画像 */}
+                          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
+                            {item.card?.imageUrl ? (
+                              <Image
+                                src={item.card.imageUrl}
+                                alt={item.card.name}
+                                width={40}
+                                height={40}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate text-sm">{item.card?.name}</div>
                             <div className="flex items-center gap-2">
