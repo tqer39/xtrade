@@ -2,7 +2,13 @@ import { asc, eq } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
-import { calcTrustScore } from '@/modules/trust';
+import {
+  type BehaviorScoreInput,
+  calcBehaviorScore,
+  calcReviewScore,
+  calcXProfileScore,
+  type ReviewScoreInput,
+} from '@/modules/trust';
 import {
   fetchXUserProfile,
   isRateLimitError,
@@ -53,16 +59,72 @@ export async function GET(request: NextRequest) {
       // X API を叩いてプロフィール取得
       const profile = await fetchXUserProfile(job.userId);
 
-      // スコア計算
-      const input = profileToTrustScoreInput(profile);
-      const result = calcTrustScore(input);
+      // Xプロフィールスコア計算
+      const xProfileInput = profileToTrustScoreInput(profile);
+      const xProfileScore = calcXProfileScore(xProfileInput);
+
+      // 行動スコア計算（統計テーブルから取得）
+      const tradeStats = await db
+        .select()
+        .from(schema.userTradeStats)
+        .where(eq(schema.userTradeStats.userId, job.userId))
+        .limit(1);
+
+      const tradeStat = tradeStats[0];
+      const behaviorInput: BehaviorScoreInput = {
+        completedTradeCount: tradeStat?.completedCount ?? 0,
+        tradeSuccessRate:
+          tradeStat &&
+          tradeStat.completedCount + tradeStat.canceledCount + tradeStat.disputedCount > 0
+            ? (tradeStat.completedCount /
+                (tradeStat.completedCount + tradeStat.canceledCount + tradeStat.disputedCount)) *
+              100
+            : 0,
+        avgResponseTimeHours: tradeStat?.avgResponseTimeHours ?? null,
+        daysSinceFirstTrade: tradeStat?.firstTradeAt
+          ? Math.floor((Date.now() - tradeStat.firstTradeAt.getTime()) / (1000 * 60 * 60 * 24))
+          : null,
+      };
+      const behaviorScore = calcBehaviorScore(behaviorInput);
+
+      // レビュースコア計算（統計テーブルから取得）
+      const reviewStats = await db
+        .select()
+        .from(schema.userReviewStats)
+        .where(eq(schema.userReviewStats.userId, job.userId))
+        .limit(1);
+
+      const reviewStat = reviewStats[0];
+      const reviewInput: ReviewScoreInput = {
+        avgRating: reviewStat?.avgRating ? reviewStat.avgRating / 10 : null,
+        reviewCount: reviewStat?.reviewCount ?? 0,
+        positiveCount: reviewStat?.positiveCount ?? 0,
+        negativeCount: reviewStat?.negativeCount ?? 0,
+      };
+      const reviewScore = calcReviewScore(reviewInput);
+
+      // 合計スコア計算
+      const totalScore = xProfileScore + behaviorScore + reviewScore;
+      const grade =
+        totalScore >= 80
+          ? 'S'
+          : totalScore >= 65
+            ? 'A'
+            : totalScore >= 50
+              ? 'B'
+              : totalScore >= 35
+                ? 'C'
+                : 'D';
 
       // users テーブル更新
       await db
         .update(schema.user)
         .set({
-          trustScore: result.score,
-          trustGrade: result.grade,
+          trustScore: totalScore,
+          trustGrade: grade,
+          xProfileScore,
+          behaviorScore,
+          reviewScore,
           trustScoreUpdatedAt: new Date(),
         })
         .where(eq(schema.user.id, job.userId));
