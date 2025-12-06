@@ -206,7 +206,8 @@ db-reset:
     docker compose up -d
     @echo "  ✓ Database reset completed"
     @echo "→ Waiting for database to be ready..."
-    @sleep 2
+    @until docker compose ps | grep -q "healthy"; do sleep 1; done
+    @echo "  ✓ Database is healthy"
     @just db-migrate
 
 # Run database seed (local only)
