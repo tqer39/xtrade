@@ -25,6 +25,12 @@ export default defineConfig({
   // ローカルの場合は pg ドライバーを使用
   ...(isLocal && { driver: undefined }),
 
+  // マイグレーション履歴テーブルの設定
+  migrations: {
+    table: '__drizzle_migrations', // デフォルトのテーブル名
+    schema: 'public', // public スキーマを使用（デフォルトは 'drizzle'）
+  },
+
   // マイグレーション設定
   verbose: true, // 詳細なログを出力
   strict: true, // 厳密モード（型安全性を強化）
