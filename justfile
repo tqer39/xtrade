@@ -186,10 +186,6 @@ db-logs:
 # Run database migrations
 db-migrate:
     @echo "→ Running database migrations..."
-    @if [ ! -d "drizzle" ] || [ ! -f "drizzle/meta/_journal.json" ]; then \
-        echo "  ℹ No migrations found, generating first..."; \
-        npm run db:generate; \
-    fi
     npm run db:migrate
     @echo "  ✓ Migrations completed"
 
