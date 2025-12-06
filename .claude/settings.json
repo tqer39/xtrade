@@ -1,5 +1,9 @@
 {
   "hooks": {
+    "PostToolUse": {
+      "Write": "just lint",
+      "Edit": "just lint"
+    },
     "SessionEnd": {
       "*": "./scripts/play-sound.sh"
     }
