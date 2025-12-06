@@ -1,8 +1,11 @@
+import * as fs from 'node:fs';
 import { config } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
 
-// .env.local ファイルから環境変数を読み込む
-config({ path: '.env.local' });
+// .env.local ファイルが存在する場合のみ読み込む（CI環境では存在しない）
+if (fs.existsSync('.env.local')) {
+  config({ path: '.env.local' });
+}
 
 const isLocal = process.env.DATABASE_URL?.includes('localhost');
 
