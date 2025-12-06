@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Plus, Search, Star } from 'lucide-react';
+import { ImageIcon, Loader2, Plus, Search, Star } from 'lucide-react';
 import { useState } from 'react';
 import { FavoriteButton } from '@/components/favorites';
 import { Badge } from '@/components/ui/badge';
@@ -59,11 +59,12 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
     setIsAdding(true);
     setAddError(null);
     try {
-      // フォトカードマスターからカードを作成
+      // フォトカードマスターからカードを作成（画像URLも引き継ぐ）
       const card = await createCard({
         name: photocard.name,
         category: photocard.groupName || 'INI',
         rarity: photocard.rarity || undefined,
+        imageUrl: photocard.imageUrl || undefined,
       });
       await onAddCard(card.id);
       handleClose();
@@ -176,6 +177,20 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
                     >
                       <CardContent className="p-3">
                         <div className="flex items-center gap-3">
+                          {/* サムネイル画像 */}
+                          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
+                            {photocard.imageUrl ? (
+                              <img
+                                src={photocard.imageUrl}
+                                alt={photocard.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
                           <div className="min-w-0 flex-1">
                             <div className="truncate font-medium">{photocard.name}</div>
                             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -218,6 +233,20 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
                     >
                       <CardContent className="p-3">
                         <div className="flex items-center gap-3">
+                          {/* サムネイル画像 */}
+                          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
+                            {card.imageUrl ? (
+                              <img
+                                src={card.imageUrl}
+                                alt={card.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
                           <div className="min-w-0 flex-1">
                             <div className="truncate font-medium">{card.name}</div>
                             <div className="mt-1 flex items-center gap-2">
