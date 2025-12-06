@@ -2,6 +2,7 @@
 
 import { ImageIcon, Loader2, Plus, Search, Star } from 'lucide-react';
 import { useState } from 'react';
+import { LoginButton } from '@/components/auth';
 import { FavoriteButton } from '@/components/favorites';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,9 +27,16 @@ interface CardSearchModalProps {
   onOpenChange: (open: boolean) => void;
   mode: 'have' | 'want' | 'set';
   onAddCard: (cardId: string) => Promise<void>;
+  isLoggedIn?: boolean;
 }
 
-export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSearchModalProps) {
+export function CardSearchModal({
+  open,
+  onOpenChange,
+  mode,
+  onAddCard,
+  isLoggedIn = true,
+}: CardSearchModalProps) {
   const { searchResults, isSearching, searchError, search, createCard, clearResults } =
     useCardSearch();
   const {
@@ -132,8 +140,12 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{modeLabel}を追加</DialogTitle>
-          <DialogDescription>カードを検索するか、新しいカードを登録してください</DialogDescription>
+          <DialogTitle>{isLoggedIn ? `${modeLabel}を追加` : 'カード検索'}</DialogTitle>
+          <DialogDescription>
+            {isLoggedIn
+              ? 'カードを検索するか、新しいカードを登録してください'
+              : 'カードを検索できます。追加するにはログインが必要です'}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -172,8 +184,8 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
                   {photocardResults.map((photocard) => (
                     <Card
                       key={`master-${photocard.id}`}
-                      className="cursor-pointer border-primary/20 transition-colors hover:bg-accent"
-                      onClick={() => !isAdding && handleSelectPhotocard(photocard)}
+                      className={`border-primary/20 transition-colors ${isLoggedIn ? 'cursor-pointer hover:bg-accent' : ''}`}
+                      onClick={() => isLoggedIn && !isAdding && handleSelectPhotocard(photocard)}
                     >
                       <CardContent className="p-3">
                         <div className="flex items-center gap-3">
@@ -211,7 +223,7 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
                               )}
                             </div>
                           </div>
-                          <Plus className="h-4 w-4 text-muted-foreground" />
+                          {isLoggedIn && <Plus className="h-4 w-4 text-muted-foreground" />}
                         </div>
                       </CardContent>
                     </Card>
@@ -228,8 +240,8 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
                   {searchResults.map((card) => (
                     <Card
                       key={card.id}
-                      className="cursor-pointer transition-colors hover:bg-accent"
-                      onClick={() => !isAdding && handleSelectCard(card.id)}
+                      className={`transition-colors ${isLoggedIn ? 'cursor-pointer hover:bg-accent' : ''}`}
+                      onClick={() => isLoggedIn && !isAdding && handleSelectCard(card.id)}
                     >
                       <CardContent className="p-3">
                         <div className="flex items-center gap-3">
@@ -260,12 +272,16 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
                               )}
                             </div>
                           </div>
-                          <FavoriteButton
-                            isFavorited={isCardFavorited(card.id)}
-                            onToggle={() => toggleFavoriteCard(card.id)}
-                            size="sm"
-                          />
-                          <Plus className="h-4 w-4 text-muted-foreground" />
+                          {isLoggedIn && (
+                            <>
+                              <FavoriteButton
+                                isFavorited={isCardFavorited(card.id)}
+                                onToggle={() => toggleFavoriteCard(card.id)}
+                                size="sm"
+                              />
+                              <Plus className="h-4 w-4 text-muted-foreground" />
+                            </>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -282,20 +298,28 @@ export function CardSearchModal({ open, onOpenChange, mode, onAddCard }: CardSea
             </div>
           ) : null}
 
-          {/* 新規登録ボタン */}
-          {!showNewCardForm && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setShowNewCardForm(true);
-                setNewCardName(searchQuery);
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              新しいカードを登録
-            </Button>
-          )}
+          {/* 新規登録ボタン / ログインボタン */}
+          {!showNewCardForm &&
+            (isLoggedIn ? (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setShowNewCardForm(true);
+                  setNewCardName(searchQuery);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                新しいカードを登録
+              </Button>
+            ) : (
+              <div className="space-y-2 rounded-lg border p-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  カードを追加するにはログインが必要です
+                </p>
+                <LoginButton />
+              </div>
+            ))}
 
           {/* 新規登録フォーム */}
           {showNewCardForm && (
