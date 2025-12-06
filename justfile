@@ -316,6 +316,8 @@ wt-add branch:
         echo "  ✓ Copied .env.local"; \
     fi
     @echo "✅ Worktree ready: {{wt_dir}}/{{branch}}"
+    @echo "→ Opening in VS Code..."
+    @code {{wt_dir}}/{{branch}}
 
 # List all worktrees
 wt-list:
