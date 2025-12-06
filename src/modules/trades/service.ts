@@ -220,6 +220,27 @@ export async function transitionTrade(
     reason: options.reason ?? null,
     createdAt: new Date(),
   });
+
+  // 統計更新が必要なステータスの場合
+  if (['completed', 'canceled', 'disputed'].includes(toStatus)) {
+    // 非同期で統計を更新（エラーは無視）
+    void updateTradeStatsForParticipants(trade);
+  }
+}
+
+/**
+ * トレード参加者の統計を更新
+ */
+async function updateTradeStatsForParticipants(trade: Trade): Promise<void> {
+  try {
+    const { updateUserTradeStats } = await import('@/modules/stats');
+    await Promise.all([
+      updateUserTradeStats(trade.initiatorUserId),
+      trade.responderUserId ? updateUserTradeStats(trade.responderUserId) : Promise.resolve(),
+    ]);
+  } catch {
+    // 統計更新の失敗は無視
+  }
 }
 
 /**

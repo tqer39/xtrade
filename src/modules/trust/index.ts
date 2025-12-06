@@ -1,5 +1,14 @@
-export { calcTrustScore } from './calc-trust-score';
+export {
+  calcBehaviorScore,
+  calcCombinedTrustScore,
+  calcReviewScore,
+  calcTrustScore,
+  calcXProfileScore,
+} from './calc-trust-score';
 export type {
+  BehaviorScoreInput,
+  CombinedTrustScoreResult,
+  ReviewScoreInput,
   TrustGrade,
   TrustJobStatus,
   TrustScoreInput,
