@@ -1,11 +1,34 @@
 {
   "hooks": {
-    "PostToolUse": {
-      "Write": "just lint",
-      "Edit": "just lint"
-    },
-    "Stop": {
-      "*": "./scripts/play-sound.sh"
-    }
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "just lint"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "just lint"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/play-sound.sh"
+          }
+        ]
+      }
+    ]
   }
 }
