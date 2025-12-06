@@ -17,6 +17,5 @@ INSERT INTO __drizzle_migrations (hash, created_at) VALUES
   ('0003_cold_zzzax', 1764537180582),
   ('0004_heavy_rhodey', 1764800389902),
   ('0005_wooden_black_widow', 1764897098937),
-  ('0006_rapid_butterfly', 1764899986917),
-  ('0007_mushy_winter_soldier', 1764973266000)
+  ('0006_rapid_butterfly', 1764899986917)
 ON CONFLICT (hash) DO NOTHING;
