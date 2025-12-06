@@ -186,10 +186,6 @@ db-logs:
 # Run database migrations
 db-migrate:
     @echo "→ Running database migrations..."
-    @if [ ! -d "drizzle" ] || [ ! -f "drizzle/meta/_journal.json" ]; then \
-        echo "  ℹ No migrations found, generating first..."; \
-        npm run db:generate; \
-    fi
     npm run db:migrate
     @echo "  ✓ Migrations completed"
 
@@ -204,17 +200,15 @@ db-studio:
     npm run db:studio
 
 # Reset database (WARNING: destroys all data)
+[confirm("⚠ WARNING: This will destroy all data in the database! Continue? (yes/no)")]
 db-reset:
-    @echo "⚠ WARNING: This will destroy all data in the database!"
-    @read -p "Are you sure? (yes/no): " confirm; \
-    if [ "$$confirm" = "yes" ]; then \
-        docker compose down -v; \
-        docker compose up -d; \
-        echo "  ✓ Database reset completed"; \
-        echo "  ℹ Run 'just db-migrate' to apply migrations"; \
-    else \
-        echo "  ✓ Cancelled"; \
-    fi
+    docker compose down -v
+    docker compose up -d
+    @echo "  ✓ Database reset completed"
+    @echo "→ Waiting for database to be ready..."
+    @until docker compose ps | grep -q "healthy"; do sleep 1; done
+    @echo "  ✓ Database is healthy"
+    @just db-migrate
 
 # Run database seed (local only)
 db-seed:
