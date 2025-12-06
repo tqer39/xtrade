@@ -5,7 +5,7 @@ test.describe('Authentication', () => {
     await page.goto('/');
 
     // ログインボタンが表示されていることを確認
-    const loginButton = page.getByRole('button', { name: 'X でログイン' });
+    const loginButton = page.getByRole('button', { name: 'ログイン' });
     await expect(loginButton).toBeVisible();
   });
 
@@ -15,7 +15,7 @@ test.describe('Authentication', () => {
     await page.goto('/');
 
     // ログインボタンをクリック
-    const loginButton = page.getByRole('button', { name: 'X でログイン' });
+    const loginButton = page.getByRole('button', { name: 'ログイン' });
     await loginButton.click();
 
     // Twitter の OAuth ページにリダイレクトされることを確認

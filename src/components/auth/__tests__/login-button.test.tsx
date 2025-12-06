@@ -18,10 +18,10 @@ describe('LoginButton', () => {
     vi.clearAllMocks();
   });
 
-  it('「X でログイン」ボタンをレンダリングする', () => {
+  it('「ログイン」ボタンをレンダリングする', () => {
     render(<LoginButton />);
 
-    const button = screen.getByRole('button', { name: /X でログイン/i });
+    const button = screen.getByRole('button', { name: /ログイン/i });
     expect(button).toBeInTheDocument();
   });
 

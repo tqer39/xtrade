@@ -16,7 +16,8 @@ export function LoginButton() {
 
   return (
     <Button onClick={handleLogin} className="rounded-full gap-2 px-6 py-5 text-base font-semibold">
-      <XLogo />X でログイン
+      <XLogo />
+      ログイン
     </Button>
   );
 }
