@@ -49,7 +49,7 @@ repos:
         additional_dependencies:
           - 'textlint@15.4.1'
           - 'textlint-filter-rule-comments@1.2.2'
-          - 'textlint-rule-preset-smarthr@1.0.0'
+          - 'textlint-rule-preset-smarthr@1.36.1'
           - 'textlint-rule-preset-ja-technical-writing@11.0.0'
           - 'textlint-rule-prh@6.1.0'
 
