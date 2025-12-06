@@ -204,17 +204,14 @@ db-studio:
     npm run db:studio
 
 # Reset database (WARNING: destroys all data)
+[confirm("⚠ WARNING: This will destroy all data in the database! Continue? (yes/no)")]
 db-reset:
-    @echo "⚠ WARNING: This will destroy all data in the database!"
-    @read -p "Are you sure? (yes/no): " confirm; \
-    if [ "$$confirm" = "yes" ]; then \
-        docker compose down -v; \
-        docker compose up -d; \
-        echo "  ✓ Database reset completed"; \
-        echo "  ℹ Run 'just db-migrate' to apply migrations"; \
-    else \
-        echo "  ✓ Cancelled"; \
-    fi
+    docker compose down -v
+    docker compose up -d
+    @echo "  ✓ Database reset completed"
+    @echo "→ Waiting for database to be ready..."
+    @sleep 2
+    @just db-migrate
 
 # Run database seed (local only)
 db-seed:
