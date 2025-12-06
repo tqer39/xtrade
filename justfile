@@ -281,19 +281,23 @@ test-all: test test-e2e
 # Worktree directory (relative to repo root)
 wt_dir := "../xtrade-worktrees"
 
-# Create a new worktree with a new branch
+# Create a new worktree with a new branch (branch name: name-yymmdd-xxxxxx)
 wt-new name:
-    @echo "→ Creating worktree: {{name}}"
-    @mkdir -p {{wt_dir}}
-    git worktree add {{wt_dir}}/{{name}} -b {{name}}
-    @echo "→ Installing dependencies..."
-    @cd {{wt_dir}}/{{name}} && npm install
-    @if [ -f .env.local ]; then \
-        cp .env.local {{wt_dir}}/{{name}}/.env.local; \
-        echo "  ✓ Copied .env.local"; \
+    #!/usr/bin/env bash
+    set -euo pipefail
+    suffix="$(date +%y%m%d)-$(openssl rand -hex 3)"
+    branch="{{name}}-${suffix}"
+    echo "→ Creating worktree: ${branch}"
+    mkdir -p {{wt_dir}}
+    git worktree add "{{wt_dir}}/${branch}" -b "${branch}"
+    echo "→ Installing dependencies..."
+    cd "{{wt_dir}}/${branch}" && npm install
+    if [ -f .env.local ]; then
+        cp .env.local "{{wt_dir}}/${branch}/.env.local"
+        echo "  ✓ Copied .env.local"
     fi
-    @echo "✅ Worktree ready: {{wt_dir}}/{{name}}"
-    @echo "  → Open in VS Code: code {{wt_dir}}/{{name}}"
+    echo "✅ Worktree ready: {{wt_dir}}/${branch}"
+    echo "  → Open in VS Code: code {{wt_dir}}/${branch}"
 
 # Create a worktree from an existing branch
 wt-add branch:
