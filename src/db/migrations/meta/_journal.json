@@ -64,6 +64,13 @@
       "when": 1765100000000,
       "tag": "0008_trust_score_v2",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1765094312223,
+      "tag": "0009_giant_dazzler",
+      "breakpoints": true
     }
   ]
 }
