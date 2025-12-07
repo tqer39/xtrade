@@ -1,6 +1,7 @@
 'use client';
 
 import { ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
@@ -26,9 +27,15 @@ export function CardListItem({ item, type }: CardListItemProps) {
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
           {/* サムネイル画像 */}
-          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
+          <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
             {card.imageUrl ? (
-              <img src={card.imageUrl} alt={card.name} className="h-full w-full object-cover" />
+              <Image
+                src={card.imageUrl}
+                alt={card.name}
+                fill
+                className="object-cover"
+                sizes="64px"
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <ImageIcon className="h-6 w-6 text-muted-foreground" />

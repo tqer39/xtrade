@@ -1,6 +1,7 @@
 'use client';
 
 import { ImageIcon, Loader2, Plus, Search, Star } from 'lucide-react';
+import Image from 'next/image';
 import { useState } from 'react';
 import { LoginButton } from '@/components/auth';
 import { FavoriteButton } from '@/components/favorites';
@@ -190,12 +191,14 @@ export function CardSearchModal({
                       <CardContent className="p-3">
                         <div className="flex items-center gap-3">
                           {/* サムネイル画像 */}
-                          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
+                          <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
                             {photocard.imageUrl ? (
-                              <img
+                              <Image
                                 src={photocard.imageUrl}
                                 alt={photocard.name}
-                                className="h-full w-full object-cover"
+                                fill
+                                className="object-cover"
+                                sizes="40px"
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center">
@@ -246,12 +249,14 @@ export function CardSearchModal({
                       <CardContent className="p-3">
                         <div className="flex items-center gap-3">
                           {/* サムネイル画像 */}
-                          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
+                          <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
                             {card.imageUrl ? (
-                              <img
+                              <Image
                                 src={card.imageUrl}
                                 alt={card.name}
-                                className="h-full w-full object-cover"
+                                fill
+                                className="object-cover"
+                                sizes="40px"
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center">

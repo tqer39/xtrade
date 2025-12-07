@@ -60,7 +60,10 @@ describe('CardListItem', () => {
 
       const img = screen.getByAltText('テストカード');
       expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute('src', 'https://example.com/image.jpg');
+      // Next.js Imageコンポーネントは/_next/image?url=... 形式にURLを変換する
+      expect(img.getAttribute('src')).toContain(
+        encodeURIComponent('https://example.com/image.jpg')
+      );
     });
   });
 
