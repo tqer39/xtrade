@@ -37,6 +37,9 @@
       },
       "performance": {
         "noImgElement": "warn"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "warn"
       }
     }
   },

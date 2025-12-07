@@ -8,9 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ViewToggle } from '@/components/view-toggle';
 import { useMyCards } from '@/hooks/use-my-cards';
 import { useMySets } from '@/hooks/use-my-sets';
+import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
+import { CardGridItem } from './card-grid-item';
 import { CardListItem } from './card-list-item';
 import { CardSearchModal } from './card-search-modal';
 import { SetDetailModal } from './set-detail-modal';
@@ -18,8 +21,7 @@ import { SetListItem } from './set-list-item';
 
 export function ListingPageClient() {
   const { data: session, isPending: isSessionPending } = useSession();
-  const { haveCards, wantCards, isLoading, error, addHaveCard, addWantCard, refetch } =
-    useMyCards();
+  const { haveCards, wantCards, isLoading, error, refetch } = useMyCards();
   const {
     sets,
     isLoading: isSetsLoading,
@@ -32,8 +34,8 @@ export function ListingPageClient() {
     removeCardFromSet,
     refetch: refetchSets,
   } = useMySets();
+  const { viewMode, setViewMode, isHydrated } = useViewPreference();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<'have' | 'want'>('have');
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
   const [isSetDetailOpen, setIsSetDetailOpen] = useState(false);
   const [newSetName, setNewSetName] = useState('');
@@ -41,11 +43,7 @@ export function ListingPageClient() {
   const [addingToSetId, setAddingToSetId] = useState<string | null>(null);
   const [setDetailKey, setSetDetailKey] = useState(0);
 
-  const handleOpenModal = (mode: 'have' | 'want') => {
-    setModalMode(mode);
-    setIsModalOpen(true);
-  };
-
+  // セットへのカード追加時にモーダル経由で呼ばれる
   const handleAddCard = async (cardId: string) => {
     if (addingToSetId) {
       await addCardToSet(addingToSetId, cardId);
@@ -54,10 +52,6 @@ export function ListingPageClient() {
       setAddingToSetId(null);
       setSetDetailKey((prev) => prev + 1);
       setIsSetDetailOpen(true);
-    } else if (modalMode === 'have') {
-      await addHaveCard(cardId);
-    } else {
-      await addWantCard(cardId);
     }
   };
 
@@ -125,9 +119,11 @@ export function ListingPageClient() {
       {/* 未ログイン時のカード検索ボタン */}
       {!isLoggedIn && (
         <div className="mb-6">
-          <Button onClick={() => handleOpenModal('have')} className="gap-2" size="lg">
-            <Search className="h-4 w-4" />
-            カードを検索
+          <Button asChild className="gap-2" size="lg">
+            <Link href="/cards/search">
+              <Search className="h-4 w-4" />
+              カードを検索
+            </Link>
           </Button>
           <p className="mt-2 text-sm text-muted-foreground">
             カードを追加・管理するにはログインが必要です
@@ -143,20 +139,27 @@ export function ListingPageClient() {
         </TabsList>
 
         <TabsContent value="have" className="mt-4">
-          <div className="mb-4">
-            <Button onClick={() => handleOpenModal('have')} className="gap-2">
-              {isLoggedIn ? (
-                <>
-                  <Plus className="h-4 w-4" />
-                  カードを追加
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4" />
-                  カードを検索
-                </>
-              )}
+          <div className="mb-4 flex items-center justify-between">
+            <Button asChild className="gap-2">
+              <Link
+                href={isLoggedIn ? '/cards/search?mode=have&returnTo=/listing' : '/cards/search'}
+              >
+                {isLoggedIn ? (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    カードを追加
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4" />
+                    カードを検索
+                  </>
+                )}
+              </Link>
             </Button>
+            {isHydrated && isLoggedIn && haveCards.length > 0 && (
+              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+            )}
           </div>
           {!isLoggedIn ? (
             <div className="text-center py-8">
@@ -166,13 +169,29 @@ export function ListingPageClient() {
               <LoginButton />
             </div>
           ) : isLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
+            <div
+              className={
+                viewMode === 'grid'
+                  ? 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3'
+                  : 'space-y-3'
+              }
+            >
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton
+                  key={i}
+                  className={viewMode === 'grid' ? 'aspect-square' : 'h-20 w-full'}
+                />
+              ))}
             </div>
           ) : haveCards.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               まだカードを登録していません
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              {haveCards.map((item) => (
+                <CardGridItem key={item.id} item={item} type="have" />
+              ))}
             </div>
           ) : (
             <div className="space-y-3">
@@ -184,20 +203,27 @@ export function ListingPageClient() {
         </TabsContent>
 
         <TabsContent value="want" className="mt-4">
-          <div className="mb-4">
-            <Button onClick={() => handleOpenModal('want')} className="gap-2">
-              {isLoggedIn ? (
-                <>
-                  <Plus className="h-4 w-4" />
-                  カードを追加
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4" />
-                  カードを検索
-                </>
-              )}
+          <div className="mb-4 flex items-center justify-between">
+            <Button asChild className="gap-2">
+              <Link
+                href={isLoggedIn ? '/cards/search?mode=want&returnTo=/listing' : '/cards/search'}
+              >
+                {isLoggedIn ? (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    カードを追加
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4" />
+                    カードを検索
+                  </>
+                )}
+              </Link>
             </Button>
+            {isHydrated && isLoggedIn && wantCards.length > 0 && (
+              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+            )}
           </div>
           {!isLoggedIn ? (
             <div className="text-center py-8">
@@ -207,13 +233,29 @@ export function ListingPageClient() {
               <LoginButton />
             </div>
           ) : isLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
+            <div
+              className={
+                viewMode === 'grid'
+                  ? 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3'
+                  : 'space-y-3'
+              }
+            >
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton
+                  key={i}
+                  className={viewMode === 'grid' ? 'aspect-square' : 'h-20 w-full'}
+                />
+              ))}
             </div>
           ) : wantCards.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               まだ欲しいカードを登録していません
+            </div>
+          ) : viewMode === 'grid' ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              {wantCards.map((item) => (
+                <CardGridItem key={item.id} item={item} type="want" />
+              ))}
             </div>
           ) : (
             <div className="space-y-3">
@@ -290,7 +332,7 @@ export function ListingPageClient() {
             setAddingToSetId(null);
           }
         }}
-        mode={addingToSetId ? 'set' : modalMode}
+        mode="set"
         onAddCard={handleAddCard}
         isLoggedIn={isLoggedIn}
       />
