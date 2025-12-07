@@ -41,6 +41,14 @@ vi.mock('@/db/schema', () => ({
     createdAt: 'card.createdAt',
     updatedAt: 'card.updatedAt',
   },
+  user: {
+    id: 'user.id',
+    name: 'user.name',
+    image: 'user.image',
+    twitterUsername: 'user.twitterUsername',
+    trustScore: 'user.trustScore',
+    trustGrade: 'user.trustGrade',
+  },
   userHaveCard: {
     id: 'userHaveCard.id',
     userId: 'userHaveCard.userId',
@@ -64,6 +72,7 @@ vi.mock('drizzle-orm', () => ({
   eq: vi.fn((a, b) => ({ type: 'eq', a, b })),
   and: vi.fn((...args) => ({ type: 'and', conditions: args })),
   like: vi.fn((a, b) => ({ type: 'like', a, b })),
+  desc: vi.fn((a) => ({ type: 'desc', column: a })),
   sql: vi.fn(),
 }));
 
@@ -77,6 +86,8 @@ const {
   upsertHaveCard,
   upsertWantCard,
   removeWantCard,
+  getLatestCards,
+  getCardOwners,
 } = await import('../service');
 
 describe('cards/service', () => {
@@ -368,6 +379,65 @@ describe('cards/service', () => {
       await removeWantCard('user-1', 'card-1');
 
       expect(mockDelete).toHaveBeenCalled();
+    });
+  });
+
+  describe('getLatestCards', () => {
+    it('最新登録カードを取得', async () => {
+      const mockCards = [
+        { id: 'card-1', name: 'Card 1', createdAt: new Date() },
+        { id: 'card-2', name: 'Card 2', createdAt: new Date() },
+      ];
+      mockLimit.mockResolvedValueOnce(mockCards);
+
+      const result = await getLatestCards(20);
+
+      expect(result).toEqual(mockCards);
+      expect(mockFrom).toHaveBeenCalled();
+      expect(mockOrderBy).toHaveBeenCalled();
+      expect(mockLimit).toHaveBeenCalledWith(20);
+    });
+
+    it('limit のデフォルト値は 20', async () => {
+      mockLimit.mockResolvedValueOnce([]);
+
+      await getLatestCards();
+
+      expect(mockLimit).toHaveBeenCalledWith(20);
+    });
+
+    it('limit の最大値は 100', async () => {
+      mockLimit.mockResolvedValueOnce([]);
+
+      await getLatestCards(200);
+
+      expect(mockLimit).toHaveBeenCalledWith(100);
+    });
+  });
+
+  describe('getCardOwners', () => {
+    it('カード所有者一覧を取得', async () => {
+      const mockOwners = [
+        { userId: 'user-1', name: 'User 1', quantity: 2, trustGrade: 'A', trustScore: 80 },
+      ];
+      mockWhere.mockReturnValue({
+        orderBy: vi.fn().mockResolvedValueOnce(mockOwners),
+      });
+
+      const result = await getCardOwners('card-1');
+
+      expect(result).toEqual(mockOwners);
+      expect(mockFrom).toHaveBeenCalled();
+    });
+
+    it('所有者がいない場合は空配列を返す', async () => {
+      mockWhere.mockReturnValue({
+        orderBy: vi.fn().mockResolvedValueOnce([]),
+      });
+
+      const result = await getCardOwners('card-1');
+
+      expect(result).toEqual([]);
     });
   });
 });
