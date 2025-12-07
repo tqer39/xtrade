@@ -1,0 +1,54 @@
+# カード画像スクレイピング定期実行ワークフロー
+name: Scrape Card Images
+
+on:
+  schedule:
+    # 毎週日曜日 03:00 UTC (日本時間 12:00)
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    # 手動実行も可能
+    inputs:
+      dry_run:
+        description: 'Dry run (no DB changes)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run scraper
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm run scrape:cards:dry-run
+          else
+            npm run scrape:cards
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_CUSTOM_DOMAIN: ${{ secrets.CLOUDFLARE_R2_CUSTOM_DOMAIN }}
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Card scraping failed. Check the logs for details."

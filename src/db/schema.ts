@@ -813,6 +813,76 @@ export const userReviewStatsRelations = relations(userReviewStats, ({ one }) => 
 }));
 
 // =====================================
+// スクレイピング関連テーブル
+// =====================================
+
+/**
+ * スクレイピングソース定義テーブル
+ * 画像収集対象のサイト・API設定を管理
+ */
+export const scrapeSource = pgTable(
+  'scrape_source',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(), // ソース名（例: "pokemon-card-db"）
+    type: text('type').notNull(), // "static" | "llm" | "api"
+    baseUrl: text('base_url').notNull(), // ベースURL
+    category: text('category'), // 対象カテゴリ（例: "ポケモンカード"）
+    groupName: text('group_name'), // 対象グループ（例: "INI"）
+    config: text('config'), // JSON: パーサー設定やプロンプト
+    isActive: boolean('is_active').default(true).notNull(),
+    lastScrapedAt: timestamp('last_scraped_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('scrape_source_type_idx').on(table.type),
+    index('scrape_source_category_idx').on(table.category),
+    index('scrape_source_is_active_idx').on(table.isActive),
+  ]
+);
+
+/**
+ * スクレイピング実行ログテーブル
+ * 各実行の結果とエラーを記録
+ */
+export const scrapeLog = pgTable(
+  'scrape_log',
+  {
+    id: text('id').primaryKey(),
+    sourceId: text('source_id')
+      .notNull()
+      .references(() => scrapeSource.id, { onDelete: 'cascade' }),
+    status: text('status').notNull(), // "running" | "success" | "failed"
+    itemsFound: integer('items_found'),
+    itemsCreated: integer('items_created'),
+    itemsUpdated: integer('items_updated'),
+    errorMessage: text('error_message'),
+    startedAt: timestamp('started_at').notNull(),
+    finishedAt: timestamp('finished_at'),
+  },
+  (table) => [
+    index('scrape_log_source_id_idx').on(table.sourceId),
+    index('scrape_log_status_idx').on(table.status),
+    index('scrape_log_started_at_idx').on(table.startedAt),
+  ]
+);
+
+export const scrapeSourceRelations = relations(scrapeSource, ({ many }) => ({
+  logs: many(scrapeLog),
+}));
+
+export const scrapeLogRelations = relations(scrapeLog, ({ one }) => ({
+  source: one(scrapeSource, {
+    fields: [scrapeLog.sourceId],
+    references: [scrapeSource.id],
+  }),
+}));
+
+// =====================================
 // User リレーション拡張
 // =====================================
 
