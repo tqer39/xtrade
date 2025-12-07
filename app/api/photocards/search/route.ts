@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import type { SortBy } from '@/modules/photocard';
 import { searchPhotocardMaster } from '@/modules/photocard';
 
 /**
@@ -12,6 +13,7 @@ import { searchPhotocardMaster } from '@/modules/photocard';
  * - member: メンバー名でフィルタ
  * - series: シリーズ名でフィルタ
  * - limit: 取得件数（デフォルト 50、最大 100）
+ * - sortBy: ソート順（'name' | 'relevance'、デフォルト 'relevance'）
  */
 export async function GET(request: NextRequest) {
   const session = await auth.api.getSession({
@@ -28,13 +30,16 @@ export async function GET(request: NextRequest) {
   const memberName = searchParams.get('member') ?? undefined;
   const series = searchParams.get('series') ?? undefined;
   const limit = parseInt(searchParams.get('limit') ?? '50', 10);
+  const sortByParam = searchParams.get('sortBy');
+  const sortBy: SortBy = sortByParam === 'name' ? 'name' : 'relevance';
 
   const photocards = await searchPhotocardMaster(
     query,
     groupName,
     memberName,
     series,
-    Math.min(limit, 100)
+    Math.min(limit, 100),
+    sortBy
   );
 
   return NextResponse.json({ photocards });
