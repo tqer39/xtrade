@@ -5,7 +5,6 @@
  * 一時的なメールサービス（mailinator.com など）をブロック
  */
 
-// @ts-expect-error - disposable-email-domains には型定義がない
 import domains from 'disposable-email-domains';
 
 import type { EmailValidationResult } from '../types';
