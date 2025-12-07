@@ -50,11 +50,15 @@ npm install resend @react-email/components disposable-email-domains
 #### 環境変数追加
 
 ```bash
-# Resend
+# Resend（Send Access 権限のみで OK）
+# dev: xtrade-dev で取得した API キー
+# prod: 本番用 API キー（別途取得）
 RESEND_API_KEY=re_xxxxxxxxxxxx
-RESEND_FROM_EMAIL=noreply@xtrade-dev.tqer39.dev
+# dev: no-reply@xtrade-dev.tqer39.dev
+# prod: no-reply@xtrade.tqer39.dev
+RESEND_FROM_EMAIL=no-reply@xtrade-dev.tqer39.dev
 
-# reCAPTCHA v3
+# reCAPTCHA v3（未設定の場合は検証をスキップ）
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
 RECAPTCHA_SECRET_KEY=
 ```

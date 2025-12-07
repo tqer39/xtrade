@@ -24,5 +24,5 @@ export function getResendClient(): Resend {
  * 送信元メールアドレスを取得
  */
 export function getFromEmail(): string {
-  return process.env.RESEND_FROM_EMAIL || 'noreply@xtrade.tqer39.dev';
+  return process.env.RESEND_FROM_EMAIL || 'no-reply@xtrade.tqer39.dev';
 }
