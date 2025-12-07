@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useSession } from '@/lib/auth-client';
 import type { CardSet, CardSetWithCount, CardSetWithItems } from '@/modules/cards/types';
 
 interface UseMySetsReturn {
@@ -20,11 +21,19 @@ interface UseMySetsReturn {
 }
 
 export function useMySets(): UseMySetsReturn {
+  const { data: session, isPending: isSessionPending } = useSession();
+  const isLoggedIn = !!session?.user;
+
   const [sets, setSets] = useState<CardSetWithCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchSets = useCallback(async () => {
+    if (!isLoggedIn) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
@@ -39,11 +48,13 @@ export function useMySets(): UseMySetsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
-    fetchSets();
-  }, [fetchSets]);
+    if (!isSessionPending) {
+      fetchSets();
+    }
+  }, [fetchSets, isSessionPending]);
 
   const createSet = useCallback(
     async (name: string, description?: string, isPublic?: boolean): Promise<CardSet> => {
