@@ -1,6 +1,8 @@
 'use client';
 
 import { ImageIcon, Plus, Search } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { LoginButton, UserMenu } from '@/components/auth';
 import { Badge } from '@/components/ui/badge';
@@ -15,14 +17,13 @@ import { useMySets } from '@/hooks/use-my-sets';
 import { useSession } from '@/lib/auth-client';
 import { CardListItem } from './card-list-item';
 import { CardOwnerList } from './card-owner-list';
-import { CardSearchModal } from './card-search-modal';
 import { SetDetailModal } from './set-detail-modal';
 import { SetListItem } from './set-list-item';
 
 export function HomePageClient() {
+  const router = useRouter();
   const { data: session, isPending: isSessionPending } = useSession();
-  const { haveCards, wantCards, isLoading, error, addHaveCard, addWantCard, refetch } =
-    useMyCards();
+  const { haveCards, wantCards, isLoading, error, refetch } = useMyCards();
   const {
     sets,
     isLoading: isSetsLoading,
@@ -31,40 +32,16 @@ export function HomePageClient() {
     updateSet,
     deleteSet,
     getSetDetail,
-    addCardToSet,
     removeCardFromSet,
     refetch: refetchSets,
   } = useMySets();
   const { latestCards, isLoading: isLatestLoading } = useLatestCards(20);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<'have' | 'want'>('have');
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
   const [isSetDetailOpen, setIsSetDetailOpen] = useState(false);
   const [newSetName, setNewSetName] = useState('');
   const [isCreatingSet, setIsCreatingSet] = useState(false);
-  const [addingToSetId, setAddingToSetId] = useState<string | null>(null);
   const [setDetailKey, setSetDetailKey] = useState(0);
   const [selectedCardForOwners, setSelectedCardForOwners] = useState<string | null>(null);
-
-  const handleOpenModal = (mode: 'have' | 'want') => {
-    setModalMode(mode);
-    setIsModalOpen(true);
-  };
-
-  const handleAddCard = async (cardId: string) => {
-    if (addingToSetId) {
-      await addCardToSet(addingToSetId, cardId);
-      // カード追加後にセット詳細モーダルを再度開く
-      setSelectedSetId(addingToSetId);
-      setAddingToSetId(null);
-      setSetDetailKey((prev) => prev + 1);
-      setIsSetDetailOpen(true);
-    } else if (modalMode === 'have') {
-      await addHaveCard(cardId);
-    } else {
-      await addWantCard(cardId);
-    }
-  };
 
   const handleSelectSet = (setId: string) => {
     setSelectedSetId(setId);
@@ -84,10 +61,9 @@ export function HomePageClient() {
     }
   };
 
+  // セットへのカード追加は検索ページへ遷移
   const handleAddCardToSet = (setId: string) => {
-    setAddingToSetId(setId);
-    setIsSetDetailOpen(false);
-    setIsModalOpen(true);
+    router.push(`/cards/search?mode=set&setId=${setId}&returnTo=/`);
   };
 
   if (isSessionPending) {
@@ -132,9 +108,11 @@ export function HomePageClient() {
       {!isLoggedIn && (
         <div className="mb-6 space-y-6">
           <div>
-            <Button onClick={() => handleOpenModal('have')} className="gap-2" size="lg">
-              <Search className="h-4 w-4" />
-              カードを検索
+            <Button asChild className="gap-2" size="lg">
+              <Link href="/cards/search">
+                <Search className="h-4 w-4" />
+                カードを検索
+              </Link>
             </Button>
             <p className="mt-2 text-sm text-muted-foreground">
               カードを追加・管理するにはログインが必要です
@@ -206,18 +184,20 @@ export function HomePageClient() {
 
         <TabsContent value="have" className="mt-4">
           <div className="mb-4">
-            <Button onClick={() => handleOpenModal('have')} className="gap-2">
-              {isLoggedIn ? (
-                <>
-                  <Plus className="h-4 w-4" />
-                  カードを追加
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4" />
-                  カードを検索
-                </>
-              )}
+            <Button asChild className="gap-2">
+              <Link href={isLoggedIn ? '/cards/search?mode=have&returnTo=/' : '/cards/search'}>
+                {isLoggedIn ? (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    カードを追加
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4" />
+                    カードを検索
+                  </>
+                )}
+              </Link>
             </Button>
           </div>
           {!isLoggedIn ? (
@@ -247,18 +227,20 @@ export function HomePageClient() {
 
         <TabsContent value="want" className="mt-4">
           <div className="mb-4">
-            <Button onClick={() => handleOpenModal('want')} className="gap-2">
-              {isLoggedIn ? (
-                <>
-                  <Plus className="h-4 w-4" />
-                  カードを追加
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4" />
-                  カードを検索
-                </>
-              )}
+            <Button asChild className="gap-2">
+              <Link href={isLoggedIn ? '/cards/search?mode=want&returnTo=/' : '/cards/search'}>
+                {isLoggedIn ? (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    カードを追加
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4" />
+                    カードを検索
+                  </>
+                )}
+              </Link>
             </Button>
           </div>
           {!isLoggedIn ? (
@@ -343,19 +325,6 @@ export function HomePageClient() {
           )}
         </TabsContent>
       </Tabs>
-
-      <CardSearchModal
-        open={isModalOpen}
-        onOpenChange={(open) => {
-          setIsModalOpen(open);
-          if (!open) {
-            setAddingToSetId(null);
-          }
-        }}
-        mode={addingToSetId ? 'set' : modalMode}
-        onAddCard={handleAddCard}
-        isLoggedIn={isLoggedIn}
-      />
 
       <SetDetailModal
         key={setDetailKey}

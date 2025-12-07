@@ -25,6 +25,7 @@ function CardSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = (searchParams.get('mode') as 'have' | 'want' | 'set') || 'have';
+  const setId = searchParams.get('setId');
   const returnTo = searchParams.get('returnTo') || '/listing';
 
   const { data: session } = useSession();
@@ -90,15 +91,29 @@ function CardSearchContent() {
   };
 
   const addCardToUser = async (cardId: string) => {
-    const endpoint = mode === 'have' ? '/api/me/cards/have' : '/api/me/cards/want';
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cardId }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || 'カードの追加に失敗しました');
+    if (mode === 'set' && setId) {
+      // セットへのカード追加
+      const res = await fetch(`/api/me/sets/${setId}/cards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'セットへのカード追加に失敗しました');
+      }
+    } else {
+      // 持っている/欲しいカードへの追加
+      const endpoint = mode === 'have' ? '/api/me/cards/have' : '/api/me/cards/want';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'カードの追加に失敗しました');
+      }
     }
   };
 
