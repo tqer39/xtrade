@@ -1,8 +1,8 @@
 'use client';
 
+import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
 import { CardGridItem } from './card-grid-item';
 import { CardGridSkeleton } from './card-grid-skeleton';
-import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
 
 interface CardGridProps {
   items: (UserHaveCard | UserWantCard)[];

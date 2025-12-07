@@ -44,8 +44,7 @@ export function CardGridFilters({
 }: CardGridFiltersProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const hasActiveFilters =
-    searchQuery || selectedCategory !== 'all' || selectedRarity !== 'all';
+  const hasActiveFilters = searchQuery || selectedCategory !== 'all' || selectedRarity !== 'all';
 
   const clearFilters = () => {
     onSearchChange('');
@@ -118,7 +117,7 @@ export function CardGridFilters({
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">カテゴリ</label>
+              <span className="text-sm font-medium">カテゴリ</span>
               <Select value={selectedCategory} onValueChange={onCategoryChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="すべて" />
@@ -134,7 +133,7 @@ export function CardGridFilters({
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">レアリティ</label>
+              <span className="text-sm font-medium">レアリティ</span>
               <Select value={selectedRarity} onValueChange={onRarityChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="すべて" />

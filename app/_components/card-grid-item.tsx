@@ -1,6 +1,7 @@
 'use client';
 
 import { Heart, ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,8 +46,9 @@ export function CardGridItem({
   };
 
   return (
-    <div
-      className="group relative aspect-square overflow-hidden rounded-lg bg-muted cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+    <button
+      type="button"
+      className="group relative aspect-square w-full overflow-hidden rounded-lg bg-muted cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98] text-left"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
@@ -54,10 +56,12 @@ export function CardGridItem({
       {/* カード画像 */}
       <div className="absolute inset-0">
         {card.imageUrl ? (
-          <img
+          <Image
             src={card.imageUrl}
             alt={card.name}
-            className="h-full w-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted">
@@ -119,6 +123,6 @@ export function CardGridItem({
       <div className="md:hidden absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
         <p className="font-semibold text-white text-xs truncate">{card.name}</p>
       </div>
-    </div>
+    </button>
   );
 }

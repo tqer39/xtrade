@@ -1,7 +1,8 @@
 'use client';
 
 import { ImageIcon, Minus, Plus } from 'lucide-react';
-import { useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,18 +36,30 @@ export function CardDetailModal({
 }: CardDetailModalProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [priority, setPriority] = useState(1);
 
-  if (!item || !item.card) {
+  // Note: useMemo/useEffect to sync with item prop values should be used if needed
+  const card = item?.card;
+  const isHave = type === 'have';
+  const haveItem = isHave && item ? (item as UserHaveCard) : null;
+  const wantItem = !isHave && item ? (item as UserWantCard) : null;
+
+  // Initialize quantity and priority from props when item changes
+  const itemQuantity = haveItem?.quantity ?? 1;
+  const itemPriority = wantItem?.priority ?? 1;
+
+  useEffect(() => {
+    setQuantity(itemQuantity);
+  }, [itemQuantity]);
+
+  useEffect(() => {
+    setPriority(itemPriority);
+  }, [itemPriority]);
+
+  if (!item || !card) {
     return null;
   }
-
-  const card = item.card;
-  const isHave = type === 'have';
-  const haveItem = isHave ? (item as UserHaveCard) : null;
-  const wantItem = !isHave ? (item as UserWantCard) : null;
-
-  const [quantity, setQuantity] = useState(haveItem?.quantity ?? 1);
-  const [priority, setPriority] = useState(wantItem?.priority ?? 1);
 
   const handleUpdate = async () => {
     if (!onUpdate) return;
@@ -86,9 +99,15 @@ export function CardDetailModal({
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* カード画像 */}
-          <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+          <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
             {card.imageUrl ? (
-              <img src={card.imageUrl} alt={card.name} className="h-full w-full object-cover" />
+              <Image
+                src={card.imageUrl}
+                alt={card.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <ImageIcon className="h-24 w-24 text-muted-foreground" />
@@ -124,14 +143,12 @@ export function CardDetailModal({
                     type="number"
                     min="1"
                     value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Number.parseInt(e.target.value) || 1))}
+                    onChange={(e) =>
+                      setQuantity(Math.max(1, Number.parseInt(e.target.value, 10) || 1))
+                    }
                     className="text-center"
                   />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setQuantity(quantity + 1)}
-                  >
+                  <Button variant="outline" size="icon" onClick={() => setQuantity(quantity + 1)}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -148,7 +165,7 @@ export function CardDetailModal({
                   max="10"
                   value={priority}
                   onChange={(e) =>
-                    setPriority(Math.min(10, Math.max(1, Number.parseInt(e.target.value) || 1)))
+                    setPriority(Math.min(10, Math.max(1, Number.parseInt(e.target.value, 10) || 1)))
                   }
                 />
                 <p className="text-xs text-muted-foreground">
@@ -183,11 +200,7 @@ export function CardDetailModal({
             >
               キャンセル
             </Button>
-            <Button
-              onClick={handleUpdate}
-              disabled={isUpdating || isDeleting}
-              className="flex-1"
-            >
+            <Button onClick={handleUpdate} disabled={isUpdating || isDeleting} className="flex-1">
               {isUpdating ? '更新中...' : '更新'}
             </Button>
           </div>
