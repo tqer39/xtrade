@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ListingPageClient } from '../_components/listing-page-client';
+import { HomePageClient } from '../_components/home-page-client';
 
 // モック設定
 const mockUseSession = vi.fn();
 const mockUseMyCards = vi.fn();
 const mockUseMySets = vi.fn();
+const mockUseLatestCards = vi.fn();
 
 vi.mock('@/lib/auth-client', () => ({
   useSession: () => mockUseSession(),
@@ -19,14 +20,13 @@ vi.mock('@/hooks/use-my-sets', () => ({
   useMySets: () => mockUseMySets(),
 }));
 
-vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
+vi.mock('@/hooks/use-latest-cards', () => ({
+  useLatestCards: () => mockUseLatestCards(),
 }));
 
 vi.mock('@/components/auth', () => ({
   LoginButton: () => <button type="button">ログイン</button>,
+  UserMenu: () => <div data-testid="user-menu">UserMenu</div>,
 }));
 
 const defaultSetsReturn = {
@@ -42,10 +42,18 @@ const defaultSetsReturn = {
   refetch: vi.fn(),
 };
 
-describe('ListingPageClient', () => {
+const defaultLatestCardsReturn = {
+  latestCards: [],
+  isLoading: false,
+  error: null,
+  refetch: vi.fn(),
+};
+
+describe('HomePageClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseMySets.mockReturnValue(defaultSetsReturn);
+    mockUseLatestCards.mockReturnValue(defaultLatestCardsReturn);
   });
 
   describe('ローディング状態', () => {
@@ -61,10 +69,10 @@ describe('ListingPageClient', () => {
         refetch: vi.fn(),
       });
 
-      render(<ListingPageClient />);
+      render(<HomePageClient />);
 
-      // ローディング中はカード出品タイトルが表示されない
-      expect(screen.queryByText('カード出品')).not.toBeInTheDocument();
+      // ローディング中はxtradeタイトルが表示されない
+      expect(screen.queryByText('xtrade')).not.toBeInTheDocument();
     });
   });
 
@@ -81,12 +89,26 @@ describe('ListingPageClient', () => {
         refetch: vi.fn(),
       });
 
-      render(<ListingPageClient />);
+      render(<HomePageClient />);
 
       expect(screen.getByText('ログイン')).toBeInTheDocument();
-      expect(
-        screen.getByText('ログインすると、持っているカードを登録・管理できます')
-      ).toBeInTheDocument();
+    });
+
+    it('最新カード一覧セクションを表示', () => {
+      mockUseSession.mockReturnValue({ data: null, isPending: false });
+      mockUseMyCards.mockReturnValue({
+        haveCards: [],
+        wantCards: [],
+        isLoading: false,
+        error: null,
+        addHaveCard: vi.fn(),
+        addWantCard: vi.fn(),
+        refetch: vi.fn(),
+      });
+
+      render(<HomePageClient />);
+
+      expect(screen.getByText('最近登録されたカード')).toBeInTheDocument();
     });
   });
 
@@ -106,7 +128,7 @@ describe('ListingPageClient', () => {
         refetch: vi.fn(),
       });
 
-      render(<ListingPageClient />);
+      render(<HomePageClient />);
 
       expect(screen.getByText(/エラーが発生しました/)).toBeInTheDocument();
       expect(screen.getByText('再読み込み')).toBeInTheDocument();
@@ -136,9 +158,9 @@ describe('ListingPageClient', () => {
         refetch: vi.fn(),
       });
 
-      render(<ListingPageClient />);
+      render(<HomePageClient />);
 
-      expect(screen.getByText('カード出品')).toBeInTheDocument();
+      expect(screen.getByText('xtrade')).toBeInTheDocument();
       expect(screen.getByText('持っている (1)')).toBeInTheDocument();
       expect(screen.getByText('欲しい (0)')).toBeInTheDocument();
       expect(screen.getByText('セット (0)')).toBeInTheDocument();
@@ -160,12 +182,12 @@ describe('ListingPageClient', () => {
         refetch: vi.fn(),
       });
 
-      render(<ListingPageClient />);
+      render(<HomePageClient />);
 
       expect(screen.getByText('まだカードを登録していません')).toBeInTheDocument();
     });
 
-    it('ホームに戻るリンクを表示', () => {
+    it('UserMenuを表示', () => {
       mockUseSession.mockReturnValue({
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
@@ -180,10 +202,9 @@ describe('ListingPageClient', () => {
         refetch: vi.fn(),
       });
 
-      render(<ListingPageClient />);
+      render(<HomePageClient />);
 
-      const homeLink = screen.getByRole('link', { name: 'ホームに戻る' });
-      expect(homeLink).toHaveAttribute('href', '/');
+      expect(screen.getByTestId('user-menu')).toBeInTheDocument();
     });
   });
 });

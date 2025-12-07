@@ -144,3 +144,20 @@ export interface AddCardToSetInput {
   cardId: string;
   quantity?: number;
 }
+
+// =====================================
+// カード所有者関連
+// =====================================
+
+/**
+ * カード所有者の情報
+ */
+export interface CardOwner {
+  userId: string;
+  name: string;
+  image: string | null;
+  twitterUsername: string | null;
+  trustScore: number | null;
+  trustGrade: string | null;
+  quantity: number;
+}

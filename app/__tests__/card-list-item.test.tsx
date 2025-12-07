@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
-import { CardListItem } from '../card-list-item';
+import { CardListItem } from '../_components/card-list-item';
 
 describe('CardListItem', () => {
   const mockCard = {
