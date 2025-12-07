@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 
+// CI 環境では DATABASE_URL が設定されていないため、DB 接続が必要なテストはスキップ
 test.describe('Guest Home Page', () => {
+  // CI ではスキップ（DATABASE_URL が必要）
+  test.skip(!!process.env.CI, 'Skipped in CI: requires database connection');
+
   test.beforeEach(async ({ page }) => {
     // localStorage をクリア
     await page.goto('/');
@@ -123,9 +127,6 @@ test.describe('Guest Home Page', () => {
   });
 
   test('should clear localStorage after login and sync', async ({ page }) => {
-    // このテストは OAuth 認証が必要なため CI ではスキップ
-    test.skip(!!process.env.CI, 'Skipped in CI: requires OAuth authentication');
-
     await page.goto('/');
 
     // ゲスト時に localStorage にお気に入りを保存
