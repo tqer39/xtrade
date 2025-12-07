@@ -2,11 +2,18 @@ import { describe, expect, it } from 'vitest';
 import {
   calcBehaviorScore,
   calcCombinedTrustScore,
+  calcCombinedTrustScoreWithEmail,
+  calcEmailVerificationScore,
   calcReviewScore,
   calcTrustScore,
   calcXProfileScore,
 } from '../calc-trust-score';
-import type { BehaviorScoreInput, ReviewScoreInput, TrustScoreInput } from '../types';
+import type {
+  BehaviorScoreInput,
+  EmailVerificationInput,
+  ReviewScoreInput,
+  TrustScoreInput,
+} from '../types';
 
 describe('calcTrustScore', () => {
   // デフォルトの入力値
@@ -341,8 +348,8 @@ describe('calcXProfileScore', () => {
     isProtected: false,
   };
 
-  it('100点満点のスコアを40点満点にスケールする', () => {
-    // 最大スコア (100点) → 40点
+  it('100点満点のスコアを35点満点にスケールする', () => {
+    // 最大スコア (100点) → 35点
     const result = calcXProfileScore({
       ...defaultInput,
       accountAgeDays: 365 * 5,
@@ -352,10 +359,10 @@ describe('calcXProfileScore', () => {
       hasDescription: true,
       verified: true,
     });
-    expect(result).toBe(40);
+    expect(result).toBe(35);
   });
 
-  it('中間スコア (50点) → 20点', () => {
+  it('中間スコア (45点) → 16点', () => {
     const result = calcXProfileScore({
       ...defaultInput,
       accountAgeDays: 365 * 2, // +20
@@ -363,10 +370,9 @@ describe('calcXProfileScore', () => {
       followersCount: 50, // +5
       hasProfileImage: true, // +10
       hasDescription: true, // +5
-      // Total: 45, but let's just check it's around 18-20
+      // Total: 45 → Math.round(45 / 100 * 35) = 16
     });
-    // 20 + 5 + 5 + 10 + 5 = 45 → 18
-    expect(result).toBe(18);
+    expect(result).toBe(16);
   });
 
   it('最小スコアは0', () => {
@@ -390,76 +396,76 @@ describe('calcBehaviorScore', () => {
   };
 
   describe('トレード完了数', () => {
-    it('20件以上で +20', () => {
+    it('20件以上で +17', () => {
       const result = calcBehaviorScore({
         ...defaultInput,
         completedTradeCount: 20,
         tradeSuccessRate: 100,
       });
-      // 20(completed) + 10(success rate 100% with 20+ trades) = 30
-      expect(result).toBe(30);
+      // 17(completed) + 9(success rate 100% with 20+ trades) = 26
+      expect(result).toBe(26);
     });
 
-    it('10件以上で +15', () => {
+    it('10件以上で +13', () => {
       const result = calcBehaviorScore({
         ...defaultInput,
         completedTradeCount: 10,
         tradeSuccessRate: 100,
       });
-      // 15(completed) + 10(success rate) = 25
-      expect(result).toBe(25);
+      // 13(completed) + 9(success rate) = 22
+      expect(result).toBe(22);
     });
 
-    it('5件以上で +10', () => {
+    it('5件以上で +9', () => {
       const result = calcBehaviorScore({
         ...defaultInput,
         completedTradeCount: 5,
         tradeSuccessRate: 100,
       });
-      // 10(completed) + 10(success rate) = 20
-      expect(result).toBe(20);
+      // 9(completed) + 9(success rate) = 18
+      expect(result).toBe(18);
     });
 
-    it('1件以上で +5', () => {
+    it('1件以上で +4', () => {
       const result = calcBehaviorScore({
         ...defaultInput,
         completedTradeCount: 1,
         tradeSuccessRate: 100,
       });
-      // 5(completed) + 0(not enough trades for success rate bonus) = 5
-      expect(result).toBe(5);
+      // 4(completed) + 0(not enough trades for success rate bonus) = 4
+      expect(result).toBe(4);
     });
   });
 
   describe('成功率', () => {
-    it('90%以上（5件以上）で +10', () => {
+    it('90%以上（5件以上）で +9', () => {
       const result = calcBehaviorScore({
         ...defaultInput,
         completedTradeCount: 5,
         tradeSuccessRate: 90,
       });
-      // 10(completed) + 10(success) = 20
-      expect(result).toBe(20);
+      // 9(completed) + 9(success) = 18
+      expect(result).toBe(18);
     });
 
-    it('80%以上（5件以上）で +7', () => {
+    it('80%以上（5件以上）で +6', () => {
       const result = calcBehaviorScore({
         ...defaultInput,
         completedTradeCount: 4, // 4 completed / 5 total = 80%
         tradeSuccessRate: 80,
       });
-      // 5(completed 1+) + 7(success) = 12
-      expect(result).toBe(12);
+      // 4(completed 1+) + 6(success) = 10
+      expect(result).toBe(10);
     });
 
-    it('70%以上（5件以上）で +4', () => {
+    it('70%以上（5件以上）で +3', () => {
       const result = calcBehaviorScore({
         ...defaultInput,
         completedTradeCount: 7, // 7 completed / 10 total = 70%
         tradeSuccessRate: 70,
       });
-      // 10(completed 5+) + 4(success) = 14
-      expect(result).toBe(14);
+      // 9(completed 5+) + 3(success) = 12
+      expect(result).toBe(12);
     });
   });
 
@@ -482,33 +488,33 @@ describe('calcBehaviorScore', () => {
   });
 
   describe('活動期間', () => {
-    it('180日以上で +5', () => {
+    it('180日以上で +4', () => {
       const result = calcBehaviorScore({
         ...defaultInput,
         daysSinceFirstTrade: 180,
       });
-      expect(result).toBe(5);
+      expect(result).toBe(4);
     });
 
-    it('30日以上で +3', () => {
+    it('30日以上で +2', () => {
       const result = calcBehaviorScore({
         ...defaultInput,
         daysSinceFirstTrade: 30,
       });
-      expect(result).toBe(3);
+      expect(result).toBe(2);
     });
   });
 
   describe('境界値', () => {
-    it('最大スコアは40', () => {
+    it('最大スコアは35', () => {
       const result = calcBehaviorScore({
         completedTradeCount: 20,
         tradeSuccessRate: 100,
         avgResponseTimeHours: 1,
         daysSinceFirstTrade: 365,
       });
-      // 20 + 10 + 5 + 5 = 40
-      expect(result).toBe(40);
+      // 17 + 9 + 5 + 4 = 35
+      expect(result).toBe(35);
     });
 
     it('最小スコアは0', () => {
@@ -640,6 +646,18 @@ describe('calcReviewScore', () => {
   });
 });
 
+describe('calcEmailVerificationScore', () => {
+  it('メール認証済みで +10', () => {
+    const result = calcEmailVerificationScore({ emailVerified: true });
+    expect(result).toBe(10);
+  });
+
+  it('メール未認証で 0', () => {
+    const result = calcEmailVerificationScore({ emailVerified: false });
+    expect(result).toBe(0);
+  });
+});
+
 describe('calcCombinedTrustScore', () => {
   const xProfileInput: TrustScoreInput = {
     accountAgeDays: 365 * 5,
@@ -661,20 +679,21 @@ describe('calcCombinedTrustScore', () => {
   const reviewInput: ReviewScoreInput = {
     reviewCount: 10,
     avgRating: 5.0,
+    positiveCount: 10,
     negativeCount: 0,
   };
 
-  it('3要素のスコアを統合する', () => {
+  it('3要素のスコアを統合する（非推奨関数）', () => {
     const result = calcCombinedTrustScore(xProfileInput, behaviorInput, reviewInput);
 
-    // xProfile: 100点 → 40点
-    expect(result.breakdown.xProfile).toBe(40);
-    // behavior: 20 + 10 + 5 + 5 = 40点
-    expect(result.breakdown.behavior).toBe(40);
+    // xProfile: 100点 → 35点
+    expect(result.breakdown.xProfile).toBe(35);
+    // behavior: 17 + 9 + 5 + 4 = 35点
+    expect(result.breakdown.behavior).toBe(35);
     // review: 12 + 4 = 16点
     expect(result.breakdown.review).toBe(16);
 
-    expect(result.totalScore).toBe(96);
+    expect(result.totalScore).toBe(86);
     expect(result.grade).toBe('S');
   });
 
@@ -689,13 +708,124 @@ describe('calcCombinedTrustScore', () => {
     const lowReview: ReviewScoreInput = {
       reviewCount: 0,
       avgRating: null,
+      positiveCount: 0,
       negativeCount: 0,
     };
 
     const result = calcCombinedTrustScore(xProfileInput, lowBehavior, lowReview);
 
-    // xProfile: 40, behavior: 0, review: 0 = 40
-    expect(result.totalScore).toBe(40);
+    // xProfile: 35, behavior: 0, review: 0 = 35
+    expect(result.totalScore).toBe(35);
     expect(result.grade).toBe('C');
+  });
+});
+
+describe('calcCombinedTrustScoreWithEmail', () => {
+  const xProfileInput: TrustScoreInput = {
+    accountAgeDays: 365 * 5,
+    tweetCount: 5000,
+    followersCount: 1000,
+    hasProfileImage: true,
+    hasDescription: true,
+    verified: true,
+    isProtected: false,
+  };
+
+  const behaviorInput: BehaviorScoreInput = {
+    completedTradeCount: 20,
+    tradeSuccessRate: 100,
+    avgResponseTimeHours: 1,
+    daysSinceFirstTrade: 365,
+  };
+
+  const reviewInput: ReviewScoreInput = {
+    reviewCount: 10,
+    avgRating: 5.0,
+    positiveCount: 10,
+    negativeCount: 0,
+  };
+
+  const emailInput: EmailVerificationInput = {
+    emailVerified: true,
+  };
+
+  it('4要素のスコアを統合する（メール認証含む）', () => {
+    const result = calcCombinedTrustScoreWithEmail(
+      xProfileInput,
+      behaviorInput,
+      reviewInput,
+      emailInput
+    );
+
+    // xProfile: 100点 → 35点
+    expect(result.breakdown.xProfile).toBe(35);
+    // behavior: 17 + 9 + 5 + 4 = 35点
+    expect(result.breakdown.behavior).toBe(35);
+    // review: 12 + 4 = 16点
+    expect(result.breakdown.review).toBe(16);
+    // emailVerification: +10点
+    expect(result.breakdown.emailVerification).toBe(10);
+
+    // 35 + 35 + 16 + 10 = 96
+    expect(result.totalScore).toBe(96);
+    expect(result.grade).toBe('S');
+  });
+
+  it('メール未認証の場合は10点少ない', () => {
+    const result = calcCombinedTrustScoreWithEmail(xProfileInput, behaviorInput, reviewInput, {
+      emailVerified: false,
+    });
+
+    expect(result.breakdown.emailVerification).toBe(0);
+    // 35 + 35 + 16 + 0 = 86
+    expect(result.totalScore).toBe(86);
+    expect(result.grade).toBe('S');
+  });
+
+  it('メール認証で最大100点を達成できる', () => {
+    const result = calcCombinedTrustScoreWithEmail(
+      xProfileInput,
+      behaviorInput,
+      {
+        reviewCount: 10,
+        avgRating: 5.0,
+        positiveCount: 10,
+        negativeCount: 0,
+      },
+      { emailVerified: true }
+    );
+
+    // 35 + 35 + 16 + 10 = 96 (最大は35+35+20+10=100だがreviewは最大16)
+    expect(result.totalScore).toBeLessThanOrEqual(100);
+  });
+
+  it('全て最低スコアでも0点', () => {
+    const result = calcCombinedTrustScoreWithEmail(
+      {
+        accountAgeDays: 0,
+        tweetCount: 0,
+        followersCount: 0,
+        hasProfileImage: false,
+        hasDescription: false,
+        verified: false,
+        isProtected: true,
+      },
+      {
+        completedTradeCount: 0,
+        tradeSuccessRate: 0,
+        avgResponseTimeHours: null,
+        daysSinceFirstTrade: null,
+      },
+      {
+        reviewCount: 0,
+        avgRating: null,
+        positiveCount: 0,
+        negativeCount: 0,
+      },
+      { emailVerified: false }
+    );
+
+    expect(result.totalScore).toBe(0);
+    expect(result.grade).toBe('D');
   });
 });
