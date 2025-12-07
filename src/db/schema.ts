@@ -16,6 +16,9 @@ export const user = pgTable('user', {
   banned: boolean('banned').default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
+  // サブスクリプション関連
+  subscriptionStatus: text('subscription_status').default('free'), // free|active|canceled|past_due
+  subscriptionPlan: text('subscription_plan').default('free'), // free|basic|premium
   // 信頼スコア関連
   trustScore: integer('trust_score'), // 0〜100（3要素の合計）
   trustGrade: text('trust_grade'), // S/A/B/C/D/U
@@ -126,6 +129,10 @@ export const userRelations = relations(user, ({ one, many }) => ({
   reviewsReceived: many(tradeReview, { relationName: 'reviewsReceived' }),
   tradeStats: one(userTradeStats),
   reviewStats: one(userReviewStats),
+  // サブスクリプション関連
+  stripeCustomer: one(stripeCustomer),
+  subscriptions: many(subscription),
+  paymentEvents: many(paymentEvent),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -879,6 +886,119 @@ export const scrapeLogRelations = relations(scrapeLog, ({ one }) => ({
   source: one(scrapeSource, {
     fields: [scrapeLog.sourceId],
     references: [scrapeSource.id],
+  }),
+}));
+
+// =====================================
+// Stripe サブスクリプション関連テーブル
+// =====================================
+
+/**
+ * Stripe 顧客テーブル
+ * ユーザーと Stripe Customer の紐付け
+ */
+export const stripeCustomer = pgTable(
+  'stripe_customer',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .unique()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    stripeCustomerId: text('stripe_customer_id').notNull().unique(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('stripe_customer_user_id_idx').on(table.userId),
+    index('stripe_customer_stripe_id_idx').on(table.stripeCustomerId),
+  ]
+);
+
+export const stripeCustomerRelations = relations(stripeCustomer, ({ one }) => ({
+  user: one(user, {
+    fields: [stripeCustomer.userId],
+    references: [user.id],
+  }),
+}));
+
+/**
+ * サブスクリプションテーブル
+ * ユーザーの契約状態を管理
+ */
+export const subscription = pgTable(
+  'subscription',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    stripeSubscriptionId: text('stripe_subscription_id').notNull().unique(),
+    stripePriceId: text('stripe_price_id').notNull(),
+    status: text('status').notNull(), // active|canceled|past_due|paused|trialing|incomplete|incomplete_expired
+    currentPeriodStart: timestamp('current_period_start').notNull(),
+    currentPeriodEnd: timestamp('current_period_end').notNull(),
+    cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false).notNull(),
+    canceledAt: timestamp('canceled_at'),
+    endedAt: timestamp('ended_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('subscription_user_id_idx').on(table.userId),
+    index('subscription_stripe_id_idx').on(table.stripeSubscriptionId),
+    index('subscription_status_idx').on(table.status),
+  ]
+);
+
+export const subscriptionRelations = relations(subscription, ({ one, many }) => ({
+  user: one(user, {
+    fields: [subscription.userId],
+    references: [user.id],
+  }),
+  paymentEvents: many(paymentEvent),
+}));
+
+/**
+ * 支払いイベントテーブル
+ * Webhook イベントの記録（冪等性担保・監査ログ）
+ */
+export const paymentEvent = pgTable(
+  'payment_event',
+  {
+    id: text('id').primaryKey(),
+    stripeEventId: text('stripe_event_id').notNull().unique(),
+    eventType: text('event_type').notNull(),
+    userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+    subscriptionId: text('subscription_id').references(() => subscription.id, {
+      onDelete: 'set null',
+    }),
+    payload: text('payload'), // JSON string
+    processedAt: timestamp('processed_at'),
+    error: text('error'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('payment_event_stripe_event_id_idx').on(table.stripeEventId),
+    index('payment_event_type_idx').on(table.eventType),
+    index('payment_event_user_id_idx').on(table.userId),
+  ]
+);
+
+export const paymentEventRelations = relations(paymentEvent, ({ one }) => ({
+  user: one(user, {
+    fields: [paymentEvent.userId],
+    references: [user.id],
+  }),
+  subscription: one(subscription, {
+    fields: [paymentEvent.subscriptionId],
+    references: [subscription.id],
   }),
 }));
 
