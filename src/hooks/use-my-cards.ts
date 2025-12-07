@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useSession } from '@/lib/auth-client';
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
 
 interface UseMyCardsReturn {
@@ -14,12 +15,20 @@ interface UseMyCardsReturn {
 }
 
 export function useMyCards(): UseMyCardsReturn {
+  const { data: session, isPending: isSessionPending } = useSession();
+  const isLoggedIn = !!session?.user;
+
   const [haveCards, setHaveCards] = useState<UserHaveCard[]>([]);
   const [wantCards, setWantCards] = useState<UserWantCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchCards = useCallback(async () => {
+    if (!isLoggedIn) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
@@ -35,11 +44,13 @@ export function useMyCards(): UseMyCardsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
-    fetchCards();
-  }, [fetchCards]);
+    if (!isSessionPending) {
+      fetchCards();
+    }
+  }, [fetchCards, isSessionPending]);
 
   const addHaveCard = useCallback(
     async (cardId: string, quantity: number = 1) => {

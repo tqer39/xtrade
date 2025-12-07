@@ -5,9 +5,20 @@ import { useFavorites } from '../use-favorites';
 // fetch モック
 global.fetch = vi.fn();
 
+// useSession モック
+const mockUseSession = vi.fn();
+vi.mock('@/lib/auth-client', () => ({
+  useSession: () => mockUseSession(),
+}));
+
 describe('useFavorites', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // デフォルトでログイン状態を返す
+    mockUseSession.mockReturnValue({
+      data: { user: { id: 'user-1', name: 'Test User' } },
+      isPending: false,
+    });
   });
 
   describe('初期データ取得', () => {
