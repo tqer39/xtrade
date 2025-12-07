@@ -1,6 +1,8 @@
 export {
   createCard,
   getCardById,
+  getCardOwners,
+  getLatestCards,
   getUserHaveCards,
   getUserWantCards,
   removeWantCard,
@@ -12,6 +14,7 @@ export type {
   AddHaveCardInput,
   AddWantCardInput,
   Card,
+  CardOwner,
   CreateCardInput,
   UserHaveCard,
   UserWantCard,

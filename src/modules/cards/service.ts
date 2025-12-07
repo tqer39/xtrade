@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, like, sql } from 'drizzle-orm';
+import { and, desc, eq, like, sql } from 'drizzle-orm';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
-import type { AddHaveCardInput, AddWantCardInput, Card, CreateCardInput } from './types';
+import type { AddHaveCardInput, AddWantCardInput, Card, CardOwner, CreateCardInput } from './types';
 
 /**
  * カードを検索する
@@ -217,4 +217,39 @@ export async function removeWantCard(userId: string, cardId: string) {
   await db
     .delete(schema.userWantCard)
     .where(and(eq(schema.userWantCard.userId, userId), eq(schema.userWantCard.cardId, cardId)));
+}
+
+/**
+ * 最新登録カードを取得する（公開API用）
+ */
+export async function getLatestCards(limit = 20): Promise<Card[]> {
+  const cards = await db
+    .select()
+    .from(schema.card)
+    .orderBy(desc(schema.card.createdAt))
+    .limit(Math.min(limit, 100));
+
+  return cards;
+}
+
+/**
+ * カードを持っているユーザー一覧を取得する（公開API用）
+ */
+export async function getCardOwners(cardId: string): Promise<CardOwner[]> {
+  const owners = await db
+    .select({
+      userId: schema.user.id,
+      name: schema.user.name,
+      image: schema.user.image,
+      twitterUsername: schema.user.twitterUsername,
+      trustScore: schema.user.trustScore,
+      trustGrade: schema.user.trustGrade,
+      quantity: schema.userHaveCard.quantity,
+    })
+    .from(schema.userHaveCard)
+    .innerJoin(schema.user, eq(schema.userHaveCard.userId, schema.user.id))
+    .where(eq(schema.userHaveCard.cardId, cardId))
+    .orderBy(desc(schema.user.trustScore));
+
+  return owners;
 }
