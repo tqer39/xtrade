@@ -26,12 +26,9 @@ test.describe('Guest Home Page', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // ログインボタンが表示されることを確認（ヘッダー内のボタン）
-    const loginButton = page
-      .locator('header, [class*="container"]')
-      .first()
-      .getByRole('button', { name: /X でログイン/ });
-    await expect(loginButton.first()).toBeVisible({ timeout: 10000 });
+    // ログインボタンが表示されることを確認（複数ある場合は最初のもの）
+    const loginButton = page.getByRole('button', { name: /ログイン/ }).first();
+    await expect(loginButton).toBeVisible({ timeout: 10000 });
   });
 
   test('should display card search button for guests', async ({ page }) => {

@@ -4,8 +4,8 @@ test.describe('Authentication', () => {
   test('should display login button on home page', async ({ page }) => {
     await page.goto('/');
 
-    // ログインボタンが表示されていることを確認
-    const loginButton = page.getByRole('button', { name: 'ログイン' });
+    // ログインボタンが表示されていることを確認（複数ある場合は最初のもの）
+    const loginButton = page.getByRole('button', { name: /ログイン/ }).first();
     await expect(loginButton).toBeVisible();
   });
 
@@ -14,8 +14,8 @@ test.describe('Authentication', () => {
   test('should redirect to Twitter OAuth when clicking login', async ({ page }) => {
     await page.goto('/');
 
-    // ログインボタンをクリック
-    const loginButton = page.getByRole('button', { name: 'ログイン' });
+    // ログインボタンをクリック（複数ある場合は最初のもの）
+    const loginButton = page.getByRole('button', { name: /ログイン/ }).first();
     await loginButton.click();
 
     // Twitter の OAuth ページにリダイレクトされることを確認
