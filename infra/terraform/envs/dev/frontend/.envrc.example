@@ -12,3 +12,6 @@ export AWS_VAULT_PROFILE="xtrade-dev"
 export TF_VAR_better_auth_secret="your-better-auth-secret-here"
 export TF_VAR_twitter_client_id="your-twitter-client-id-here"
 export TF_VAR_twitter_client_secret="your-twitter-client-secret-here"
+
+# Resend メール送信設定 (必須)
+export TF_VAR_resend_api_key="your-resend-api-key-here"

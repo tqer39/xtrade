@@ -34,6 +34,12 @@ variable "admin_twitter_username" {
   default     = ""
 }
 
+variable "resend_api_key" {
+  description = "Resend API キー（メール送信用）"
+  type        = string
+  sensitive   = true
+}
+
 # Vercel プロジェクトの作成
 module "vercel" {
   source = "../../../modules/vercel"
@@ -63,6 +69,8 @@ module "vercel" {
     TWITTER_CLIENT_ID      = var.twitter_client_id
     TWITTER_CLIENT_SECRET  = var.twitter_client_secret
     ADMIN_TWITTER_USERNAME = var.admin_twitter_username
+    RESEND_API_KEY         = var.resend_api_key
+    RESEND_FROM_EMAIL      = "no-reply@${local.env_config.subdomain}.${local.domain}"
   }
 }
 
