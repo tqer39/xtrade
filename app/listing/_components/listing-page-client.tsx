@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { LoginButton } from '@/components/auth';
@@ -99,17 +99,7 @@ export function ListingPageClient() {
     );
   }
 
-  if (!session?.user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">カード出品</h1>
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">ログインして、カードを管理しましょう</p>
-          <LoginButton />
-        </div>
-      </div>
-    );
-  }
+  const isLoggedIn = !!session?.user;
 
   if (error) {
     return (
@@ -132,21 +122,50 @@ export function ListingPageClient() {
         </Button>
       </div>
 
+      {/* 未ログイン時のカード検索ボタン */}
+      {!isLoggedIn && (
+        <div className="mb-6">
+          <Button onClick={() => handleOpenModal('have')} className="gap-2" size="lg">
+            <Search className="h-4 w-4" />
+            カードを検索
+          </Button>
+          <p className="mt-2 text-sm text-muted-foreground">
+            カードを追加・管理するにはログインが必要です
+          </p>
+        </div>
+      )}
+
       <Tabs defaultValue="have" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="have">持っている ({haveCards.length})</TabsTrigger>
-          <TabsTrigger value="want">欲しい ({wantCards.length})</TabsTrigger>
-          <TabsTrigger value="sets">セット ({sets.length})</TabsTrigger>
+          <TabsTrigger value="have">持っている {isLoggedIn && `(${haveCards.length})`}</TabsTrigger>
+          <TabsTrigger value="want">欲しい {isLoggedIn && `(${wantCards.length})`}</TabsTrigger>
+          <TabsTrigger value="sets">セット {isLoggedIn && `(${sets.length})`}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="have" className="mt-4">
           <div className="mb-4">
             <Button onClick={() => handleOpenModal('have')} className="gap-2">
-              <Plus className="h-4 w-4" />
-              カードを追加
+              {isLoggedIn ? (
+                <>
+                  <Plus className="h-4 w-4" />
+                  カードを追加
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4" />
+                  カードを検索
+                </>
+              )}
             </Button>
           </div>
-          {isLoading ? (
+          {!isLoggedIn ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">
+                ログインすると、持っているカードを登録・管理できます
+              </p>
+              <LoginButton />
+            </div>
+          ) : isLoading ? (
             <div className="space-y-3">
               <Skeleton className="h-20 w-full" />
               <Skeleton className="h-20 w-full" />
@@ -167,11 +186,27 @@ export function ListingPageClient() {
         <TabsContent value="want" className="mt-4">
           <div className="mb-4">
             <Button onClick={() => handleOpenModal('want')} className="gap-2">
-              <Plus className="h-4 w-4" />
-              カードを追加
+              {isLoggedIn ? (
+                <>
+                  <Plus className="h-4 w-4" />
+                  カードを追加
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4" />
+                  カードを検索
+                </>
+              )}
             </Button>
           </div>
-          {isLoading ? (
+          {!isLoggedIn ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">
+                ログインすると、欲しいカードを登録・管理できます
+              </p>
+              <LoginButton />
+            </div>
+          ) : isLoading ? (
             <div className="space-y-3">
               <Skeleton className="h-20 w-full" />
               <Skeleton className="h-20 w-full" />
@@ -190,48 +225,59 @@ export function ListingPageClient() {
         </TabsContent>
 
         <TabsContent value="sets" className="mt-4">
-          <div className="mb-4 flex gap-2">
-            <Input
-              placeholder="新しいセット名"
-              value={newSetName}
-              onChange={(e) => setNewSetName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateSet()}
-              className="max-w-xs"
-            />
-            <Button
-              onClick={handleCreateSet}
-              disabled={!newSetName.trim() || isCreatingSet}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              作成
-            </Button>
-          </div>
-          {isSetsLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
-          ) : setsError ? (
+          {!isLoggedIn ? (
             <div className="text-center py-8">
-              <p className="text-destructive mb-4">エラー: {setsError.message}</p>
-              <Button onClick={() => refetchSets()}>再読み込み</Button>
-            </div>
-          ) : sets.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              まだセットを作成していません
+              <p className="text-muted-foreground mb-4">
+                ログインすると、セットを作成・管理できます
+              </p>
+              <LoginButton />
             </div>
           ) : (
-            <div className="space-y-3">
-              {sets.map((set) => (
-                <SetListItem
-                  key={set.id}
-                  set={set}
-                  onSelect={handleSelectSet}
-                  onDelete={deleteSet}
+            <>
+              <div className="mb-4 flex gap-2">
+                <Input
+                  placeholder="新しいセット名"
+                  value={newSetName}
+                  onChange={(e) => setNewSetName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateSet()}
+                  className="max-w-xs"
                 />
-              ))}
-            </div>
+                <Button
+                  onClick={handleCreateSet}
+                  disabled={!newSetName.trim() || isCreatingSet}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  作成
+                </Button>
+              </div>
+              {isSetsLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : setsError ? (
+                <div className="text-center py-8">
+                  <p className="text-destructive mb-4">エラー: {setsError.message}</p>
+                  <Button onClick={() => refetchSets()}>再読み込み</Button>
+                </div>
+              ) : sets.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  まだセットを作成していません
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sets.map((set) => (
+                    <SetListItem
+                      key={set.id}
+                      set={set}
+                      onSelect={handleSelectSet}
+                      onDelete={deleteSet}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
@@ -246,6 +292,7 @@ export function ListingPageClient() {
         }}
         mode={addingToSetId ? 'set' : modalMode}
         onAddCard={handleAddCard}
+        isLoggedIn={isLoggedIn}
       />
 
       <SetDetailModal

@@ -109,6 +109,10 @@ describe('AdminUsersPage', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({ allowedUsers: mockAllowedUsers }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ users: [] }),
         });
 
       render(<AdminUsersPage />);
@@ -129,6 +133,10 @@ describe('AdminUsersPage', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({ allowedUsers: [] }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ users: [] }),
         });
 
       render(<AdminUsersPage />);
@@ -147,6 +155,10 @@ describe('AdminUsersPage', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({ allowedUsers: [] }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ users: [] }),
         });
 
       render(<AdminUsersPage />);
@@ -167,6 +179,10 @@ describe('AdminUsersPage', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({ allowedUsers: [] }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ users: [] }),
         })
         .mockResolvedValueOnce({
           ok: true,
@@ -214,6 +230,10 @@ describe('AdminUsersPage', () => {
           ok: false,
           status: 403,
           json: () => Promise.resolve({ error: 'Forbidden' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ users: [] }),
         });
 
       render(<AdminUsersPage />);
@@ -232,6 +252,10 @@ describe('AdminUsersPage', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({ allowedUsers: [] }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ users: [] }),
         });
 
       render(<AdminUsersPage />);

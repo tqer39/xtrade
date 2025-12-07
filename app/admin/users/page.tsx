@@ -20,12 +20,26 @@ interface UserData {
   role: string;
 }
 
+interface RegisteredUser {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  twitterUsername: string | null;
+  role: string;
+  trustScore: number | null;
+  trustGrade: string | null;
+  createdAt: string;
+}
+
 export default function AdminUsersPage() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
   const [allowedUsers, setAllowedUsers] = useState<AllowedUser[]>([]);
+  const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
   const [newUsername, setNewUsername] = useState('');
   const [loading, setLoading] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -65,12 +79,32 @@ export default function AdminUsersPage() {
     }
   }, []);
 
-  // ホワイトリスト取得
+  const fetchRegisteredUsers = useCallback(async () => {
+    try {
+      setUsersLoading(true);
+      const res = await fetch('/api/admin/users');
+      if (!res.ok) {
+        if (res.status === 403) {
+          return;
+        }
+        throw new Error('Failed to fetch');
+      }
+      const data = await res.json();
+      setRegisteredUsers(data.users);
+    } catch {
+      // エラーは既にホワイトリストで表示される可能性があるため、ここでは設定しない
+    } finally {
+      setUsersLoading(false);
+    }
+  }, []);
+
+  // ホワイトリスト・登録ユーザー取得
   useEffect(() => {
     if (!isPending && session?.user) {
       fetchAllowedUsers();
+      fetchRegisteredUsers();
     }
-  }, [isPending, session, fetchAllowedUsers]);
+  }, [isPending, session, fetchAllowedUsers, fetchRegisteredUsers]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,6 +253,41 @@ export default function AdminUsersPage() {
             </ul>
           )}
         </div>
+
+        {/* 登録済みユーザー一覧 */}
+        <div style={styles.section}>
+          <h2 style={styles.subtitle}>登録済みユーザー ({registeredUsers.length})</h2>
+          {usersLoading ? (
+            <div style={styles.loading}>読み込み中...</div>
+          ) : registeredUsers.length === 0 ? (
+            <p style={styles.empty}>登録済みユーザーはいません</p>
+          ) : (
+            <ul style={styles.list}>
+              {registeredUsers.map((user) => (
+                <li key={user.id} style={styles.userListItem}>
+                  <div style={styles.userInfo}>
+                    {user.image && <img src={user.image} alt={user.name} style={styles.avatar} />}
+                    <div style={styles.userDetails}>
+                      <span style={styles.userName}>{user.name}</span>
+                      {user.twitterUsername && (
+                        <span style={styles.userHandle}>@{user.twitterUsername}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={styles.userMeta}>
+                    {user.trustGrade && <span style={styles.trustBadge}>{user.trustGrade}</span>}
+                    <span style={styles.roleBadge} data-role={user.role}>
+                      {user.role}
+                    </span>
+                    <span style={styles.date}>
+                      {new Date(user.createdAt).toLocaleDateString('ja-JP')}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -361,5 +430,58 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '6px',
     marginBottom: '16px',
     fontSize: '14px',
+  },
+  userListItem: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px',
+    borderBottom: '1px solid #eee',
+    gap: '12px',
+  },
+  userInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    flex: 1,
+  },
+  avatar: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    objectFit: 'cover' as const,
+  },
+  userDetails: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '2px',
+  },
+  userName: {
+    fontWeight: '500',
+    fontSize: '14px',
+  },
+  userHandle: {
+    color: '#666',
+    fontSize: '12px',
+  },
+  userMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  trustBadge: {
+    padding: '2px 8px',
+    backgroundColor: '#e6f7ff',
+    color: '#1890ff',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '600',
+  },
+  roleBadge: {
+    padding: '2px 8px',
+    backgroundColor: '#f0f0f0',
+    color: '#666',
+    borderRadius: '4px',
+    fontSize: '12px',
   },
 };

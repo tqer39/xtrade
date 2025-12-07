@@ -84,7 +84,9 @@ describe('ListingPageClient', () => {
       render(<ListingPageClient />);
 
       expect(screen.getByText('ログイン')).toBeInTheDocument();
-      expect(screen.getByText('ログインして、カードを管理しましょう')).toBeInTheDocument();
+      expect(
+        screen.getByText('ログインすると、持っているカードを登録・管理できます')
+      ).toBeInTheDocument();
     });
   });
 
