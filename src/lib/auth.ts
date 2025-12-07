@@ -3,8 +3,10 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { admin } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
+
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
+import { sendVerificationEmail } from '@/modules/email';
 
 /**
  * 管理者の X ユーザー名（環境変数から取得）
@@ -135,6 +137,24 @@ export const auth = betterAuth({
         required: false,
       },
     },
+  },
+
+  // メール認証設定
+  emailVerification: {
+    // X Auth 必須なので初回サインアップ時には送信しない
+    sendOnSignUp: false,
+    // 認証メール送信ハンドラー
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendVerificationEmail({
+        to: user.email,
+        verificationUrl: url,
+        userName: user.name,
+      });
+    },
+    // トークン有効期限: 1時間
+    expiresIn: 60 * 60,
+    // 認証完了後のリダイレクト先
+    callbackURL: '/settings?email_verified=true',
   },
 });
 

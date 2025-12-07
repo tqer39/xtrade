@@ -63,7 +63,16 @@ export interface ReviewScoreInput {
 }
 
 /**
- * 3要素統合スコアの結果
+ * メール認証スコア計算の入力パラメータ
+ */
+export interface EmailVerificationInput {
+  /** メールアドレスが認証済みか */
+  emailVerified: boolean;
+}
+
+/**
+ * 3要素統合スコアの結果（旧バージョン互換）
+ * @deprecated calcCombinedTrustScoreWithEmail を使用してください
  */
 export interface CombinedTrustScoreResult {
   /** 合計スコア（0〜100） */
@@ -78,6 +87,27 @@ export interface CombinedTrustScoreResult {
     behavior: number;
     /** レビュースコア（0〜20） */
     review: number;
+  };
+}
+
+/**
+ * 4要素統合スコアの結果（メール認証含む）
+ */
+export interface CombinedTrustScoreWithEmailResult {
+  /** 合計スコア（0〜100） */
+  totalScore: number;
+  /** グレード */
+  grade: TrustGrade;
+  /** スコア内訳 */
+  breakdown: {
+    /** Xプロフィールスコア（0〜35） */
+    xProfile: number;
+    /** 行動スコア（0〜35） */
+    behavior: number;
+    /** レビュースコア（0〜20） */
+    review: number;
+    /** メール認証スコア（0〜10） */
+    emailVerification: number;
   };
 }
 

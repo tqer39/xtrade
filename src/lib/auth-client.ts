@@ -13,3 +13,10 @@ export const authClient = createAuthClient({
 
 // 便利なメソッドをエクスポート
 export const { signIn, signOut, useSession } = authClient;
+
+/**
+ * メール認証用のメソッド
+ * - sendVerificationEmail: 認証メールを送信
+ * - verifyEmail: 認証トークンを検証
+ */
+export const { sendVerificationEmail, verifyEmail } = authClient;

@@ -1,6 +1,8 @@
 export {
   calcBehaviorScore,
   calcCombinedTrustScore,
+  calcCombinedTrustScoreWithEmail,
+  calcEmailVerificationScore,
   calcReviewScore,
   calcTrustScore,
   calcXProfileScore,
@@ -8,6 +10,8 @@ export {
 export type {
   BehaviorScoreInput,
   CombinedTrustScoreResult,
+  CombinedTrustScoreWithEmailResult,
+  EmailVerificationInput,
   ReviewScoreInput,
   TrustGrade,
   TrustJobStatus,

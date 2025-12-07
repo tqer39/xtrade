@@ -1,6 +1,8 @@
 import type {
   BehaviorScoreInput,
   CombinedTrustScoreResult,
+  CombinedTrustScoreWithEmailResult,
+  EmailVerificationInput,
   ReviewScoreInput,
   TrustGrade,
   TrustScoreInput,
@@ -107,43 +109,46 @@ export function calcTrustScore(p: TrustScoreInput): TrustScoreResult {
 }
 
 /**
- * Xプロフィールスコアを計算する（0〜40点）
+ * Xプロフィールスコアを計算する（0〜35点）
  *
- * 既存の calcTrustScore を0.4倍にスケール
+ * 既存の calcTrustScore を0.35倍にスケール
+ * ※ メール認証スコア導入に伴い、40点から35点に変更
  */
 export function calcXProfileScore(p: TrustScoreInput): number {
   const result = calcTrustScore(p);
-  // 100点満点を40点満点にスケール
-  return Math.round((result.score / 100) * 40);
+  // 100点満点を35点満点にスケール
+  return Math.round((result.score / 100) * 35);
 }
 
 /**
- * 行動スコアを計算する（0〜40点）
+ * 行動スコアを計算する（0〜35点）
+ *
+ * ※ メール認証スコア導入に伴い、40点から35点に変更
  */
 export function calcBehaviorScore(p: BehaviorScoreInput): number {
   let score = 0;
 
-  // トレード完了数（最大 +20）
+  // トレード完了数（最大 +17）
   if (p.completedTradeCount >= 20) {
-    score += 20;
+    score += 17;
   } else if (p.completedTradeCount >= 10) {
-    score += 15;
+    score += 13;
   } else if (p.completedTradeCount >= 5) {
-    score += 10;
+    score += 9;
   } else if (p.completedTradeCount >= 1) {
-    score += 5;
+    score += 4;
   }
 
-  // トレード成功率（最大 +10、5件以上のトレードが必要）
+  // トレード成功率（最大 +9、5件以上のトレードが必要）
   const totalTrades =
     p.completedTradeCount > 0 ? p.completedTradeCount / (p.tradeSuccessRate / 100) : 0;
   if (totalTrades >= 5) {
     if (p.tradeSuccessRate >= 90) {
-      score += 10;
+      score += 9;
     } else if (p.tradeSuccessRate >= 80) {
-      score += 7;
+      score += 6;
     } else if (p.tradeSuccessRate >= 70) {
-      score += 4;
+      score += 3;
     }
   }
 
@@ -156,16 +161,16 @@ export function calcBehaviorScore(p: BehaviorScoreInput): number {
     }
   }
 
-  // 活動期間（最大 +5）
+  // 活動期間（最大 +4）
   if (p.daysSinceFirstTrade !== null) {
     if (p.daysSinceFirstTrade >= 180) {
-      score += 5;
+      score += 4;
     } else if (p.daysSinceFirstTrade >= 30) {
-      score += 3;
+      score += 2;
     }
   }
 
-  return Math.max(0, Math.min(40, score));
+  return Math.max(0, Math.min(35, score));
 }
 
 /**
@@ -205,7 +210,15 @@ export function calcReviewScore(p: ReviewScoreInput): number {
 }
 
 /**
+ * メール認証スコアを計算する（0〜10点）
+ */
+export function calcEmailVerificationScore(p: EmailVerificationInput): number {
+  return p.emailVerified ? 10 : 0;
+}
+
+/**
  * 3要素を統合した信頼スコアを計算する
+ * @deprecated calcCombinedTrustScoreWithEmail を使用してください
  */
 export function calcCombinedTrustScore(
   xProfileInput: TrustScoreInput,
@@ -225,6 +238,41 @@ export function calcCombinedTrustScore(
       xProfile: xProfileScore,
       behavior: behaviorScore,
       review: reviewScore,
+    },
+  };
+}
+
+/**
+ * 4要素を統合した信頼スコアを計算する（メール認証含む）
+ *
+ * 配分:
+ * - Xプロフィール: 0〜35点
+ * - 行動スコア: 0〜35点
+ * - レビュースコア: 0〜20点
+ * - メール認証: 0〜10点
+ * - 合計: 0〜100点
+ */
+export function calcCombinedTrustScoreWithEmail(
+  xProfileInput: TrustScoreInput,
+  behaviorInput: BehaviorScoreInput,
+  reviewInput: ReviewScoreInput,
+  emailInput: EmailVerificationInput
+): CombinedTrustScoreWithEmailResult {
+  const xProfileScore = calcXProfileScore(xProfileInput);
+  const behaviorScore = calcBehaviorScore(behaviorInput);
+  const reviewScore = calcReviewScore(reviewInput);
+  const emailVerificationScore = calcEmailVerificationScore(emailInput);
+
+  const totalScore = xProfileScore + behaviorScore + reviewScore + emailVerificationScore;
+
+  return {
+    totalScore,
+    grade: scoreToGrade(totalScore),
+    breakdown: {
+      xProfile: xProfileScore,
+      behavior: behaviorScore,
+      review: reviewScore,
+      emailVerification: emailVerificationScore,
     },
   };
 }
