@@ -2,6 +2,7 @@
 
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { LoginButton } from '@/components/auth';
 import { Button } from '@/components/ui/button';
@@ -15,11 +16,11 @@ import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
 import { CardGridItem } from './card-grid-item';
 import { CardListItem } from './card-list-item';
-import { CardSearchModal } from './card-search-modal';
 import { SetDetailModal } from './set-detail-modal';
 import { SetListItem } from './set-list-item';
 
 export function ListingPageClient() {
+  const router = useRouter();
   const { data: session, isPending: isSessionPending } = useSession();
   const { haveCards, wantCards, isLoading, error, refetch } = useMyCards();
   const {
@@ -30,30 +31,15 @@ export function ListingPageClient() {
     updateSet,
     deleteSet,
     getSetDetail,
-    addCardToSet,
     removeCardFromSet,
     refetch: refetchSets,
   } = useMySets();
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
   const [isSetDetailOpen, setIsSetDetailOpen] = useState(false);
   const [newSetName, setNewSetName] = useState('');
   const [isCreatingSet, setIsCreatingSet] = useState(false);
-  const [addingToSetId, setAddingToSetId] = useState<string | null>(null);
   const [setDetailKey, setSetDetailKey] = useState(0);
-
-  // セットへのカード追加時にモーダル経由で呼ばれる
-  const handleAddCard = async (cardId: string) => {
-    if (addingToSetId) {
-      await addCardToSet(addingToSetId, cardId);
-      // カード追加後にセット詳細モーダルを再度開く
-      setSelectedSetId(addingToSetId);
-      setAddingToSetId(null);
-      setSetDetailKey((prev) => prev + 1);
-      setIsSetDetailOpen(true);
-    }
-  };
 
   const handleSelectSet = (setId: string) => {
     setSelectedSetId(setId);
@@ -73,10 +59,9 @@ export function ListingPageClient() {
     }
   };
 
+  // セットへのカード追加は検索ページへ遷移
   const handleAddCardToSet = (setId: string) => {
-    setAddingToSetId(setId);
-    setIsSetDetailOpen(false);
-    setIsModalOpen(true);
+    router.push(`/cards/search?mode=set&setId=${setId}&returnTo=/listing`);
   };
 
   if (isSessionPending) {
@@ -323,19 +308,6 @@ export function ListingPageClient() {
           )}
         </TabsContent>
       </Tabs>
-
-      <CardSearchModal
-        open={isModalOpen}
-        onOpenChange={(open) => {
-          setIsModalOpen(open);
-          if (!open) {
-            setAddingToSetId(null);
-          }
-        }}
-        mode="set"
-        onAddCard={handleAddCard}
-        isLoggedIn={isLoggedIn}
-      />
 
       <SetDetailModal
         key={setDetailKey}

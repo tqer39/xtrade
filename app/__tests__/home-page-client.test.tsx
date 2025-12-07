@@ -7,6 +7,11 @@ const mockUseSession = vi.fn();
 const mockUseMyCards = vi.fn();
 const mockUseMySets = vi.fn();
 const mockUseLatestCards = vi.fn();
+const mockPush = vi.fn();
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
 
 vi.mock('@/lib/auth-client', () => ({
   useSession: () => mockUseSession(),
