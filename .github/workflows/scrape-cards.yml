@@ -40,13 +40,13 @@ jobs:
             npm run scrape:cards
           fi
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT }}
-          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
-          CLOUDFLARE_R2_CUSTOM_DOMAIN: ${{ secrets.CLOUDFLARE_R2_CUSTOM_DOMAIN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_DEV }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_DEV }}
+          CLOUDFLARE_R2_ENDPOINT: ${{ secrets.CLOUDFLARE_R2_ENDPOINT_DEV }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID_DEV }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY_DEV }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET_DEV }}
+          CLOUDFLARE_R2_CUSTOM_DOMAIN: ${{ secrets.CLOUDFLARE_R2_CUSTOM_DOMAIN_DEV }}
 
       - name: Notify on failure
         if: failure()

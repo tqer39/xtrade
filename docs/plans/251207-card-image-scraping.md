@@ -301,6 +301,110 @@ jobs:
 
 ---
 
+## 処理フロー詳細
+
+### 1. オーケストレーター処理
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                  Orchestrator (index.ts)                    │
+├─────────────────────────────────────────────────────────────┤
+│ 1. scrapeSource テーブルから有効なソースを取得              │
+│ 2. 各ソースに対して:                                        │
+│    a. scrapeLog に "running" ステータスで記録開始           │
+│    b. ソースタイプに応じたスクレイパーを実行                │
+│    c. 結果を photocardMaster に保存                        │
+│    d. scrapeLog を "success" or "failed" で更新            │
+│ 3. 全ソース処理完了後、サマリーを出力                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2. スクレイパータイプ別処理
+
+#### Static Scraper（固定セレクタ）
+
+```text
+入力: baseUrl, selectors (cardList, cardName, cardImage)
+処理:
+  1. HTML を fetch
+  2. CSS セレクタでカード要素を抽出
+  3. 各カードから name, imageUrl を取得
+出力: ExtractedCard[]
+```
+
+#### LLM Scraper（Claude API）
+
+```text
+入力: baseUrl, prompt
+処理:
+  1. HTML を fetch
+  2. cleanHtml() で不要要素を削除（script, style, コメント）
+  3. Claude API にプロンプトと共に送信
+  4. JSON レスポンスをパース
+出力: ExtractedCard[]
+```
+
+#### API Fetcher（公開 API）
+
+```text
+入力: apiEndpoint, apiKey (optional)
+処理:
+  1. API エンドポイントを呼び出し
+  2. レスポンス JSON をパース
+  3. カード情報にマッピング
+出力: ExtractedCard[]
+```
+
+### 3. 画像処理パイプライン
+
+```text
+ExtractedCard.imageUrl
+        │
+        ▼
+┌──────────────────┐
+│   fetch image    │
+│  (HTTP GET)      │
+└────────┬─────────┘
+         │ Buffer
+         ▼
+┌──────────────────┐
+│ detectImageFormat│  sharp でフォーマット検出
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│  optimizeImage   │  WebP→PNG変換、リサイズ(最大800px)
+└────────┬─────────┘
+         │ ProcessedImage
+         ▼
+┌──────────────────┐
+│ uploadImageToR2  │  SHA256ハッシュベースのキー生成
+└────────┬─────────┘
+         │ UploadResult
+         ▼
+   photocardMaster.imageUrl に保存
+```
+
+### 4. エラーハンドリング
+
+| エラー種別 | 対応 |
+| --- | --- |
+| HTTP 4xx/5xx | リトライ（最大3回、指数バックオフ） |
+| 画像取得失敗 | スキップして次のカードへ |
+| LLM パースエラー | 空配列を返し、ログに記録 |
+| R2 アップロード失敗 | リトライ後、エラーログ記録 |
+| DB 保存失敗 | トランザクションロールバック |
+
+### 5. 監視・アラート
+
+| 項目 | 方法 |
+| --- | --- |
+| 実行ログ | scrapeLog テーブルに記録 |
+| 失敗通知 | GitHub Actions 失敗時にエラー出力 |
+| コスト監視 | Anthropic Console で API 使用量確認 |
+
+---
+
 ## 実装ステップ
 
 ### Phase 1: 基盤構築
