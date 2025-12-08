@@ -12,3 +12,9 @@ output "r2_public_url" {
   description = "R2 バケットのパブリック URL（カスタムドメイン）"
   value       = module.r2.public_url
 }
+
+output "r2_endpoint" {
+  description = "R2 S3互換エンドポイント（GitHub Secrets設定用）"
+  value       = module.r2.r2_endpoint
+  sensitive   = true
+}

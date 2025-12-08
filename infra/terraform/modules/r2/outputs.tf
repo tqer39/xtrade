@@ -12,3 +12,9 @@ output "public_url" {
   description = "R2 バケットのパブリック URL"
   value       = var.custom_domain != null ? "https://${var.custom_domain}" : null
 }
+
+output "r2_endpoint" {
+  description = "R2 S3互換エンドポイント"
+  value       = "https://${var.account_id}.r2.cloudflarestorage.com"
+  sensitive   = true
+}
