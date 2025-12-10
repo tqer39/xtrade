@@ -12,9 +12,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ViewToggle } from '@/components/view-toggle';
 import { useLatestCards } from '@/hooks/use-latest-cards';
 import { useMyCards } from '@/hooks/use-my-cards';
 import { useMySets } from '@/hooks/use-my-sets';
+import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
 import { CardListItem } from './card-list-item';
 import { CardOwnerList } from './card-owner-list';
@@ -37,6 +39,7 @@ export function HomePageClient() {
     refetch: refetchSets,
   } = useMySets();
   const { latestCards, isLoading: isLatestLoading } = useLatestCards(20);
+  const { viewMode, setViewMode, isHydrated } = useViewPreference();
   const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
   const [isSetDetailOpen, setIsSetDetailOpen] = useState(false);
   const [newSetName, setNewSetName] = useState('');
@@ -133,18 +136,30 @@ export function HomePageClient() {
               />
             ) : (
               <div>
-                <h2 className="text-lg font-medium mb-3">最近登録されたカード</h2>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-medium">最近登録されたカード</h2>
+                  {isHydrated && <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
+                </div>
                 {isLatestLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <div
+                    className={
+                      viewMode === 'grid'
+                        ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3'
+                        : 'space-y-2'
+                    }
+                  >
                     {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((key) => (
-                      <Skeleton key={key} className="h-32 w-full" />
+                      <Skeleton
+                        key={key}
+                        className={viewMode === 'grid' ? 'h-32 w-full' : 'h-20 w-full'}
+                      />
                     ))}
                   </div>
                 ) : latestCards.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
                     まだカードが登録されていません
                   </p>
-                ) : (
+                ) : viewMode === 'grid' ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {latestCards.map((card) => (
                       <Card
@@ -174,6 +189,40 @@ export function HomePageClient() {
                       </Card>
                     ))}
                   </div>
+                ) : (
+                  <div className="space-y-2">
+                    {latestCards.map((card) => (
+                      <Card
+                        key={card.id}
+                        className="cursor-pointer transition-colors hover:bg-accent"
+                        onClick={() => setSelectedCardForOwners(card.id)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
+                              {card.imageUrl ? (
+                                <img
+                                  src={card.imageUrl}
+                                  alt={card.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center">
+                                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium truncate">{card.name}</p>
+                              <Badge variant="secondary" className="text-xs mt-1">
+                                {card.category}
+                              </Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
@@ -190,7 +239,7 @@ export function HomePageClient() {
           </TabsList>
 
           <TabsContent value="have" className="mt-4">
-            <div className="mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <Button asChild className="gap-2">
                 <Link href={isLoggedIn ? '/cards/search?mode=have&returnTo=/' : '/cards/search'}>
                   {isLoggedIn ? (
@@ -206,6 +255,9 @@ export function HomePageClient() {
                   )}
                 </Link>
               </Button>
+              {isLoggedIn && isHydrated && haveCards.length > 0 && (
+                <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              )}
             </div>
             {!isLoggedIn ? (
               <div className="text-center py-8">
@@ -215,25 +267,41 @@ export function HomePageClient() {
                 <LoginButton />
               </div>
             ) : isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
+              <div
+                className={
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3'
+                    : 'space-y-3'
+                }
+              >
+                {Array.from({ length: 4 }, (_, i) => `skeleton-have-${i}`).map((key) => (
+                  <Skeleton
+                    key={key}
+                    className={viewMode === 'grid' ? 'aspect-square w-full' : 'h-20 w-full'}
+                  />
+                ))}
               </div>
             ) : haveCards.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 まだカードを登録していません
               </div>
+            ) : viewMode === 'grid' ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {haveCards.map((item) => (
+                  <CardListItem key={item.id} item={item} type="have" viewMode="grid" />
+                ))}
+              </div>
             ) : (
               <div className="space-y-3">
                 {haveCards.map((item) => (
-                  <CardListItem key={item.id} item={item} type="have" />
+                  <CardListItem key={item.id} item={item} type="have" viewMode="list" />
                 ))}
               </div>
             )}
           </TabsContent>
 
           <TabsContent value="want" className="mt-4">
-            <div className="mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <Button asChild className="gap-2">
                 <Link href={isLoggedIn ? '/cards/search?mode=want&returnTo=/' : '/cards/search'}>
                   {isLoggedIn ? (
@@ -249,6 +317,9 @@ export function HomePageClient() {
                   )}
                 </Link>
               </Button>
+              {isLoggedIn && isHydrated && wantCards.length > 0 && (
+                <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              )}
             </div>
             {!isLoggedIn ? (
               <div className="text-center py-8">
@@ -258,18 +329,34 @@ export function HomePageClient() {
                 <LoginButton />
               </div>
             ) : isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
+              <div
+                className={
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3'
+                    : 'space-y-3'
+                }
+              >
+                {Array.from({ length: 4 }, (_, i) => `skeleton-want-${i}`).map((key) => (
+                  <Skeleton
+                    key={key}
+                    className={viewMode === 'grid' ? 'aspect-square w-full' : 'h-20 w-full'}
+                  />
+                ))}
               </div>
             ) : wantCards.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 まだ欲しいカードを登録していません
               </div>
+            ) : viewMode === 'grid' ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {wantCards.map((item) => (
+                  <CardListItem key={item.id} item={item} type="want" viewMode="grid" />
+                ))}
+              </div>
             ) : (
               <div className="space-y-3">
                 {wantCards.map((item) => (
-                  <CardListItem key={item.id} item={item} type="want" />
+                  <CardListItem key={item.id} item={item} type="want" viewMode="list" />
                 ))}
               </div>
             )}

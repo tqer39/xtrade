@@ -106,7 +106,9 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn }: CardOwnerListProps
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium truncate">{owner.name}</span>
+                        <span className="font-medium truncate">
+                          {owner.twitterUsername ? `@${owner.twitterUsername}` : owner.name}
+                        </span>
                         <TrustBadge
                           grade={owner.trustGrade as TrustGrade}
                           size="sm"
@@ -114,9 +116,6 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn }: CardOwnerListProps
                           score={owner.trustScore}
                         />
                       </div>
-                      {owner.twitterUsername && (
-                        <p className="text-xs text-muted-foreground">@{owner.twitterUsername}</p>
-                      )}
                     </div>
                     <div className="text-right">
                       <span className="text-sm text-muted-foreground">{owner.quantity}枚</span>
