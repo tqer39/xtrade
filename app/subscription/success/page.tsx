@@ -25,7 +25,7 @@ export default function SubscriptionSuccessPage() {
           </p>
           <div className="flex flex-col gap-2">
             <Button asChild>
-              <Link href="/listing">カードを出品する</Link>
+              <Link href="/cards/search">カードを検索する</Link>
             </Button>
             <Button asChild variant="outline">
               <Link href="/subscription">サブスクリプションを管理</Link>
