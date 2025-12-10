@@ -71,6 +71,13 @@
       "when": 1765094312223,
       "tag": "0009_giant_dazzler",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1765407240984,
+      "tag": "0010_rapid_la_nuit",
+      "breakpoints": true
     }
   ]
 }
