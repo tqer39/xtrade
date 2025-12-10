@@ -34,6 +34,10 @@ vi.mock('@/components/auth', () => ({
   UserMenu: () => <div data-testid="user-menu">UserMenu</div>,
 }));
 
+vi.mock('@/components/layout', () => ({
+  Footer: () => <footer data-testid="footer">Footer</footer>,
+}));
+
 const defaultSetsReturn = {
   sets: [],
   isLoading: false,
@@ -114,6 +118,23 @@ describe('HomePageClient', () => {
       render(<HomePageClient />);
 
       expect(screen.getByText('最近登録されたカード')).toBeInTheDocument();
+    });
+
+    it('フッターを表示', () => {
+      mockUseSession.mockReturnValue({ data: null, isPending: false });
+      mockUseMyCards.mockReturnValue({
+        haveCards: [],
+        wantCards: [],
+        isLoading: false,
+        error: null,
+        addHaveCard: vi.fn(),
+        addWantCard: vi.fn(),
+        refetch: vi.fn(),
+      });
+
+      render(<HomePageClient />);
+
+      expect(screen.getByTestId('footer')).toBeInTheDocument();
     });
   });
 
