@@ -57,8 +57,8 @@ export const auth = betterAuth({
   // X (Twitter) OAuth プロバイダー
   socialProviders: {
     twitter: {
-      clientId: process.env.TWITTER_CLIENT_ID!,
-      clientSecret: process.env.TWITTER_CLIENT_SECRET!,
+      clientId: process.env.TWITTER_CLIENT_ID ?? '',
+      clientSecret: process.env.TWITTER_CLIENT_SECRET ?? '',
       // Twitter プロフィールからユーザー情報をマッピング
       mapProfileToUser: async (profile) => {
         // Twitter API v2 のプロフィールには username フィールドがある

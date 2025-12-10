@@ -83,6 +83,28 @@ cloudflare:
       location: APAC
       custom_domain: card-images.xtrade.tqer39.dev
 
+# Stripe 設定
+# API キーは環境変数 TF_VAR_stripe_api_key で設定
+stripe:
+  dev:
+    basic:
+      product_name: 'xtrade Basic (Dev)'
+      product_description: 'xtrade Basic プラン - マッチング制限緩和（開発環境）'
+      price_amount: 200 # 日本円
+    premium:
+      product_name: 'xtrade Premium (Dev)'
+      product_description: 'xtrade Premium プラン - 全機能解放（開発環境）'
+      price_amount: 400 # 日本円
+  prod:
+    basic:
+      product_name: 'xtrade Basic'
+      product_description: 'xtrade Basic プラン - マッチング制限緩和'
+      price_amount: 200 # 日本円
+    premium:
+      product_name: 'xtrade Premium'
+      product_description: 'xtrade Premium プラン - 全機能解放'
+      price_amount: 400 # 日本円
+
 # タグ設定
 tags:
   common:

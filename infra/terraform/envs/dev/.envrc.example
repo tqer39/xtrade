@@ -11,5 +11,9 @@ export AWS_VAULT_PROFILE="xtrade-dev"
 # Terraform 変数として使用する場合
 export TF_VAR_neon_api_key="${NEON_API_KEY}"
 
+# Stripe API Key (billing モジュール用)
+# Stripe Dashboard > Developers > API keys から取得
+export TF_VAR_stripe_api_key="sk_test_your-stripe-secret-key-here"
+
 # その他の環境変数
 export TF_ENV="dev"
