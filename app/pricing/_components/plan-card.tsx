@@ -17,7 +17,7 @@ interface PlanCardProps {
   name: string;
   price: number;
   description: string;
-  features: string[];
+  features: readonly string[];
   isCurrentPlan?: boolean;
   isPopular?: boolean;
   onSelect?: () => void;
