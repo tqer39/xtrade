@@ -26,7 +26,7 @@ function CardSearchContent() {
   const searchParams = useSearchParams();
   const mode = (searchParams.get('mode') as 'have' | 'want' | 'set') || 'have';
   const setId = searchParams.get('setId');
-  const returnTo = searchParams.get('returnTo') || '/listing';
+  const returnTo = searchParams.get('returnTo') || '/';
 
   const { data: session } = useSession();
   const isLoggedIn = !!session?.user;
