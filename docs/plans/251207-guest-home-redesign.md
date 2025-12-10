@@ -138,7 +138,7 @@ src/
 - [ ] ログイン後に localStorage から DB へ同期される（OAuth 認証が必要なため手動確認）
 - [ ] 同期後に localStorage がクリアされる（OAuth 認証が必要なため手動確認）
 
-E2E テストは `e2e/guest-home.spec.ts` に追加済み
+E2E テストは `e2e/guest-home.spec.ts` に追加済み。
 
 ## 関連ドキュメント
 
