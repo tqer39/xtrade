@@ -9,9 +9,10 @@ describe('Database Connection', () => {
     it('DATABASE_URL が未設定の場合はエラーをスローする', async () => {
       vi.stubEnv('DATABASE_URL', '');
 
-      await expect(import('../drizzle')).rejects.toThrow(
-        'DATABASE_URL 環境変数が設定されていません'
-      );
+      const { db } = await import('../drizzle');
+
+      // 遅延初期化のため、プロパティにアクセスしたときにエラーが発生する
+      expect(() => db.query).toThrow('DATABASE_URL 環境変数が設定されていません');
     });
   });
 

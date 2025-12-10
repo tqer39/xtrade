@@ -73,7 +73,7 @@ async function handleCheckoutCompleted(event: Stripe.Event): Promise<void> {
 
   // DB を同期
   await syncSubscriptionFromStripe(
-    subscription as Parameters<typeof syncSubscriptionFromStripe>[0]
+    subscription as unknown as Parameters<typeof syncSubscriptionFromStripe>[0]
   );
 }
 
@@ -83,7 +83,7 @@ async function handleCheckoutCompleted(event: Stripe.Event): Promise<void> {
 async function handleSubscriptionCreated(event: Stripe.Event): Promise<void> {
   const subscription = event.data.object as Stripe.Subscription;
   await syncSubscriptionFromStripe(
-    subscription as Parameters<typeof syncSubscriptionFromStripe>[0]
+    subscription as unknown as Parameters<typeof syncSubscriptionFromStripe>[0]
   );
 }
 
@@ -93,7 +93,7 @@ async function handleSubscriptionCreated(event: Stripe.Event): Promise<void> {
 async function handleSubscriptionUpdated(event: Stripe.Event): Promise<void> {
   const subscription = event.data.object as Stripe.Subscription;
   await syncSubscriptionFromStripe(
-    subscription as Parameters<typeof syncSubscriptionFromStripe>[0]
+    subscription as unknown as Parameters<typeof syncSubscriptionFromStripe>[0]
   );
 }
 
@@ -105,7 +105,7 @@ async function handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
 
   // サブスクリプションを同期（status が canceled になる）
   await syncSubscriptionFromStripe(
-    subscription as Parameters<typeof syncSubscriptionFromStripe>[0]
+    subscription as unknown as Parameters<typeof syncSubscriptionFromStripe>[0]
   );
 }
 
@@ -113,7 +113,7 @@ async function handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
  * 請求書支払い成功ハンドラ
  */
 async function handleInvoicePaid(event: Stripe.Event): Promise<void> {
-  const invoice = event.data.object as Stripe.Invoice;
+  const invoice = event.data.object as Stripe.Invoice & { subscription?: string | null };
 
   if (!invoice.subscription) {
     return;
@@ -121,11 +121,11 @@ async function handleInvoicePaid(event: Stripe.Event): Promise<void> {
 
   // Stripe からサブスクリプション詳細を取得
   const stripe = (await import('@/lib/stripe')).stripe;
-  const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+  const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
 
   // DB を同期
   await syncSubscriptionFromStripe(
-    subscription as Parameters<typeof syncSubscriptionFromStripe>[0]
+    subscription as unknown as Parameters<typeof syncSubscriptionFromStripe>[0]
   );
 }
 
@@ -133,7 +133,7 @@ async function handleInvoicePaid(event: Stripe.Event): Promise<void> {
  * 請求書支払い失敗ハンドラ
  */
 async function handleInvoicePaymentFailed(event: Stripe.Event): Promise<void> {
-  const invoice = event.data.object as Stripe.Invoice;
+  const invoice = event.data.object as Stripe.Invoice & { subscription?: string | null };
 
   if (!invoice.subscription) {
     return;
@@ -141,11 +141,11 @@ async function handleInvoicePaymentFailed(event: Stripe.Event): Promise<void> {
 
   // Stripe からサブスクリプション詳細を取得して同期
   const stripe = (await import('@/lib/stripe')).stripe;
-  const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+  const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
 
   // DB を同期（status が past_due になる可能性）
   await syncSubscriptionFromStripe(
-    subscription as Parameters<typeof syncSubscriptionFromStripe>[0]
+    subscription as unknown as Parameters<typeof syncSubscriptionFromStripe>[0]
   );
 
   // TODO: 支払い失敗通知メールを送信

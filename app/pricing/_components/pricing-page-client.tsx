@@ -90,7 +90,7 @@ export function PricingPageClient() {
             description={plan.description}
             features={plan.features}
             isCurrentPlan={currentPlan === plan.id}
-            isPopular={plan.isPopular}
+            isPopular={'isPopular' in plan && plan.isPopular}
             onSelect={
               plan.id !== 'free'
                 ? () => handleSelectPlan(plan.id as 'basic' | 'premium')
