@@ -90,6 +90,7 @@ jobs:
           TF_VAR_twitter_client_secret: ${{ secrets.TWITTER_CLIENT_SECRET_DEV }}
           TF_VAR_admin_twitter_username: ${{ secrets.ADMIN_TWITTER_USERNAME_DEV }}
           TF_VAR_resend_api_key: ${{ secrets.RESEND_API_KEY_DEV }}
+          TF_VAR_stripe_api_key: ${{ secrets.STRIPE_SECRET_KEY }}
         with:
           AWS_ENV_NAME: ${{ env.AWS_ENV_NAME }}
           CHECK_DIFF: ${{ env.CHECK_DIFF }}
@@ -120,6 +121,7 @@ jobs:
           TF_VAR_twitter_client_secret: ${{ secrets.TWITTER_CLIENT_SECRET_DEV }}
           TF_VAR_admin_twitter_username: ${{ secrets.ADMIN_TWITTER_USERNAME_DEV }}
           TF_VAR_resend_api_key: ${{ secrets.RESEND_API_KEY_DEV }}
+          TF_VAR_stripe_api_key: ${{ secrets.STRIPE_SECRET_KEY }}
         with:
           working-directory: ./infra/terraform/envs/${{ env.AWS_ENV_NAME }}/${{ matrix.directory }}
 
