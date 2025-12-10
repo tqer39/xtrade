@@ -297,12 +297,6 @@ wt-new name:
         echo "  ✓ Copied .env.local"
     fi
     echo "✅ Worktree ready: {{wt_dir}}/${branch}"
-    if command -v code >/dev/null 2>&1; then
-        echo "  → Opening in VS Code..."
-        code "{{wt_dir}}/${branch}"
-    else
-        echo "  → VS Code not found. Open manually with: code {{wt_dir}}/${branch}"
-    fi
 
 # Create a worktree from an existing branch
 wt-add branch:
