@@ -1,6 +1,11 @@
 /**
  * スクレイピングオーケストレーター
  * 全体の処理フローを制御
+ *
+ * 外部サイトへのアクセス対策:
+ * - リクエスト間隔を設けてブロックを回避
+ * - 指数バックオフ付きリトライ
+ * - 適切な User-Agent 設定
  */
 
 import { eq } from 'drizzle-orm';
@@ -9,8 +14,18 @@ import { db } from '../../src/db/drizzle';
 import { photocardMaster, scrapeLog, scrapeSource as scrapeSourceTable } from '../../src/db/schema';
 import { fetchAndProcessImage } from './image-processor';
 import { extractCardsWithLLM } from './llm-scraper';
+import { EXTERNAL_SITE_RETRY_OPTIONS, RateLimiter, sleep, withRetry } from './retry';
 import { mirrorImageToR2 } from './storage';
 import type { ExtractedCard, ScrapeResult, ScraperConfig, ScrapeSourceConfig } from './types';
+
+/** 外部サイトへのリクエスト用レートリミッター（デフォルト: 2秒間隔） */
+const externalSiteRateLimiter = new RateLimiter(2000);
+
+/** 画像ダウンロード用レートリミッター（デフォルト: 1秒間隔） */
+const imageRateLimiter = new RateLimiter(1000);
+
+/** ソース間の待機時間（ミリ秒） */
+const SOURCE_INTERVAL_MS = 5000;
 
 /**
  * アクティブなスクレイピングソースを取得
@@ -88,29 +103,39 @@ async function updateSourceLastScraped(sourceId: string): Promise<void> {
     .where(eq(scrapeSourceTable.id, sourceId));
 }
 
+/** 一般的なブラウザの User-Agent */
+const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
 /**
  * ページをフェッチ
+ * - レートリミットを適用
+ * - リトライ処理付き
+ * - 適切なヘッダーを設定してブロックを回避
  */
-async function fetchPage(url: string, options: { rateLimit?: number } = {}): Promise<string> {
-  const { rateLimit = 1000 } = options;
+async function fetchPage(url: string): Promise<string> {
+  return externalSiteRateLimiter.execute(async () =>
+    withRetry(async () => {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': USER_AGENT,
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
+          // リファラーを設定（一部サイトで必要）
+          Referer: new URL(url).origin,
+        },
+      });
 
-  // レートリミット
-  await new Promise((resolve) => setTimeout(resolve, rateLimit));
+      if (!response.ok) {
+        const error = new Error(`Failed to fetch page: ${response.status} ${response.statusText}`);
+        // ステータスコードをエラーに付与（リトライ判定用）
+        Object.assign(error, { status: response.status });
+        throw error;
+      }
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch page: ${response.status} ${response.statusText}`);
-  }
-
-  return response.text();
+      return response.text();
+    }, EXTERNAL_SITE_RETRY_OPTIONS)
+  );
 }
 
 /**
@@ -167,6 +192,8 @@ async function saveCards(
 
 /**
  * 画像を処理してR2にアップロード
+ * - レートリミットを適用してブロックを回避
+ * - 失敗しても他の画像の処理を継続
  */
 async function processAndUploadImages(cards: ExtractedCard[]): Promise<Map<string, string>> {
   const imageMap = new Map<string, string>();
@@ -175,8 +202,8 @@ async function processAndUploadImages(cards: ExtractedCard[]): Promise<Map<strin
     if (!card.imageUrl) continue;
 
     try {
-      // 画像を取得・処理
-      const processed = await fetchAndProcessImage(card.imageUrl);
+      // レートリミットを適用して画像を取得・処理
+      const processed = await imageRateLimiter.execute(() => fetchAndProcessImage(card.imageUrl));
 
       // R2にアップロード
       const result = await mirrorImageToR2(card.imageUrl, processed.buffer, {
@@ -208,9 +235,7 @@ async function runLLMScraper(source: ScrapeSourceConfig): Promise<ExtractedCard[
 - カテゴリ: ${source.category || '不明'}
 `;
 
-  const html = await fetchPage(source.baseUrl, {
-    rateLimit: source.config?.rateLimit,
-  });
+  const html = await fetchPage(source.baseUrl);
 
   return extractCardsWithLLM(html, prompt);
 }
@@ -307,6 +332,7 @@ export async function scrapeSource(source: ScrapeSourceConfig): Promise<ScrapeRe
 
 /**
  * 全てのアクティブなソースをスクレイピング
+ * ソース間に待機時間を設けてブロックを回避
  */
 export async function scrapeAllSources(): Promise<ScrapeResult[]> {
   const sources = await getActiveSources();
@@ -314,7 +340,15 @@ export async function scrapeAllSources(): Promise<ScrapeResult[]> {
 
   const results: ScrapeResult[] = [];
 
-  for (const source of sources) {
+  for (let i = 0; i < sources.length; i++) {
+    const source = sources[i];
+
+    // 2つ目以降のソースの前に待機（同一サイトへの連続アクセスを避ける）
+    if (i > 0) {
+      console.log(`Waiting ${SOURCE_INTERVAL_MS / 1000}s before next source...`);
+      await sleep(SOURCE_INTERVAL_MS);
+    }
+
     const result = await scrapeSource(source);
     results.push(result);
   }

@@ -18,6 +18,8 @@ import { useMyCards } from '@/hooks/use-my-cards';
 import { useMySets } from '@/hooks/use-my-sets';
 import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
+import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
+import { CardEditModal } from './card-edit-modal';
 import { CardListItem } from './card-list-item';
 import { CardOwnerList } from './card-owner-list';
 import { SetDetailModal } from './set-detail-modal';
@@ -26,7 +28,17 @@ import { SetListItem } from './set-list-item';
 export function HomePageClient() {
   const router = useRouter();
   const { data: session, isPending: isSessionPending } = useSession();
-  const { haveCards, wantCards, isLoading, error, refetch } = useMyCards();
+  const {
+    haveCards,
+    wantCards,
+    isLoading,
+    error,
+    refetch,
+    updateHaveCard,
+    updateWantCard,
+    removeHaveCard,
+    removeWantCard,
+  } = useMyCards();
   const {
     sets,
     isLoading: isSetsLoading,
@@ -46,6 +58,10 @@ export function HomePageClient() {
   const [isCreatingSet, setIsCreatingSet] = useState(false);
   const [setDetailKey, setSetDetailKey] = useState(0);
   const [selectedCardForOwners, setSelectedCardForOwners] = useState<string | null>(null);
+  const [editingCard, setEditingCard] = useState<{
+    item: UserHaveCard | UserWantCard;
+    type: 'have' | 'want';
+  } | null>(null);
 
   const handleSelectSet = (setId: string) => {
     setSelectedSetId(setId);
@@ -288,13 +304,25 @@ export function HomePageClient() {
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {haveCards.map((item) => (
-                  <CardListItem key={item.id} item={item} type="have" viewMode="grid" />
+                  <CardListItem
+                    key={item.id}
+                    item={item}
+                    type="have"
+                    viewMode="grid"
+                    onClick={() => setEditingCard({ item, type: 'have' })}
+                  />
                 ))}
               </div>
             ) : (
               <div className="space-y-3">
                 {haveCards.map((item) => (
-                  <CardListItem key={item.id} item={item} type="have" viewMode="list" />
+                  <CardListItem
+                    key={item.id}
+                    item={item}
+                    type="have"
+                    viewMode="list"
+                    onClick={() => setEditingCard({ item, type: 'have' })}
+                  />
                 ))}
               </div>
             )}
@@ -350,13 +378,25 @@ export function HomePageClient() {
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {wantCards.map((item) => (
-                  <CardListItem key={item.id} item={item} type="want" viewMode="grid" />
+                  <CardListItem
+                    key={item.id}
+                    item={item}
+                    type="want"
+                    viewMode="grid"
+                    onClick={() => setEditingCard({ item, type: 'want' })}
+                  />
                 ))}
               </div>
             ) : (
               <div className="space-y-3">
                 {wantCards.map((item) => (
-                  <CardListItem key={item.id} item={item} type="want" viewMode="list" />
+                  <CardListItem
+                    key={item.id}
+                    item={item}
+                    type="want"
+                    viewMode="list"
+                    onClick={() => setEditingCard({ item, type: 'want' })}
+                  />
                 ))}
               </div>
             )}
@@ -429,6 +469,27 @@ export function HomePageClient() {
           updateSet={updateSet}
           removeCardFromSet={removeCardFromSet}
           onAddCard={handleAddCardToSet}
+        />
+
+        <CardEditModal
+          open={!!editingCard}
+          onOpenChange={(open) => !open && setEditingCard(null)}
+          item={editingCard?.item ?? null}
+          type={editingCard?.type ?? 'have'}
+          onUpdate={async (cardId, value) => {
+            if (editingCard?.type === 'have') {
+              await updateHaveCard(cardId, value);
+            } else {
+              await updateWantCard(cardId, value);
+            }
+          }}
+          onRemove={async (cardId) => {
+            if (editingCard?.type === 'have') {
+              await removeHaveCard(cardId);
+            } else {
+              await removeWantCard(cardId);
+            }
+          }}
         />
       </div>
 

@@ -1,13 +1,24 @@
 /**
  * 画像処理ユーティリティ
  * WebP → PNG 変換、リサイズなど
+ *
+ * 外部サイトへのアクセス対策:
+ * - 指数バックオフ付きリトライ
+ * - 適切なヘッダー設定
  */
 
 import sharp from 'sharp';
+import { EXTERNAL_SITE_RETRY_OPTIONS, withRetry } from './retry';
 import type { ProcessedImage } from './types';
+
+/** 一般的なブラウザの User-Agent */
+const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 /**
  * 画像URLから画像を取得して処理
+ * - リトライ処理付き
+ * - 適切なヘッダーを設定してブロックを回避
  */
 export async function fetchAndProcessImage(
   imageUrl: string,
@@ -18,21 +29,27 @@ export async function fetchAndProcessImage(
 ): Promise<ProcessedImage> {
   const { maxWidth = 800, format = 'png' } = options;
 
-  // 画像を取得
-  const response = await fetch(imageUrl, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      Accept: 'image/webp,image/png,image/jpeg,image/*',
-    },
-  });
+  // リトライ付きで画像を取得
+  const inputBuffer = await withRetry(async () => {
+    const response = await fetch(imageUrl, {
+      headers: {
+        'User-Agent': USER_AGENT,
+        Accept: 'image/webp,image/png,image/jpeg,image/*',
+        // リファラーを設定（一部サイトで必要）
+        Referer: new URL(imageUrl).origin,
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-  }
+    if (!response.ok) {
+      const error = new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+      // ステータスコードをエラーに付与（リトライ判定用）
+      Object.assign(error, { status: response.status });
+      throw error;
+    }
 
-  const arrayBuffer = await response.arrayBuffer();
-  const inputBuffer = Buffer.from(arrayBuffer);
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }, EXTERNAL_SITE_RETRY_OPTIONS);
 
   // sharp で処理
   let processor = sharp(inputBuffer);
