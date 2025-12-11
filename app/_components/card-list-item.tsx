@@ -10,9 +10,10 @@ interface CardListItemProps {
   item: UserHaveCard | UserWantCard;
   type: 'have' | 'want';
   viewMode?: 'list' | 'grid';
+  onClick?: () => void;
 }
 
-export function CardListItem({ item, type, viewMode = 'list' }: CardListItemProps) {
+export function CardListItem({ item, type, viewMode = 'list', onClick }: CardListItemProps) {
   const card = item.card;
 
   if (!card) {
@@ -25,7 +26,10 @@ export function CardListItem({ item, type, viewMode = 'list' }: CardListItemProp
 
   if (viewMode === 'grid') {
     return (
-      <Card className="overflow-hidden">
+      <Card
+        className={`overflow-hidden ${onClick ? 'cursor-pointer transition-colors hover:bg-accent/50' : ''}`}
+        onClick={onClick}
+      >
         <CardContent className="p-0">
           <div className="aspect-square relative overflow-hidden bg-muted">
             {card.imageUrl ? (
@@ -65,7 +69,10 @@ export function CardListItem({ item, type, viewMode = 'list' }: CardListItemProp
   }
 
   return (
-    <Card>
+    <Card
+      className={onClick ? 'cursor-pointer transition-colors hover:bg-accent/50' : ''}
+      onClick={onClick}
+    >
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
           {/* サムネイル画像 */}
