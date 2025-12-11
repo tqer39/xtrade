@@ -31,21 +31,92 @@ function getClient(): Anthropic {
 
 /**
  * HTML をクリーニング（不要な要素を削除）
+ * 商品データ部分を優先的に抽出するため、script/style/head を削除
  */
 export function cleanHtml(html: string): string {
+  let cleaned = html
+    // headタグ全体を削除
+    .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, '')
+    // scriptタグを削除
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    // styleタグを削除
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    // noscriptタグを削除
+    .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, '')
+    // SVGタグを削除（アイコン等）
+    .replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, '')
+    // コメントを削除
+    .replace(/<!--[\s\S]*?-->/g, '')
+    // data-* 属性を削除（不要なデータ削減）
+    .replace(/\s+data-[a-z-]+="[^"]*"/gi, '')
+    // class属性の長いクラス名を短縮
+    .replace(/\s+class="[^"]{100,}"/gi, ' class="..."')
+    // 連続する空白を1つに
+    .replace(/\s+/g, ' ')
+    // 改行を整理
+    .replace(/>\s+</g, '><')
+    .trim();
+
+  // 商品グリッド部分を抽出（Shopify サイト対応）
+  cleaned = extractProductSection(cleaned);
+
+  // さらに圧縮
+  cleaned = compressHtml(cleaned);
+
+  return cleaned;
+}
+
+/**
+ * 商品セクションを抽出（ECサイト対応）
+ * main タグまたは product-grid を含む部分を優先
+ */
+function extractProductSection(html: string): string {
+  // product-grid を含む部分を探す（Shopify）
+  const productGridIndex = html.indexOf('product-grid');
+  if (productGridIndex > 0) {
+    // product-grid から抽出開始
+    return html.substring(productGridIndex);
+  }
+
+  // main タグの内容を抽出
+  const mainMatch = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i);
+  if (mainMatch && mainMatch[1].length > 1000) {
+    return mainMatch[1];
+  }
+
+  // collection を含む部分を探す
+  const collectionIndex = html.indexOf('collection');
+  if (collectionIndex > 0) {
+    return html.substring(collectionIndex);
+  }
+
+  return html;
+}
+
+/**
+ * 商品情報に不要な属性を削除してさらに圧縮
+ */
+function compressHtml(html: string): string {
   return (
     html
-      // scriptタグを削除
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      // styleタグを削除
-      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-      // コメントを削除
-      .replace(/<!--[\s\S]*?-->/g, '')
+      // id 属性を削除
+      .replace(/\s+id="[^"]*"/gi, '')
+      // style 属性を削除
+      .replace(/\s+style="[^"]*"/gi, '')
+      // onclick 等のイベント属性を削除
+      .replace(/\s+on\w+="[^"]*"/gi, '')
+      // aria-* 属性を削除
+      .replace(/\s+aria-[a-z-]+="[^"]*"/gi, '')
+      // role 属性を削除
+      .replace(/\s+role="[^"]*"/gi, '')
+      // tabindex 属性を削除
+      .replace(/\s+tabindex="[^"]*"/gi, '')
+      // link タグを削除
+      .replace(/<link\b[^>]*>/gi, '')
+      // 空の div/span を削除
+      .replace(/<(div|span)[^>]*>\s*<\/\1>/gi, '')
       // 連続する空白を1つに
       .replace(/\s+/g, ' ')
-      // 改行を整理
-      .replace(/>\s+</g, '><')
-      .trim()
   );
 }
 
@@ -82,8 +153,12 @@ function parseJsonFromResponse(text: string): ExtractedCard[] {
   }
 }
 
-/** HTML の最大長（これを超えるとトリミング） */
-const MAX_HTML_LENGTH = 100000;
+/**
+ * HTML の最大長（これを超えるとトリミング）
+ * Anthropic API の rate limit（30,000 input tokens/分）を考慮
+ * 日本語は約2文字≒1トークン、HTMLタグ等を含めて安全マージンを取る
+ */
+const MAX_HTML_LENGTH = 40000;
 
 /** カード抽出用プロンプトテンプレート */
 const CARD_EXTRACTION_PROMPT = `以下のHTMLからカード情報を抽出してください。
