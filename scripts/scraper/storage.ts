@@ -27,6 +27,8 @@ function createR2Client(): S3Client {
       accessKeyId,
       secretAccessKey,
     },
+    // MinIO はパススタイルのアクセスが必要
+    forcePathStyle: true,
   });
 }
 
@@ -68,9 +70,12 @@ export async function uploadImageToR2(
     })
   );
 
+  // ローカル開発時は http、本番は https
+  const protocol = customDomain.startsWith('localhost') ? 'http' : 'https';
+
   return {
     key,
-    url: `https://${customDomain}/${key}`,
+    url: `${protocol}://${customDomain}/${key}`,
     size: buffer.length,
   };
 }
