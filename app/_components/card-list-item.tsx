@@ -27,7 +27,7 @@ export function CardListItem({ item, type, viewMode = 'list', onClick }: CardLis
   if (viewMode === 'grid') {
     return (
       <Card
-        className={`overflow-hidden ${onClick ? 'cursor-pointer transition-colors hover:bg-accent/50' : ''}`}
+        className={`overflow-hidden rounded-none ${onClick ? 'cursor-pointer transition-colors hover:bg-accent/50' : ''}`}
         onClick={onClick}
       >
         <CardContent className="p-0">
