@@ -285,9 +285,15 @@ export const photocardMaster = pgTable(
     releaseType: text('release_type'), // album/single/live_goods
     releaseDate: text('release_date'), // リリース日
     rarity: text('rarity'), // レアリティ
-    imageUrl: text('image_url'),
+    imageUrl: text('image_url'), // 廃止予定（移行期間中は r2ImageUrl と同じ値）
     source: text('source').default('seed'), // seed/user/scrape
     sourceUrl: text('source_url'), // 参照元URL
+    // スクレイピング画像同期用カラム
+    sourceImageUrl: text('source_image_url'), // 元サイトの画像URL（重複チェック用）
+    r2ImageUrl: text('r2_image_url'), // R2にアップロード後のURL
+    imageSyncStatus: text('image_sync_status').default('pending'), // pending/synced/failed
+    imageSyncedAt: timestamp('image_synced_at'), // 同期完了日時
+    imageSyncError: text('image_sync_error'), // エラーメッセージ
     verified: boolean('verified').default(false), // 検証済みフラグ
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
@@ -300,6 +306,8 @@ export const photocardMaster = pgTable(
     index('photocard_master_group_idx').on(table.groupName),
     index('photocard_master_member_idx').on(table.memberName),
     index('photocard_master_series_idx').on(table.series),
+    index('photocard_master_source_image_url_idx').on(table.sourceImageUrl),
+    index('photocard_master_image_sync_status_idx').on(table.imageSyncStatus),
   ]
 );
 

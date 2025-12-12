@@ -90,3 +90,33 @@ export interface UploadResult {
   url: string;
   size: number;
 }
+
+/**
+ * 画像同期ステータス
+ */
+export type ImageSyncStatus = 'pending' | 'synced' | 'failed';
+
+/**
+ * 画像同期対象のカード情報
+ */
+export interface CardWithSyncStatus {
+  id: string;
+  name: string;
+  sourceImageUrl: string;
+  imageSyncStatus: ImageSyncStatus;
+  imageSyncError?: string | null;
+}
+
+/**
+ * スクレイパー実行モード
+ */
+export type ScraperMode = 'metadata' | 'sync-images' | 'all';
+
+/**
+ * メタデータ保存結果
+ */
+export interface MetadataSaveResult {
+  created: number;
+  skipped: number;
+  errors: number;
+}
