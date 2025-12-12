@@ -78,6 +78,13 @@
       "when": 1765407240984,
       "tag": "0010_rapid_la_nuit",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1765493681523,
+      "tag": "0011_magenta_wraith",
+      "breakpoints": true
     }
   ]
 }

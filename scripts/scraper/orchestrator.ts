@@ -2,6 +2,10 @@
  * スクレイピングオーケストレーター
  * 全体の処理フローを制御
  *
+ * フェーズ分離アーキテクチャ:
+ * - Phase 1: メタデータ収集（LLM でカード情報を抽出、DB に保存）
+ * - Phase 2: 画像同期（未同期の画像を R2 にアップロード）
+ *
  * 外部サイトへのアクセス対策:
  * - リクエスト間隔を設けてブロックを回避
  * - 指数バックオフ付きリトライ
@@ -16,7 +20,16 @@ import { fetchAndProcessImage } from './image-processor';
 import { extractCardsWithLLM } from './llm-scraper';
 import { EXTERNAL_SITE_RETRY_OPTIONS, RateLimiter, sleep, withRetry } from './retry';
 import { mirrorImageToR2 } from './storage';
-import type { ExtractedCard, ScrapeResult, ScraperConfig, ScrapeSourceConfig } from './types';
+import type {
+  CardWithSyncStatus,
+  ExtractedCard,
+  ImageSyncStatus,
+  MetadataSaveResult,
+  ScrapeResult,
+  ScraperConfig,
+  ScraperMode,
+  ScrapeSourceConfig,
+} from './types';
 
 /** 外部サイトへのリクエスト用レートリミッター（デフォルト: 2秒間隔） */
 const externalSiteRateLimiter = new RateLimiter(2000);
@@ -26,6 +39,10 @@ const imageRateLimiter = new RateLimiter(1000);
 
 /** ソース間の待機時間（ミリ秒） */
 const SOURCE_INTERVAL_MS = 5000;
+
+// =====================================
+// ソース管理
+// =====================================
 
 /**
  * アクティブなスクレイピングソースを取得
@@ -47,6 +64,10 @@ export async function getActiveSources(): Promise<ScrapeSourceConfig[]> {
     isActive: s.isActive,
   }));
 }
+
+// =====================================
+// ログ管理
+// =====================================
 
 /**
  * スクレイピングログを作成
@@ -103,6 +124,10 @@ async function updateSourceLastScraped(sourceId: string): Promise<void> {
     .where(eq(scrapeSourceTable.id, sourceId));
 }
 
+// =====================================
+// HTTP フェッチ
+// =====================================
+
 /** 一般的なブラウザの User-Agent */
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -138,39 +163,38 @@ async function fetchPage(url: string): Promise<string> {
   );
 }
 
+// =====================================
+// Phase 1: メタデータ収集
+// =====================================
+
 /**
- * カードをDBに保存（upsert）
+ * カードメタデータをDBに保存（重複チェック付き）
+ * 画像のダウンロード・アップロードは行わない
  */
-async function saveCards(
+async function saveCardMetadata(
   cards: ExtractedCard[],
   source: ScrapeSourceConfig
-): Promise<{ created: number; updated: number }> {
+): Promise<MetadataSaveResult> {
   let created = 0;
-  let updated = 0;
+  let skipped = 0;
+  let errors = 0;
 
   for (const card of cards) {
-    // 既存のカードを検索（名前とシリーズで一致）
-    const existing = await db
-      .select()
-      .from(photocardMaster)
-      .where(eq(photocardMaster.name, card.name))
-      .limit(1);
+    try {
+      // sourceImageUrl で重複チェック
+      const existing = await db
+        .select()
+        .from(photocardMaster)
+        .where(eq(photocardMaster.sourceImageUrl, card.imageUrl))
+        .limit(1);
 
-    if (existing.length > 0) {
-      // 画像URLが異なる場合のみ更新
-      if (existing[0].imageUrl !== card.imageUrl && card.imageUrl) {
-        await db
-          .update(photocardMaster)
-          .set({
-            imageUrl: card.imageUrl,
-            sourceUrl: card.sourceUrl || source.baseUrl,
-            source: 'scrape',
-          })
-          .where(eq(photocardMaster.id, existing[0].id));
-        updated++;
+      if (existing.length > 0) {
+        console.log(`Skip duplicate: ${card.name} (${card.imageUrl})`);
+        skipped++;
+        continue;
       }
-    } else {
-      // 新規作成
+
+      // 新規作成（画像は未同期状態で保存）
       await db.insert(photocardMaster).values({
         id: uuidv4(),
         name: card.name,
@@ -178,53 +202,27 @@ async function saveCards(
         memberName: card.memberName,
         series: card.series,
         rarity: card.rarity,
-        imageUrl: card.imageUrl,
+        sourceImageUrl: card.imageUrl, // 元サイトの画像URL
+        imageUrl: null, // 廃止予定フィールド（後方互換のため保持）
+        r2ImageUrl: null, // 画像同期後に設定
+        imageSyncStatus: 'pending', // 未同期
         source: 'scrape',
         sourceUrl: card.sourceUrl || source.baseUrl,
         verified: false,
       });
       created++;
-    }
-  }
-
-  return { created, updated };
-}
-
-/**
- * 画像を処理してR2にアップロード
- * - レートリミットを適用してブロックを回避
- * - 失敗しても他の画像の処理を継続
- */
-async function processAndUploadImages(cards: ExtractedCard[]): Promise<Map<string, string>> {
-  const imageMap = new Map<string, string>();
-
-  for (const card of cards) {
-    if (!card.imageUrl) continue;
-
-    try {
-      // レートリミットを適用して画像を取得・処理
-      const processed = await imageRateLimiter.execute(() => fetchAndProcessImage(card.imageUrl));
-
-      // R2にアップロード
-      const result = await mirrorImageToR2(card.imageUrl, processed.buffer, {
-        prefix: 'cards',
-        format: processed.format,
-      });
-
-      imageMap.set(card.imageUrl, result.url);
-      console.log(`Uploaded: ${card.name} -> ${result.url}`);
+      console.log(`Created: ${card.name}`);
     } catch (error) {
-      console.warn(`Failed to process image for ${card.name}:`, error);
-      // 元のURLをそのまま使用
-      imageMap.set(card.imageUrl, card.imageUrl);
+      console.error(`Error saving card ${card.name}:`, error);
+      errors++;
     }
   }
 
-  return imageMap;
+  return { created, skipped, errors };
 }
 
 /**
- * LLMスクレイパーを実行
+ * LLMスクレイパーを実行してカード情報を抽出
  */
 async function runLLMScraper(source: ScrapeSourceConfig): Promise<ExtractedCard[]> {
   const prompt =
@@ -241,14 +239,14 @@ async function runLLMScraper(source: ScrapeSourceConfig): Promise<ExtractedCard[
 }
 
 /**
- * 単一ソースのスクレイピングを実行
+ * Phase 1: メタデータのみ収集
  */
-export async function scrapeSource(source: ScrapeSourceConfig): Promise<ScrapeResult> {
+export async function scrapeMetadata(source: ScrapeSourceConfig): Promise<ScrapeResult> {
   const startedAt = new Date();
   const logId = await createLog(source.id, 'running', startedAt);
 
   try {
-    console.log(`Starting scrape: ${source.name} (${source.type})`);
+    console.log(`[Phase 1] Starting metadata scrape: ${source.name} (${source.type})`);
 
     let cards: ExtractedCard[] = [];
 
@@ -257,50 +255,41 @@ export async function scrapeSource(source: ScrapeSourceConfig): Promise<ScrapeRe
         cards = await runLLMScraper(source);
         break;
       case 'static':
-        // TODO: 静的スクレイパーの実装
         console.warn('Static scraper not implemented yet');
         break;
       case 'api':
-        // TODO: APIフェッチャーの実装
         console.warn('API fetcher not implemented yet');
         break;
     }
 
     console.log(`Found ${cards.length} cards`);
 
-    // 画像を処理・アップロード
-    const imageMap = await processAndUploadImages(cards);
-
-    // 画像URLを更新
-    const cardsWithNewUrls = cards.map((card) => ({
-      ...card,
-      imageUrl: imageMap.get(card.imageUrl) || card.imageUrl,
-    }));
-
-    // DBに保存
-    const { created, updated } = await saveCards(cardsWithNewUrls, source);
+    // メタデータのみ保存（画像はダウンロードしない）
+    const { created, skipped, errors } = await saveCardMetadata(cards, source);
 
     // ログを更新
     const finishedAt = new Date();
     await updateLog(logId, {
-      status: 'success',
+      status: errors > 0 && created === 0 ? 'failed' : 'success',
       itemsFound: cards.length,
       itemsCreated: created,
-      itemsUpdated: updated,
+      itemsUpdated: skipped, // skipped を updated として記録
       finishedAt,
     });
 
     await updateSourceLastScraped(source.id);
 
-    console.log(`Completed: ${source.name} - Created: ${created}, Updated: ${updated}`);
+    console.log(
+      `[Phase 1] Completed: ${source.name} - Created: ${created}, Skipped: ${skipped}, Errors: ${errors}`
+    );
 
     return {
       sourceId: source.id,
-      status: 'success',
+      status: errors > 0 && created === 0 ? 'failed' : 'success',
       itemsFound: cards.length,
       itemsCreated: created,
-      itemsUpdated: updated,
-      cards: cardsWithNewUrls,
+      itemsUpdated: skipped,
+      cards,
       startedAt,
       finishedAt,
     };
@@ -314,7 +303,7 @@ export async function scrapeSource(source: ScrapeSourceConfig): Promise<ScrapeRe
       finishedAt,
     });
 
-    console.error(`Failed: ${source.name} - ${errorMessage}`);
+    console.error(`[Phase 1] Failed: ${source.name} - ${errorMessage}`);
 
     return {
       sourceId: source.id,
@@ -330,15 +319,166 @@ export async function scrapeSource(source: ScrapeSourceConfig): Promise<ScrapeRe
   }
 }
 
+// =====================================
+// Phase 2: 画像同期
+// =====================================
+
+/**
+ * 未同期のカードを取得
+ */
+async function getPendingImages(limit: number = 100): Promise<CardWithSyncStatus[]> {
+  const records = await db
+    .select({
+      id: photocardMaster.id,
+      name: photocardMaster.name,
+      sourceImageUrl: photocardMaster.sourceImageUrl,
+      imageSyncStatus: photocardMaster.imageSyncStatus,
+      imageSyncError: photocardMaster.imageSyncError,
+    })
+    .from(photocardMaster)
+    .where(eq(photocardMaster.imageSyncStatus, 'pending'))
+    .limit(limit);
+
+  return records
+    .filter((r) => r.sourceImageUrl !== null)
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      sourceImageUrl: r.sourceImageUrl!,
+      imageSyncStatus: (r.imageSyncStatus || 'pending') as ImageSyncStatus,
+      imageSyncError: r.imageSyncError,
+    }));
+}
+
+/**
+ * 画像同期ステータスを更新
+ */
+async function updateImageSyncStatus(
+  cardId: string,
+  status: ImageSyncStatus,
+  r2ImageUrl?: string,
+  errorMessage?: string
+): Promise<void> {
+  await db
+    .update(photocardMaster)
+    .set({
+      imageSyncStatus: status,
+      r2ImageUrl: r2ImageUrl || null,
+      imageUrl: r2ImageUrl || null, // 後方互換のため両方更新
+      imageSyncedAt: status === 'synced' ? new Date() : null,
+      imageSyncError: errorMessage || null,
+    })
+    .where(eq(photocardMaster.id, cardId));
+}
+
+/**
+ * 単一の画像を同期
+ */
+async function syncSingleImage(card: CardWithSyncStatus): Promise<boolean> {
+  try {
+    console.log(`[Phase 2] Syncing image: ${card.name}`);
+
+    // レートリミットを適用して画像を取得・処理
+    const processed = await imageRateLimiter.execute(() =>
+      fetchAndProcessImage(card.sourceImageUrl)
+    );
+
+    // R2にアップロード
+    const result = await mirrorImageToR2(card.sourceImageUrl, processed.buffer, {
+      prefix: 'cards',
+      format: processed.format,
+    });
+
+    // 成功: ステータスを更新
+    await updateImageSyncStatus(card.id, 'synced', result.url);
+    console.log(`[Phase 2] Uploaded: ${card.name} -> ${result.url}`);
+
+    return true;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`[Phase 2] Failed to sync image for ${card.name}:`, errorMessage);
+
+    // 失敗: ステータスを更新
+    await updateImageSyncStatus(card.id, 'failed', undefined, errorMessage);
+
+    return false;
+  }
+}
+
+/**
+ * Phase 2: 画像同期
+ */
+export async function syncImages(limit: number = 100): Promise<{
+  total: number;
+  synced: number;
+  failed: number;
+}> {
+  console.log(`[Phase 2] Starting image sync (limit: ${limit})`);
+
+  const pendingCards = await getPendingImages(limit);
+  console.log(`[Phase 2] Found ${pendingCards.length} pending images`);
+
+  let synced = 0;
+  let failed = 0;
+
+  for (const card of pendingCards) {
+    const success = await syncSingleImage(card);
+    if (success) {
+      synced++;
+    } else {
+      failed++;
+    }
+  }
+
+  console.log(`[Phase 2] Completed - Synced: ${synced}, Failed: ${failed}`);
+
+  return {
+    total: pendingCards.length,
+    synced,
+    failed,
+  };
+}
+
+// =====================================
+// 従来互換 API（all モード）
+// =====================================
+
+/**
+ * 単一ソースのスクレイピングを実行（従来互換）
+ * メタデータ収集 + 画像同期を一度に行う
+ */
+export async function scrapeSource(source: ScrapeSourceConfig): Promise<ScrapeResult> {
+  // Phase 1: メタデータ収集
+  const metadataResult = await scrapeMetadata(source);
+
+  if (metadataResult.status === 'failed') {
+    return metadataResult;
+  }
+
+  // Phase 2: 画像同期
+  // 新しく作成されたカードの画像のみ同期
+  if (metadataResult.itemsCreated > 0) {
+    await syncImages(metadataResult.itemsCreated);
+  }
+
+  return metadataResult;
+}
+
 /**
  * 全てのアクティブなソースをスクレイピング
  * ソース間に待機時間を設けてブロックを回避
  */
-export async function scrapeAllSources(): Promise<ScrapeResult[]> {
+export async function scrapeAllSources(mode: ScraperMode = 'all'): Promise<ScrapeResult[]> {
   const sources = await getActiveSources();
-  console.log(`Found ${sources.length} active sources`);
+  console.log(`Found ${sources.length} active sources (mode: ${mode})`);
 
   const results: ScrapeResult[] = [];
+
+  if (mode === 'sync-images') {
+    // 画像同期のみ（ソースに関係なく未同期の画像を処理）
+    await syncImages();
+    return results;
+  }
 
   for (let i = 0; i < sources.length; i++) {
     const source = sources[i];
@@ -349,7 +489,16 @@ export async function scrapeAllSources(): Promise<ScrapeResult[]> {
       await sleep(SOURCE_INTERVAL_MS);
     }
 
-    const result = await scrapeSource(source);
+    let result: ScrapeResult;
+
+    if (mode === 'metadata') {
+      // メタデータのみ
+      result = await scrapeMetadata(source);
+    } else {
+      // all: メタデータ + 画像同期
+      result = await scrapeSource(source);
+    }
+
     results.push(result);
   }
 
