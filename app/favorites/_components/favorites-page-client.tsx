@@ -42,10 +42,14 @@ function FavoriteCardItem({
           )}
           <div className="flex-1 min-w-0">
             <p className="font-medium truncate">{card.name}</p>
-            <div className="flex flex-wrap gap-1 mt-1">
-              <Badge variant="secondary">{card.category}</Badge>
-              {card.rarity && <Badge variant="outline">{card.rarity}</Badge>}
-            </div>
+            {card.category && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                <Badge variant="secondary">{card.category}</Badge>
+              </div>
+            )}
+            {card.description && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{card.description}</p>
+            )}
           </div>
           <FavoriteButton isFavorited={true} onToggle={() => onRemove(favoriteCard.cardId)} />
         </div>

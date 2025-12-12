@@ -9,6 +9,7 @@ import { FavoriteButton } from '@/components/favorites';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { CategoryAutocomplete } from '@/components/ui/category-autocomplete';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ViewToggle } from '@/components/view-toggle';
 import { useCardSearch } from '@/hooks/use-card-search';
 import { useFavorites } from '@/hooks/use-favorites';
+import { useMyCategories } from '@/hooks/use-my-categories';
 import { usePhotocardSearch } from '@/hooks/use-photocard-search';
 import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
@@ -39,12 +41,13 @@ function CardSearchContent() {
     search: searchPhotocard,
   } = usePhotocardSearch();
   const { isCardFavorited, toggleFavoriteCard } = useFavorites();
+  const { categories: myCategories } = useMyCategories();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [newCardName, setNewCardName] = useState('');
   const [newCardCategory, setNewCardCategory] = useState('');
-  const [newCardRarity, setNewCardRarity] = useState('');
+  const [newCardDescription, setNewCardDescription] = useState('');
   const [newCardImageUrl, setNewCardImageUrl] = useState<string | undefined>();
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
@@ -63,8 +66,8 @@ function CardSearchContent() {
     try {
       const card = await createCard({
         name: photocard.name,
-        category: photocard.groupName || 'INI',
-        rarity: photocard.rarity || undefined,
+        category: photocard.groupName || undefined,
+        description: photocard.rarity || undefined,
         imageUrl: photocard.imageUrl || undefined,
       });
       await addCardToUser(card.id);
@@ -118,8 +121,8 @@ function CardSearchContent() {
   };
 
   const handleCreateAndAdd = async () => {
-    if (!newCardName.trim() || !newCardCategory.trim()) {
-      setAddError('名前とカテゴリは必須です');
+    if (!newCardName.trim()) {
+      setAddError('名前は必須です');
       return;
     }
 
@@ -128,8 +131,8 @@ function CardSearchContent() {
     try {
       const card = await createCard({
         name: newCardName.trim(),
-        category: newCardCategory.trim(),
-        rarity: newCardRarity.trim() || undefined,
+        category: newCardCategory.trim() || undefined,
+        description: newCardDescription.trim() || undefined,
         imageUrl: newCardImageUrl,
       });
       await addCardToUser(card.id);
@@ -142,7 +145,11 @@ function CardSearchContent() {
   };
 
   const modeLabel =
-    mode === 'have' ? '持っているカード' : mode === 'want' ? '欲しいカード' : 'セットにカード';
+    mode === 'have'
+      ? '持っているアイテム'
+      : mode === 'want'
+        ? '欲しいアイテム'
+        : 'セットにアイテム';
 
   const isLoading = isSearching || isPhotocardSearching;
   const hasResults = photocardResults.length > 0 || searchResults.length > 0;
@@ -161,12 +168,12 @@ function CardSearchContent() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">
-              {isLoggedIn ? `${modeLabel}を追加` : 'カード検索'}
+              {isLoggedIn ? `${modeLabel}を追加` : 'アイテム検索'}
             </h1>
             <p className="text-muted-foreground mt-1">
               {isLoggedIn
-                ? 'カードを検索するか、新しいカードを登録してください'
-                : 'カードを検索できます。追加するにはログインが必要です'}
+                ? 'アイテムを検索するか、新しいアイテムを登録してください'
+                : 'アイテムを検索できます。追加するにはログインが必要です'}
             </p>
           </div>
           {isHydrated && <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
@@ -177,7 +184,7 @@ function CardSearchContent() {
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="カード名で検索..."
+          placeholder="アイテム名で検索..."
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
           className="pl-9 h-12 text-lg"
@@ -285,7 +292,7 @@ function CardSearchContent() {
           {/* 結果なし */}
           {!hasResults && (
             <div className="py-12 text-center text-muted-foreground">
-              「{searchQuery}」に一致するカードが見つかりません
+              「{searchQuery}」に一致するアイテムが見つかりません
             </div>
           )}
         </div>
@@ -294,7 +301,7 @@ function CardSearchContent() {
       {/* 初期状態 */}
       {!isLoading && !searchQuery && (
         <div className="py-12 text-center text-muted-foreground">
-          カード名を入力して検索してください
+          アイテム名を入力して検索してください
         </div>
       )}
 
@@ -311,12 +318,12 @@ function CardSearchContent() {
               }}
             >
               <Plus className="mr-2 h-4 w-4" />
-              新しいカードを登録
+              新しいアイテムを登録
             </Button>
           ) : (
             <div className="space-y-2 rounded-lg border p-4 text-center">
               <p className="text-sm text-muted-foreground">
-                カードを追加するにはログインが必要です
+                アイテムを追加するにはログインが必要です
               </p>
               <LoginButton />
             </div>
@@ -325,36 +332,37 @@ function CardSearchContent() {
         {/* 新規登録フォーム */}
         {showNewCardForm && (
           <div className="space-y-3 rounded-lg border p-4">
-            <h4 className="font-medium">新しいカードを登録</h4>
+            <h4 className="font-medium">新しいアイテムを登録</h4>
             <div className="space-y-2">
-              <Label htmlFor="new-card-name">カード名 *</Label>
+              <Label htmlFor="new-card-name">アイテム名 *</Label>
               <Input
                 id="new-card-name"
                 value={newCardName}
                 onChange={(e) => setNewCardName(e.target.value)}
-                placeholder="カード名を入力"
+                placeholder="アイテム名を入力"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="new-card-category">カテゴリ *</Label>
-              <Input
-                id="new-card-category"
+              <Label htmlFor="new-card-category">カテゴリ (任意)</Label>
+              <CategoryAutocomplete
                 value={newCardCategory}
-                onChange={(e) => setNewCardCategory(e.target.value)}
-                placeholder="例: ポケモンカード、遊戯王、MTG"
+                onChange={setNewCardCategory}
+                suggestions={myCategories}
+                placeholder="例: ポケモンカード、遊戯王、アイドルグッズ"
+                disabled={isAdding}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="new-card-rarity">レアリティ (任意)</Label>
+              <Label htmlFor="new-card-description">説明 (任意)</Label>
               <Input
-                id="new-card-rarity"
-                value={newCardRarity}
-                onChange={(e) => setNewCardRarity(e.target.value)}
-                placeholder="例: SR、UR、レア"
+                id="new-card-description"
+                value={newCardDescription}
+                onChange={(e) => setNewCardDescription(e.target.value)}
+                placeholder="アイテムの説明を入力"
               />
             </div>
             <div className="space-y-2">
-              <Label>カード画像 (任意)</Label>
+              <Label>画像 (任意)</Label>
               <ImageUpload
                 value={newCardImageUrl}
                 onChange={setNewCardImageUrl}
@@ -515,8 +523,8 @@ function CardGridItem({
     id: string;
     name: string;
     imageUrl?: string | null;
-    category: string;
-    rarity?: string | null;
+    category?: string | null;
+    description?: string | null;
   };
   isLoggedIn: boolean;
   isAdding: boolean;
@@ -550,11 +558,13 @@ function CardGridItem({
       <div className="absolute inset-0 flex flex-col justify-end p-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="text-white">
           <div className="text-sm font-semibold truncate">{card.name}</div>
-          <div className="flex items-center gap-1 mt-1">
-            <Badge variant="secondary" className="text-xs h-5">
-              {card.category}
-            </Badge>
-          </div>
+          {card.category && (
+            <div className="flex items-center gap-1 mt-1">
+              <Badge variant="secondary" className="text-xs h-5">
+                {card.category}
+              </Badge>
+            </div>
+          )}
         </div>
       </div>
       {isLoggedIn && (
@@ -579,8 +589,8 @@ function CardListItem({
     id: string;
     name: string;
     imageUrl?: string | null;
-    category: string;
-    rarity?: string | null;
+    category?: string | null;
+    description?: string | null;
   };
   isLoggedIn: boolean;
   isAdding: boolean;
@@ -609,16 +619,16 @@ function CardListItem({
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate font-medium">{card.name}</div>
-            <div className="mt-1 flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs">
-                {card.category}
-              </Badge>
-              {card.rarity && (
-                <Badge variant="outline" className="text-xs">
-                  {card.rarity}
+            {card.category && (
+              <div className="mt-1 flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs">
+                  {card.category}
                 </Badge>
-              )}
-            </div>
+              </div>
+            )}
+            {card.description && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{card.description}</p>
+            )}
           </div>
           {isLoggedIn && (
             <>

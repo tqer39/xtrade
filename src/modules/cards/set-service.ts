@@ -61,7 +61,7 @@ export async function getSetById(setId: string): Promise<CardSetWithItems | null
         id: schema.card.id,
         name: schema.card.name,
         category: schema.card.category,
-        rarity: schema.card.rarity,
+        description: schema.card.description,
         imageUrl: schema.card.imageUrl,
       },
     })

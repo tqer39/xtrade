@@ -96,16 +96,16 @@ export function CardListItem({ item, type, viewMode = 'list', onClick }: CardLis
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-semibold truncate">{card.name}</div>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="secondary" className="text-xs">
-                {card.category}
-              </Badge>
-              {card.rarity && (
-                <Badge variant="outline" className="text-xs">
-                  {card.rarity}
+            {card.category && (
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary" className="text-xs">
+                  {card.category}
                 </Badge>
-              )}
-            </div>
+              </div>
+            )}
+            {card.description && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{card.description}</p>
+            )}
           </div>
           <div className="text-right">
             {isHave && haveItem && (

@@ -312,24 +312,25 @@ export const seriesMasterRelations = relations(seriesMaster, ({ many }) => ({
 }));
 
 export const photocardMasterRelations = relations(photocardMaster, ({ many }) => ({
-  cards: many(card),
+  items: many(item),
 }));
 
 // =====================================
-// カード関連テーブル
+// アイテム関連テーブル
 // =====================================
 
 /**
- * カードマスターテーブル
+ * アイテムマスターテーブル
  * ユーザーがマニュアルで登録可能、他ユーザーも検索・選択可能
+ * フリーフォーマットでカードに限らず何でも交換可能
  */
-export const card = pgTable(
-  'card',
+export const item = pgTable(
+  'item',
   {
     id: text('id').primaryKey(),
     name: text('name').notNull(),
-    category: text('category').notNull(),
-    rarity: text('rarity'),
+    category: text('category'), // カテゴリは任意
+    description: text('description'), // アイテムの説明
     imageUrl: text('image_url'),
     createdByUserId: text('created_by_user_id').references(() => user.id, {
       onDelete: 'set null',
@@ -345,29 +346,35 @@ export const card = pgTable(
       .notNull(),
   },
   (table) => [
-    index('card_name_idx').on(table.name),
-    index('card_category_idx').on(table.category),
-    index('card_photocard_master_id_idx').on(table.photocardMasterId),
+    index('item_name_idx').on(table.name),
+    index('item_category_idx').on(table.category),
+    index('item_photocard_master_id_idx').on(table.photocardMasterId),
   ]
 );
 
-export const cardRelations = relations(card, ({ one, many }) => ({
+// 後方互換性のためのエイリアス（既存コードで card を使用している場合）
+export const card = item;
+
+export const itemRelations = relations(item, ({ one, many }) => ({
   createdBy: one(user, {
-    fields: [card.createdByUserId],
+    fields: [item.createdByUserId],
     references: [user.id],
   }),
   photocardMaster: one(photocardMaster, {
-    fields: [card.photocardMasterId],
+    fields: [item.photocardMasterId],
     references: [photocardMaster.id],
   }),
-  haveCards: many(userHaveCard),
-  wantCards: many(userWantCard),
+  haveItems: many(userHaveCard),
+  wantItems: many(userWantCard),
   cardSetItems: many(cardSetItem),
   tradeItems: many(tradeItem),
 }));
 
+// 後方互換性のためのエイリアス
+export const cardRelations = itemRelations;
+
 /**
- * ユーザーが持っているカードテーブル
+ * ユーザーが持っているアイテムテーブル
  */
 export const userHaveCard = pgTable(
   'user_have_card',
@@ -376,9 +383,9 @@ export const userHaveCard = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
-    cardId: text('card_id')
+    cardId: text('card_id') // TODO: itemId に変更予定
       .notNull()
-      .references(() => card.id, { onDelete: 'cascade' }),
+      .references(() => item.id, { onDelete: 'cascade' }),
     quantity: integer('quantity').default(1).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
@@ -405,7 +412,7 @@ export const userHaveCardRelations = relations(userHaveCard, ({ one }) => ({
 }));
 
 /**
- * ユーザーが欲しいカードテーブル
+ * ユーザーが欲しいアイテムテーブル
  */
 export const userWantCard = pgTable(
   'user_want_card',
@@ -414,9 +421,9 @@ export const userWantCard = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
-    cardId: text('card_id')
+    cardId: text('card_id') // TODO: itemId に変更予定
       .notNull()
-      .references(() => card.id, { onDelete: 'cascade' }),
+      .references(() => item.id, { onDelete: 'cascade' }),
     priority: integer('priority').default(0),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
@@ -642,7 +649,7 @@ export const tradeHistoryRelations = relations(tradeHistory, ({ one }) => ({
 // =====================================
 
 /**
- * ユーザーがお気に入りにしたカードテーブル
+ * ユーザーがお気に入りにしたアイテムテーブル
  */
 export const userFavoriteCard = pgTable(
   'user_favorite_card',

@@ -91,9 +91,9 @@ export function CardDetailModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>カード詳細</DialogTitle>
+          <DialogTitle>アイテム詳細</DialogTitle>
           <DialogDescription>
-            {isHave ? '持っているカード' : '欲しいカード'}の情報を確認・編集できます
+            {isHave ? '持っているアイテム' : '欲しいアイテム'}の情報を確認・編集できます
           </DialogDescription>
         </DialogHeader>
 
@@ -119,10 +119,14 @@ export function CardDetailModal({
           <div className="space-y-4">
             <div>
               <h3 className="text-xl font-bold">{card.name}</h3>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Badge variant="secondary">{card.category}</Badge>
-                {card.rarity && <Badge variant="outline">{card.rarity}</Badge>}
-              </div>
+              {card.category && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Badge variant="secondary">{card.category}</Badge>
+                </div>
+              )}
+              {card.description && (
+                <p className="mt-2 text-sm text-muted-foreground">{card.description}</p>
+              )}
             </div>
 
             {/* 数量・優先度編集 */}

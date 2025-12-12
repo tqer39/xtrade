@@ -8,10 +8,7 @@ describe('CardGridFilters', () => {
     onSearchChange: vi.fn(),
     selectedCategory: 'all',
     onCategoryChange: vi.fn(),
-    selectedRarity: 'all',
-    onRarityChange: vi.fn(),
     categories: ['INI', 'JO1', 'BE:FIRST'],
-    rarities: ['N', 'R', 'SR', 'SSR'],
     viewMode: 'grid' as const,
     onViewModeChange: vi.fn(),
     totalCount: 100,
@@ -22,14 +19,14 @@ describe('CardGridFilters', () => {
     it('検索入力を表示すること', () => {
       render(<CardGridFilters {...defaultProps} />);
 
-      expect(screen.getByPlaceholderText('カード名で検索...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('アイテム名で検索...')).toBeInTheDocument();
     });
 
     it('検索クエリを入力できること', () => {
       const handleSearchChange = vi.fn();
       render(<CardGridFilters {...defaultProps} onSearchChange={handleSearchChange} />);
 
-      const input = screen.getByPlaceholderText('カード名で検索...');
+      const input = screen.getByPlaceholderText('アイテム名で検索...');
       fireEvent.change(input, { target: { value: 'テスト' } });
 
       expect(handleSearchChange).toHaveBeenCalledWith('テスト');
@@ -79,7 +76,6 @@ describe('CardGridFilters', () => {
 
       expect(screen.getByText('フィルター')).toBeInTheDocument();
       expect(screen.getByText('カテゴリ')).toBeInTheDocument();
-      expect(screen.getByText('レアリティ')).toBeInTheDocument();
     });
 
     it('フィルターがアクティブな場合はボーダーがハイライトされること', () => {
@@ -143,17 +139,14 @@ describe('CardGridFilters', () => {
     it('フィルターパネル内のクリアボタンで全フィルターをクリアできること', async () => {
       const handleSearchChange = vi.fn();
       const handleCategoryChange = vi.fn();
-      const handleRarityChange = vi.fn();
 
       render(
         <CardGridFilters
           {...defaultProps}
           searchQuery="テスト"
           selectedCategory="INI"
-          selectedRarity="SR"
           onSearchChange={handleSearchChange}
           onCategoryChange={handleCategoryChange}
-          onRarityChange={handleRarityChange}
         />
       );
 
@@ -172,7 +165,6 @@ describe('CardGridFilters', () => {
 
         expect(handleSearchChange).toHaveBeenCalledWith('');
         expect(handleCategoryChange).toHaveBeenCalledWith('all');
-        expect(handleRarityChange).toHaveBeenCalledWith('all');
       }
     });
   });

@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST: カードを新規登録
+ * POST: アイテムを新規登録
  *
- * Body: { name: string, category: string, rarity?: string, imageUrl?: string }
+ * Body: { name: string, category?: string, description?: string, imageUrl?: string }
  */
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   let body: {
     name?: string;
     category?: string;
-    rarity?: string;
+    description?: string;
     imageUrl?: string;
   };
   try {
@@ -56,21 +56,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { name, category, rarity, imageUrl } = body;
+  const { name, category, description, imageUrl } = body;
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     return NextResponse.json({ error: 'name is required' }, { status: 400 });
   }
 
-  if (!category || typeof category !== 'string' || category.trim().length === 0) {
-    return NextResponse.json({ error: 'category is required' }, { status: 400 });
-  }
-
   const card = await createCard(
     {
       name: name.trim(),
-      category: category.trim(),
-      rarity: rarity?.trim(),
+      category: category?.trim(),
+      description: description?.trim(),
       imageUrl: imageUrl?.trim(),
     },
     session.user.id

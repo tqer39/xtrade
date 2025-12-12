@@ -31,7 +31,7 @@ async function main() {
         trade,
         user_want_card,
         user_have_card,
-        card,
+        item,
         allowed_user,
         user_trust_job
       CASCADE
@@ -58,18 +58,19 @@ async function main() {
     }
     console.log(`  ✓ ${seedUsers.length} 件のユーザーを作成しました`);
 
-    // カードマスタの投入
-    console.log('🎴 カードマスタデータを投入中...');
+    // アイテムマスタの投入
+    console.log('📦 アイテムマスタデータを投入中...');
     for (const cardData of seedCards) {
-      await db.insert(schema.card).values({
+      await db.insert(schema.item).values({
         id: cardData.id,
         name: cardData.name,
         category: cardData.category,
-        rarity: cardData.rarity,
+        description: cardData.description,
+        imageUrl: cardData.imageUrl,
         createdByUserId: 'test-admin',
       });
     }
-    console.log(`  ✓ ${seedCards.length} 件のカードを作成しました`);
+    console.log(`  ✓ ${seedCards.length} 件のアイテムを作成しました`);
 
     // 許可ユーザー（ホワイトリスト）
     console.log('📋 許可ユーザーリストを作成中...');
@@ -218,10 +219,10 @@ async function main() {
     console.log('');
     console.log('作成されたデータ:');
     console.log(`  - ユーザー: ${seedUsers.length} 件`);
-    console.log(`  - カード: ${seedCards.length} 件`);
+    console.log(`  - アイテム: ${seedCards.length} 件`);
     console.log(`  - 許可ユーザー: ${allowedUsers.length} 件`);
-    console.log(`  - 所持カード: ${userHaveCards.length} 件`);
-    console.log(`  - 欲しいカード: ${userWantCards.length} 件`);
+    console.log(`  - 所持アイテム: ${userHaveCards.length} 件`);
+    console.log(`  - 欲しいアイテム: ${userWantCards.length} 件`);
     console.log(`  - トレード: ${seedTrades.length} 件`);
     console.log(`  - トレードアイテム: ${seedTradeItems.length} 件`);
     console.log(`  - トレード履歴: ${seedTradeHistory.length} 件`);

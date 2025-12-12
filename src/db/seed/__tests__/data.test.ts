@@ -36,16 +36,16 @@ describe('Seed Data', () => {
   });
 
   describe('seedCards', () => {
-    it('15件のサンプルカードが定義されている', () => {
-      expect(seedCards).toHaveLength(15);
+    it('26件のサンプルアイテムが定義されている', () => {
+      expect(seedCards).toHaveLength(26);
     });
 
-    it('各カードに必須フィールドが存在する', () => {
+    it('各アイテムに必須フィールドが存在する', () => {
       for (const card of seedCards) {
         expect(card.id).toBeDefined();
         expect(card.name).toBeDefined();
         expect(card.category).toBeDefined();
-        expect(card.rarity).toBeDefined();
+        expect(card.description).toBeDefined();
       }
     });
 
@@ -54,7 +54,7 @@ describe('Seed Data', () => {
       expect(categories.size).toBeGreaterThan(1);
     });
 
-    it('カードIDが一意である', () => {
+    it('アイテムIDが一意である', () => {
       const ids = seedCards.map((c) => c.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(ids.length);

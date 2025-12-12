@@ -8,7 +8,7 @@ describe('CardListItem', () => {
     id: 'card-1',
     name: 'テストカード',
     category: 'INI',
-    rarity: 'SR',
+    description: 'テスト用のカードです',
     imageUrl: null,
     createdByUserId: 'user-1',
     createdAt: new Date(),
@@ -80,24 +80,24 @@ describe('CardListItem', () => {
       expect(screen.getByText('INI')).toBeInTheDocument();
     });
 
-    it('レアリティがバッジとして表示されること', () => {
+    it('説明が表示されること', () => {
       render(<CardListItem item={mockHaveCard} type="have" />);
 
-      expect(screen.getByText('SR')).toBeInTheDocument();
+      expect(screen.getByText('テスト用のカードです')).toBeInTheDocument();
     });
 
-    it('レアリティがない場合はバッジを表示しないこと', () => {
-      const cardWithoutRarity: UserHaveCard = {
+    it('説明がない場合は表示しないこと', () => {
+      const cardWithoutDescription: UserHaveCard = {
         ...mockHaveCard,
         card: {
           ...mockCard,
-          rarity: null,
+          description: null,
         },
       };
 
-      render(<CardListItem item={cardWithoutRarity} type="have" />);
+      render(<CardListItem item={cardWithoutDescription} type="have" />);
 
-      expect(screen.queryByText('SR')).not.toBeInTheDocument();
+      expect(screen.queryByText('テスト用のカードです')).not.toBeInTheDocument();
     });
   });
 
