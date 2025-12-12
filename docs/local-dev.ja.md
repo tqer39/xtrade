@@ -75,12 +75,14 @@ TWITTER_CLIENT_SECRET="your-client-secret"
 3. "Keys and tokens" に移動
 4. Client ID と Client Secret をコピー
 
-### 5. ローカルデータベースのセットアップ
+### 5. ローカルデータベース・ストレージのセットアップ
 
 #### オプション A: Docker を使用（推奨）
 
+Docker Compose で PostgreSQL と LocalStack（S3 互換ストレージ）を起動します：
+
 ```bash
-# PostgreSQL コンテナを起動
+# PostgreSQL + LocalStack コンテナを起動
 docker-compose up -d
 
 # マイグレーションを実行
@@ -105,6 +107,24 @@ npm run db:studio
 - サンプルトレード（3件: 異なるステータス）
 - その他関連データ（所持カード、欲しいカード、許可ユーザー等）
 
+**LocalStack（画像ストレージ）について：**
+
+LocalStack は AWS S3 互換のローカルストレージエミュレータです。画像アップロード機能をローカルでテストできます。
+
+ローカル開発時は `.env.local` に以下を設定：
+
+```bash
+R2_ACCESS_KEY_ID=test
+R2_SECRET_ACCESS_KEY=test
+R2_ENDPOINT=http://localhost:4566
+R2_BUCKET_NAME=xtrade-card-images-dev
+R2_PUBLIC_URL=http://localhost:4566/xtrade-card-images-dev
+```
+
+**LocalStack Web UI（オプション）：**
+
+LocalStack の Web UI を使用する場合は、[LocalStack Web Application](https://app.localstack.cloud/) にアクセスしてください（無料アカウント登録が必要）。
+
 #### オプション B: 既存の PostgreSQL を使用
 
 PostgreSQL がローカルにインストールされている場合：
@@ -119,6 +139,8 @@ createdb xtrade
 # マイグレーションを実行
 npm run db:migrate
 ```
+
+この場合、画像ストレージには Cloudflare R2 の dev 環境を使用するか、LocalStack を別途起動してください。
 
 ### 6. 開発サーバーの起動
 
