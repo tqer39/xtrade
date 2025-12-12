@@ -2,18 +2,29 @@
 
 import { Skeleton } from '@/components/ui/skeleton';
 
-export function CardGridSkeleton() {
-  // フィーチャーカードのパターン（0, 5, 11番目を大きく）
-  const featuredIndices = new Set([0, 5, 11]);
+// ランダムな高さのパターン
+const heightPatterns = [
+  'aspect-[3/4]',
+  'aspect-[4/5]',
+  'aspect-[3/4]',
+  'aspect-[5/6]',
+  'aspect-[3/4]',
+  'aspect-[4/5]',
+  'aspect-[3/4]',
+  'aspect-[5/7]',
+  'aspect-[3/4]',
+  'aspect-[4/5]',
+  'aspect-[3/4]',
+  'aspect-[5/6]',
+];
 
+export function CardGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr">
-      {Array.from({ length: 12 }).map((_, i) => (
+    <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-0.5">
+      {heightPatterns.map((height, i) => (
         <Skeleton
           key={`skeleton-${i.toString()}`}
-          className={`bg-zinc-800 ${
-            featuredIndices.has(i) ? 'aspect-[4/5] row-span-2' : 'aspect-[3/4]'
-          }`}
+          className={`bg-zinc-800 rounded-sm mb-0.5 ${height}`}
         />
       ))}
     </div>

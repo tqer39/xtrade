@@ -14,22 +14,6 @@ interface CardGridProps {
   emptyMessage?: string;
 }
 
-/**
- * フィーチャーカードのインデックスを決定
- * Sora風のバリエーションを出すため、一定間隔でフィーチャーカードを配置
- */
-function getFeaturedIndices(totalItems: number): Set<number> {
-  const featured = new Set<number>();
-  if (totalItems < 6) return featured;
-
-  // 最初のカードと、6個ごとにフィーチャーカードを配置
-  featured.add(0);
-  for (let i = 5; i < totalItems; i += 6) {
-    featured.add(i);
-  }
-  return featured;
-}
-
 export function CardGrid({
   items,
   type,
@@ -67,11 +51,9 @@ export function CardGrid({
     );
   }
 
-  const featuredIndices = getFeaturedIndices(items.length);
-
   return (
-    <div className="grid grid-cols-2 gap-0 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr">
-      {items.map((item, index) => (
+    <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-0.5">
+      {items.map((item) => (
         <CardGridItem
           key={item.id}
           item={item}
@@ -79,7 +61,6 @@ export function CardGrid({
           onCardClick={onCardClick}
           onFavoriteToggle={onFavoriteToggle}
           isFavorite={item.card ? favoriteCardIds.has(item.card.id) : false}
-          featured={featuredIndices.has(index)}
         />
       ))}
     </div>
