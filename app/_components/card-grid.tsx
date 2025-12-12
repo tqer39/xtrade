@@ -14,6 +14,22 @@ interface CardGridProps {
   emptyMessage?: string;
 }
 
+/**
+ * フィーチャーカードのインデックスを決定
+ * Sora風のバリエーションを出すため、一定間隔でフィーチャーカードを配置
+ */
+function getFeaturedIndices(totalItems: number): Set<number> {
+  const featured = new Set<number>();
+  if (totalItems < 6) return featured;
+
+  // 最初のカードと、6個ごとにフィーチャーカードを配置
+  featured.add(0);
+  for (let i = 5; i < totalItems; i += 6) {
+    featured.add(i);
+  }
+  return featured;
+}
+
 export function CardGrid({
   items,
   type,
@@ -29,15 +45,33 @@ export function CardGrid({
 
   if (items.length === 0) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <p className="text-muted-foreground">{emptyMessage}</p>
+      <div className="flex flex-col items-center justify-center py-20 px-4">
+        <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4">
+          <svg
+            className="w-8 h-8 text-zinc-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            />
+          </svg>
+        </div>
+        <p className="text-zinc-400 text-center">{emptyMessage}</p>
       </div>
     );
   }
 
+  const featuredIndices = getFeaturedIndices(items.length);
+
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-      {items.map((item) => (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5 auto-rows-fr">
+      {items.map((item, index) => (
         <CardGridItem
           key={item.id}
           item={item}
@@ -45,6 +79,7 @@ export function CardGrid({
           onCardClick={onCardClick}
           onFavoriteToggle={onFavoriteToggle}
           isFavorite={item.card ? favoriteCardIds.has(item.card.id) : false}
+          featured={featuredIndices.has(index)}
         />
       ))}
     </div>
