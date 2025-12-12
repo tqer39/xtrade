@@ -26,45 +26,48 @@ export function CardListItem({ item, type, viewMode = 'list', onClick }: CardLis
 
   if (viewMode === 'grid') {
     return (
-      <Card
-        className={`overflow-hidden rounded-none ${onClick ? 'cursor-pointer transition-colors hover:bg-accent/50' : ''}`}
+      <button
+        type="button"
+        className={`relative w-full mb-0.5 rounded-sm overflow-hidden text-left ${onClick ? 'cursor-pointer transition-all duration-200 hover:brightness-110' : ''}`}
         onClick={onClick}
       >
-        <CardContent className="p-0">
-          <div className="aspect-square relative overflow-hidden bg-muted">
-            {card.imageUrl ? (
-              <Image
-                src={card.imageUrl}
-                alt={card.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <ImageIcon className="h-8 w-8 text-muted-foreground" />
-              </div>
-            )}
-            {/* 数量/優先度バッジ */}
-            {isHave && haveItem && haveItem.quantity > 1 && (
-              <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-full">
-                x{haveItem.quantity}
-              </div>
-            )}
-            {!isHave && wantItem && wantItem.priority !== null && (
-              <div className="absolute top-2 right-2 bg-secondary text-secondary-foreground text-xs font-bold px-2 py-1 rounded-full">
-                優先{wantItem.priority}
-              </div>
-            )}
+        <div className="relative w-full">
+          {card.imageUrl ? (
+            <Image
+              src={card.imageUrl}
+              alt={card.name}
+              width={400}
+              height={600}
+              className="w-full h-auto object-cover"
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+            />
+          ) : (
+            <div className="aspect-[3/4] flex items-center justify-center bg-zinc-800">
+              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+            </div>
+          )}
+        </div>
+        {/* グラデーションオーバーレイ */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+        {/* 数量/優先度バッジ */}
+        {isHave && haveItem && haveItem.quantity > 1 && (
+          <div className="absolute top-2 right-2 bg-white/90 text-zinc-900 text-xs font-bold px-1.5 py-0.5 rounded">
+            ×{haveItem.quantity}
           </div>
-          <div className="p-3">
-            <div className="font-medium text-sm truncate">{card.name}</div>
-            <Badge variant="secondary" className="text-xs mt-1">
-              {card.category}
-            </Badge>
+        )}
+        {!isHave && wantItem && wantItem.priority !== null && (
+          <div className="absolute top-2 right-2 bg-violet-500/90 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+            P{wantItem.priority}
           </div>
-        </CardContent>
-      </Card>
+        )}
+        {/* 下部の情報エリア */}
+        <div className="absolute bottom-0 left-0 right-0 p-2">
+          <div className="font-medium text-white text-xs truncate drop-shadow-lg">{card.name}</div>
+          <span className="text-[10px] text-zinc-300 bg-black/40 px-1.5 py-0.5 rounded">
+            {card.category}
+          </span>
+        </div>
+      </button>
     );
   }
 

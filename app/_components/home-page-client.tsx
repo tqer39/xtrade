@@ -160,14 +160,18 @@ export function HomePageClient() {
                   <div
                     className={
                       viewMode === 'grid'
-                        ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0'
+                        ? 'columns-2 sm:columns-3 md:columns-4 gap-0.5'
                         : 'space-y-2'
                     }
                   >
                     {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((key) => (
                       <Skeleton
                         key={key}
-                        className={viewMode === 'grid' ? 'h-32 w-full' : 'h-20 w-full'}
+                        className={
+                          viewMode === 'grid'
+                            ? 'aspect-[3/4] w-full mb-0.5 rounded-sm'
+                            : 'h-20 w-full'
+                        }
                       />
                     ))}
                   </div>
@@ -176,35 +180,37 @@ export function HomePageClient() {
                     まだカードが登録されていません
                   </p>
                 ) : viewMode === 'grid' ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0">
+                  <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
                     {latestCards.map((card) => (
-                      <Card
+                      <button
+                        type="button"
                         key={card.id}
-                        className="cursor-pointer transition-colors hover:bg-accent rounded-none"
+                        className="relative w-full mb-0.5 rounded-sm overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110 text-left"
                         onClick={() => setSelectedCardForOwners(card.id)}
                       >
-                        <CardContent className="p-0">
-                          <div className="aspect-square overflow-hidden bg-muted">
-                            {card.imageUrl ? (
-                              <img
-                                src={card.imageUrl}
-                                alt={card.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="p-2">
-                            <p className="font-medium text-sm truncate">{card.name}</p>
-                            <Badge variant="secondary" className="text-xs mt-1">
-                              {card.category}
-                            </Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        <div className="relative w-full">
+                          {card.imageUrl ? (
+                            <img
+                              src={card.imageUrl}
+                              alt={card.name}
+                              className="w-full h-auto object-cover"
+                            />
+                          ) : (
+                            <div className="aspect-[3/4] flex items-center justify-center bg-zinc-800">
+                              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                          <p className="font-medium text-white text-xs truncate drop-shadow-lg">
+                            {card.name}
+                          </p>
+                          <span className="text-[10px] text-zinc-300 bg-black/40 px-1.5 py-0.5 rounded">
+                            {card.category}
+                          </span>
+                        </div>
+                      </button>
                     ))}
                   </div>
                 ) : (
@@ -287,15 +293,15 @@ export function HomePageClient() {
             ) : isLoading ? (
               <div
                 className={
-                  viewMode === 'grid'
-                    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0'
-                    : 'space-y-3'
+                  viewMode === 'grid' ? 'columns-2 sm:columns-3 md:columns-4 gap-0.5' : 'space-y-3'
                 }
               >
                 {Array.from({ length: 4 }, (_, i) => `skeleton-have-${i}`).map((key) => (
                   <Skeleton
                     key={key}
-                    className={viewMode === 'grid' ? 'aspect-square w-full' : 'h-20 w-full'}
+                    className={
+                      viewMode === 'grid' ? 'aspect-[3/4] w-full mb-0.5 rounded-sm' : 'h-20 w-full'
+                    }
                   />
                 ))}
               </div>
@@ -304,7 +310,7 @@ export function HomePageClient() {
                 まだカードを登録していません
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0">
+              <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
                 {haveCards.map((item) => (
                   <CardListItem
                     key={item.id}
@@ -361,15 +367,15 @@ export function HomePageClient() {
             ) : isLoading ? (
               <div
                 className={
-                  viewMode === 'grid'
-                    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0'
-                    : 'space-y-3'
+                  viewMode === 'grid' ? 'columns-2 sm:columns-3 md:columns-4 gap-0.5' : 'space-y-3'
                 }
               >
                 {Array.from({ length: 4 }, (_, i) => `skeleton-want-${i}`).map((key) => (
                   <Skeleton
                     key={key}
-                    className={viewMode === 'grid' ? 'aspect-square w-full' : 'h-20 w-full'}
+                    className={
+                      viewMode === 'grid' ? 'aspect-[3/4] w-full mb-0.5 rounded-sm' : 'h-20 w-full'
+                    }
                   />
                 ))}
               </div>
@@ -378,7 +384,7 @@ export function HomePageClient() {
                 まだ欲しいカードを登録していません
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0">
+              <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
                 {wantCards.map((item) => (
                   <CardListItem
                     key={item.id}
