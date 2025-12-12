@@ -285,15 +285,9 @@ export const photocardMaster = pgTable(
     releaseType: text('release_type'), // album/single/live_goods
     releaseDate: text('release_date'), // リリース日
     rarity: text('rarity'), // レアリティ
-    imageUrl: text('image_url'), // 廃止予定（移行期間中は r2ImageUrl と同じ値）
-    source: text('source').default('seed'), // seed/user/scrape
+    imageUrl: text('image_url'),
+    source: text('source').default('seed'), // seed/user
     sourceUrl: text('source_url'), // 参照元URL
-    // スクレイピング画像同期用カラム
-    sourceImageUrl: text('source_image_url'), // 元サイトの画像URL（重複チェック用）
-    r2ImageUrl: text('r2_image_url'), // R2にアップロード後のURL
-    imageSyncStatus: text('image_sync_status').default('pending'), // pending/synced/failed
-    imageSyncedAt: timestamp('image_synced_at'), // 同期完了日時
-    imageSyncError: text('image_sync_error'), // エラーメッセージ
     verified: boolean('verified').default(false), // 検証済みフラグ
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
@@ -306,8 +300,6 @@ export const photocardMaster = pgTable(
     index('photocard_master_group_idx').on(table.groupName),
     index('photocard_master_member_idx').on(table.memberName),
     index('photocard_master_series_idx').on(table.series),
-    index('photocard_master_source_image_url_idx').on(table.sourceImageUrl),
-    index('photocard_master_image_sync_status_idx').on(table.imageSyncStatus),
   ]
 );
 
@@ -824,76 +816,6 @@ export const userReviewStatsRelations = relations(userReviewStats, ({ one }) => 
   user: one(user, {
     fields: [userReviewStats.userId],
     references: [user.id],
-  }),
-}));
-
-// =====================================
-// スクレイピング関連テーブル
-// =====================================
-
-/**
- * スクレイピングソース定義テーブル
- * 画像収集対象のサイト・API設定を管理
- */
-export const scrapeSource = pgTable(
-  'scrape_source',
-  {
-    id: text('id').primaryKey(),
-    name: text('name').notNull(), // ソース名（例: "pokemon-card-db"）
-    type: text('type').notNull(), // "static" | "llm" | "api"
-    baseUrl: text('base_url').notNull(), // ベースURL
-    category: text('category'), // 対象カテゴリ（例: "ポケモンカード"）
-    groupName: text('group_name'), // 対象グループ（例: "INI"）
-    config: text('config'), // JSON: パーサー設定やプロンプト
-    isActive: boolean('is_active').default(true).notNull(),
-    lastScrapedAt: timestamp('last_scraped_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
-      .defaultNow()
-      .$onUpdate(() => new Date())
-      .notNull(),
-  },
-  (table) => [
-    index('scrape_source_type_idx').on(table.type),
-    index('scrape_source_category_idx').on(table.category),
-    index('scrape_source_is_active_idx').on(table.isActive),
-  ]
-);
-
-/**
- * スクレイピング実行ログテーブル
- * 各実行の結果とエラーを記録
- */
-export const scrapeLog = pgTable(
-  'scrape_log',
-  {
-    id: text('id').primaryKey(),
-    sourceId: text('source_id')
-      .notNull()
-      .references(() => scrapeSource.id, { onDelete: 'cascade' }),
-    status: text('status').notNull(), // "running" | "success" | "failed"
-    itemsFound: integer('items_found'),
-    itemsCreated: integer('items_created'),
-    itemsUpdated: integer('items_updated'),
-    errorMessage: text('error_message'),
-    startedAt: timestamp('started_at').notNull(),
-    finishedAt: timestamp('finished_at'),
-  },
-  (table) => [
-    index('scrape_log_source_id_idx').on(table.sourceId),
-    index('scrape_log_status_idx').on(table.status),
-    index('scrape_log_started_at_idx').on(table.startedAt),
-  ]
-);
-
-export const scrapeSourceRelations = relations(scrapeSource, ({ many }) => ({
-  logs: many(scrapeLog),
-}));
-
-export const scrapeLogRelations = relations(scrapeLog, ({ one }) => ({
-  source: one(scrapeSource, {
-    fields: [scrapeLog.sourceId],
-    references: [scrapeSource.id],
   }),
 }));
 

@@ -86,55 +86,10 @@
 | Secret 名 | 説明 | 使用箇所 | 必須 |
 | -------- | ---- | ------ | -------- |
 | `OPENAI_API_KEY` | PR 説明生成用 OpenAI API キー | `generate-pr-description.yml` | No |
-| `ANTHROPIC_API_KEY_DEV` | dev 環境用 Claude API キー | `scrape-cards.yml` | No |
-| `ANTHROPIC_API_KEY_PROD` | prod 環境用 Claude API キー | （prod ワークフロー） | No |
 
 **取得方法**:
 
 - OpenAI: [OpenAI Platform](https://platform.openai.com/api-keys)
-- Anthropic: [Anthropic Console](https://console.anthropic.com/settings/keys)
-
-**注**: dev/prod で別の API キーを使用することで、使用量・コストを環境別に追跡できます。
-
-### CloudFlare R2
-
-環境ごとに異なるバケット・ドメインを使用するため、Secrets は `_DEV` / `_PROD` サフィックスで分離します。
-
-#### dev 環境
-
-| Secret 名 | 説明 | 値の取得元 |
-| -------- | ---- | ------ |
-| `CLOUDFLARE_R2_ENDPOINT_DEV` | R2 エンドポイント | `terraform output r2_endpoint` |
-| `CLOUDFLARE_R2_BUCKET_DEV` | R2 バケット名 | `terraform output r2_bucket_name` |
-| `CLOUDFLARE_R2_CUSTOM_DOMAIN_DEV` | R2 カスタムドメイン | `terraform output r2_public_url` |
-| `CLOUDFLARE_R2_ACCESS_KEY_ID_DEV` | R2 API アクセスキー | CloudFlare Dashboard |
-| `CLOUDFLARE_R2_SECRET_ACCESS_KEY_DEV` | R2 API シークレット | CloudFlare Dashboard |
-
-#### prod 環境
-
-| Secret 名 | 説明 | 値の取得元 |
-| -------- | ---- | ------ |
-| `CLOUDFLARE_R2_ENDPOINT_PROD` | R2 エンドポイント | `terraform output r2_endpoint` |
-| `CLOUDFLARE_R2_BUCKET_PROD` | R2 バケット名 | `terraform output r2_bucket_name` |
-| `CLOUDFLARE_R2_CUSTOM_DOMAIN_PROD` | R2 カスタムドメイン | `terraform output r2_public_url` |
-| `CLOUDFLARE_R2_ACCESS_KEY_ID_PROD` | R2 API アクセスキー | CloudFlare Dashboard |
-| `CLOUDFLARE_R2_SECRET_ACCESS_KEY_PROD` | R2 API シークレット | CloudFlare Dashboard |
-
-**Terraform 出力からの値取得**:
-
-```bash
-cd infra/terraform/envs/dev/storage
-terraform output r2_bucket_name    # → xtrade-card-images-dev
-terraform output r2_public_url     # → https://card-images.xtrade-dev.tqer39.dev
-terraform output r2_endpoint       # → https://<account_id>.r2.cloudflarestorage.com
-```
-
-**R2 API トークンの作成**:
-
-1. CloudFlare Dashboard → R2 → Manage R2 API Tokens
-2. 「Create API Token」をクリック
-3. 権限: Object Read & Write
-4. バケット: 環境に応じたバケットを選択
 
 ### 自動 Secrets
 
