@@ -35,7 +35,7 @@ vi.mock('@/db/schema', () => ({
     id: 'card.id',
     name: 'card.name',
     category: 'card.category',
-    rarity: 'card.rarity',
+    description: 'card.description',
     imageUrl: 'card.imageUrl',
     createdByUserId: 'card.createdByUserId',
     createdAt: 'card.createdAt',
@@ -88,6 +88,7 @@ const {
   removeWantCard,
   getLatestCards,
   getCardOwners,
+  getUserCategories,
 } = await import('../service');
 
 describe('cards/service', () => {
@@ -173,7 +174,7 @@ describe('cards/service', () => {
       const input = {
         name: 'New Card',
         category: 'common',
-        rarity: 'R',
+        description: 'テスト用の説明',
         imageUrl: 'https://example.com/image.png',
       };
 
@@ -181,7 +182,7 @@ describe('cards/service', () => {
 
       expect(result.name).toBe('New Card');
       expect(result.category).toBe('common');
-      expect(result.rarity).toBe('R');
+      expect(result.description).toBe('テスト用の説明');
       expect(result.imageUrl).toBe('https://example.com/image.png');
       expect(result.createdByUserId).toBe('user-1');
       expect(result.id).toBeDefined();
@@ -197,7 +198,7 @@ describe('cards/service', () => {
       const result = await createCard(input, 'user-1');
 
       expect(result.name).toBe('Simple Card');
-      expect(result.rarity).toBeNull();
+      expect(result.description).toBeNull();
       expect(result.imageUrl).toBeNull();
     });
   });
@@ -438,6 +439,70 @@ describe('cards/service', () => {
       const result = await getCardOwners('card-1');
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('getUserCategories', () => {
+    it('ユーザーのカテゴリ一覧を取得', async () => {
+      const mockSelectDistinct = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi
+              .fn()
+              .mockResolvedValueOnce([{ category: 'カテゴリA' }, { category: 'カテゴリB' }])
+              .mockResolvedValueOnce([{ category: 'カテゴリB' }, { category: 'カテゴリC' }]),
+          }),
+        }),
+      });
+
+      // db.selectDistinct をモック
+      const db = await import('@/db/drizzle');
+      (db.db as unknown as { selectDistinct: typeof mockSelectDistinct }).selectDistinct =
+        mockSelectDistinct;
+
+      const result = await getUserCategories('user-1');
+
+      // 重複を排除してソートされた配列を期待
+      expect(result).toEqual(['カテゴリA', 'カテゴリB', 'カテゴリC']);
+    });
+
+    it('カテゴリがない場合は空配列を返す', async () => {
+      const mockSelectDistinct = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([]),
+          }),
+        }),
+      });
+
+      const db = await import('@/db/drizzle');
+      (db.db as unknown as { selectDistinct: typeof mockSelectDistinct }).selectDistinct =
+        mockSelectDistinct;
+
+      const result = await getUserCategories('user-1');
+
+      expect(result).toEqual([]);
+    });
+
+    it('null カテゴリは除外される', async () => {
+      const mockSelectDistinct = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi
+              .fn()
+              .mockResolvedValueOnce([{ category: 'カテゴリA' }, { category: null }])
+              .mockResolvedValueOnce([{ category: null }]),
+          }),
+        }),
+      });
+
+      const db = await import('@/db/drizzle');
+      (db.db as unknown as { selectDistinct: typeof mockSelectDistinct }).selectDistinct =
+        mockSelectDistinct;
+
+      const result = await getUserCategories('user-1');
+
+      expect(result).toEqual(['カテゴリA']);
     });
   });
 });

@@ -8,7 +8,7 @@ describe('CardGrid', () => {
     id: 'card-1',
     name: 'テストカード',
     category: 'INI',
-    rarity: 'SR',
+    description: 'テスト用のカードです',
     imageUrl: 'https://example.com/image.jpg',
     createdByUserId: 'user-1',
     createdAt: new Date(),

@@ -114,16 +114,18 @@ export function CardGridItem({
         <h3 className="font-medium text-white text-xs leading-tight line-clamp-2 drop-shadow-lg">
           {card.name}
         </h3>
-        <div className="flex items-center gap-1 mt-1">
-          <span className="text-[10px] text-zinc-300 bg-black/40 px-1.5 py-0.5 rounded backdrop-blur-sm">
-            {card.category}
-          </span>
-          {card.rarity && (
+        {card.category && (
+          <div className="flex items-center gap-1 mt-1">
             <span className="text-[10px] text-zinc-300 bg-black/40 px-1.5 py-0.5 rounded backdrop-blur-sm">
-              {card.rarity}
+              {card.category}
             </span>
-          )}
-        </div>
+          </div>
+        )}
+        {card.description && (
+          <p className="text-[10px] text-zinc-300 mt-1 line-clamp-2 drop-shadow-lg">
+            {card.description}
+          </p>
+        )}
       </div>
     </button>
   );

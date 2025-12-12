@@ -77,6 +77,12 @@ const nextConfig: NextConfig = {
         port: '4566',
         pathname: '/**',
       },
+      // Picsum Photos（テストデータ用）
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+        pathname: '/**',
+      },
     ],
   },
 };

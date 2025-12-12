@@ -1,16 +1,20 @@
 /**
- * カードの基本情報
+ * アイテムの基本情報
+ * フリーフォーマットでカードに限らず何でも交換可能
  */
 export interface Card {
   id: string;
   name: string;
-  category: string;
-  rarity: string | null;
+  category: string | null; // カテゴリは任意
+  description: string | null; // アイテムの説明
   imageUrl: string | null;
   createdByUserId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
+
+// エイリアス
+export type Item = Card;
 
 /**
  * ユーザーが持っているカード
@@ -39,14 +43,17 @@ export interface UserWantCard {
 }
 
 /**
- * カード作成の入力
+ * アイテム作成の入力
  */
 export interface CreateCardInput {
   name: string;
-  category: string;
-  rarity?: string;
+  category?: string; // カテゴリは任意
+  description?: string; // アイテムの説明
   imageUrl?: string;
 }
+
+// エイリアス
+export type CreateItemInput = CreateCardInput;
 
 /**
  * 持っているカード追加の入力
@@ -82,15 +89,18 @@ export interface CardSet {
 }
 
 /**
- * カード情報（簡易版、一覧表示用）
+ * アイテム情報（簡易版、一覧表示用）
  */
 export interface CardSummary {
   id: string;
   name: string;
-  category: string;
-  rarity: string | null;
+  category: string | null;
+  description: string | null;
   imageUrl: string | null;
 }
+
+// エイリアス
+export type ItemSummary = CardSummary;
 
 /**
  * カードセット内のアイテム

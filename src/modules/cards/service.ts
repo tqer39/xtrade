@@ -35,8 +35,8 @@ export async function createCard(input: CreateCardInput, createdByUserId: string
   const newCard = {
     id: randomUUID(),
     name: input.name,
-    category: input.category,
-    rarity: input.rarity ?? null,
+    category: input.category ?? null,
+    description: input.description ?? null,
     imageUrl: input.imageUrl ?? null,
     createdByUserId,
     createdAt: new Date(),
@@ -73,7 +73,7 @@ export async function getUserHaveCards(userId: string) {
         id: schema.card.id,
         name: schema.card.name,
         category: schema.card.category,
-        rarity: schema.card.rarity,
+        description: schema.card.description,
         imageUrl: schema.card.imageUrl,
       },
     })
@@ -101,7 +101,7 @@ export async function getUserWantCards(userId: string) {
         id: schema.card.id,
         name: schema.card.name,
         category: schema.card.category,
-        rarity: schema.card.rarity,
+        description: schema.card.description,
         imageUrl: schema.card.imageUrl,
       },
     })
@@ -252,4 +252,37 @@ export async function getCardOwners(cardId: string): Promise<CardOwner[]> {
     .orderBy(desc(schema.user.trustScore));
 
   return owners;
+}
+
+/**
+ * ユーザーが持っているカードのカテゴリ一覧を取得する
+ */
+export async function getUserCategories(userId: string): Promise<string[]> {
+  // ユーザーの持っているカードと欲しいカードからカテゴリを取得
+  const haveCardCategories = await db
+    .selectDistinct({ category: schema.card.category })
+    .from(schema.userHaveCard)
+    .innerJoin(schema.card, eq(schema.userHaveCard.cardId, schema.card.id))
+    .where(eq(schema.userHaveCard.userId, userId));
+
+  const wantCardCategories = await db
+    .selectDistinct({ category: schema.card.category })
+    .from(schema.userWantCard)
+    .innerJoin(schema.card, eq(schema.userWantCard.cardId, schema.card.id))
+    .where(eq(schema.userWantCard.userId, userId));
+
+  // カテゴリを統合して重複を排除
+  const allCategories = new Set<string>();
+  for (const row of haveCardCategories) {
+    if (row.category) {
+      allCategories.add(row.category);
+    }
+  }
+  for (const row of wantCardCategories) {
+    if (row.category) {
+      allCategories.add(row.category);
+    }
+  }
+
+  return Array.from(allCategories).sort();
 }

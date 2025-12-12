@@ -18,10 +18,7 @@ interface CardGridFiltersProps {
   onSearchChange: (query: string) => void;
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
-  selectedRarity: string;
-  onRarityChange: (rarity: string) => void;
   categories: string[];
-  rarities: string[];
   viewMode: 'grid' | 'list';
   onViewModeChange: (mode: 'grid' | 'list') => void;
   totalCount: number;
@@ -33,10 +30,7 @@ export function CardGridFilters({
   onSearchChange,
   selectedCategory,
   onCategoryChange,
-  selectedRarity,
-  onRarityChange,
   categories,
-  rarities,
   viewMode,
   onViewModeChange,
   totalCount,
@@ -44,12 +38,11 @@ export function CardGridFilters({
 }: CardGridFiltersProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const hasActiveFilters = searchQuery || selectedCategory !== 'all' || selectedRarity !== 'all';
+  const hasActiveFilters = searchQuery || selectedCategory !== 'all';
 
   const clearFilters = () => {
     onSearchChange('');
     onCategoryChange('all');
-    onRarityChange('all');
   };
 
   return (
@@ -60,7 +53,7 @@ export function CardGridFilters({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="カード名で検索..."
+            placeholder="アイテム名で検索..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-9 pr-9"
@@ -115,39 +108,21 @@ export function CardGridFilters({
               </Button>
             )}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <span className="text-sm font-medium">カテゴリ</span>
-              <Select value={selectedCategory} onValueChange={onCategoryChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="すべて" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <span className="text-sm font-medium">レアリティ</span>
-              <Select value={selectedRarity} onValueChange={onRarityChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="すべて" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  {rarities.map((rarity) => (
-                    <SelectItem key={rarity} value={rarity}>
-                      {rarity}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <span className="text-sm font-medium">カテゴリ</span>
+            <Select value={selectedCategory} onValueChange={onCategoryChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="すべて" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">すべて</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       )}
@@ -167,11 +142,6 @@ export function CardGridFilters({
             {selectedCategory !== 'all' && (
               <Badge variant="secondary" className="text-xs">
                 {selectedCategory}
-              </Badge>
-            )}
-            {selectedRarity !== 'all' && (
-              <Badge variant="secondary" className="text-xs">
-                {selectedRarity}
               </Badge>
             )}
           </div>

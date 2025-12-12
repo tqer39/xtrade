@@ -22,7 +22,7 @@ export async function getUserFavoriteCards(userId: string): Promise<UserFavorite
         id: schema.card.id,
         name: schema.card.name,
         category: schema.card.category,
-        rarity: schema.card.rarity,
+        description: schema.card.description,
         imageUrl: schema.card.imageUrl,
         createdByUserId: schema.card.createdByUserId,
         createdAt: schema.card.createdAt,

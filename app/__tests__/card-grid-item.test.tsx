@@ -8,7 +8,7 @@ describe('CardGridItem', () => {
     id: 'card-1',
     name: 'テストカード',
     category: 'INI',
-    rarity: 'SR',
+    description: 'テスト用のカードです',
     imageUrl: 'https://example.com/image.jpg',
     createdByUserId: 'user-1',
     createdAt: new Date(),
@@ -167,7 +167,6 @@ describe('CardGridItem', () => {
       // カード名は複数箇所に表示されるのでgetAllByTextを使用
       expect(screen.getAllByText('テストカード').length).toBeGreaterThan(0);
       expect(screen.getAllByText('INI').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('SR').length).toBeGreaterThan(0);
     });
   });
 });
