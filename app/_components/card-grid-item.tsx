@@ -51,8 +51,8 @@ export function CardGridItem({
   return (
     <button
       type="button"
-      className={`group relative w-full overflow-hidden rounded-2xl bg-zinc-900 cursor-pointer transition-all duration-300 text-left
-        hover:ring-2 hover:ring-white/20 hover:shadow-xl hover:shadow-black/20
+      className={`group relative w-full overflow-hidden bg-zinc-900 cursor-pointer transition-all duration-300 text-left
+        hover:z-10 hover:ring-2 hover:ring-white/30 hover:shadow-2xl
         active:scale-[0.98]
         ${featured ? 'aspect-[4/5] row-span-2' : 'aspect-[3/4]'}
       `}

@@ -160,7 +160,7 @@ export function HomePageClient() {
                   <div
                     className={
                       viewMode === 'grid'
-                        ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3'
+                        ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0'
                         : 'space-y-2'
                     }
                   >
@@ -176,15 +176,15 @@ export function HomePageClient() {
                     まだカードが登録されていません
                   </p>
                 ) : viewMode === 'grid' ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0">
                     {latestCards.map((card) => (
                       <Card
                         key={card.id}
-                        className="cursor-pointer transition-colors hover:bg-accent"
+                        className="cursor-pointer transition-colors hover:bg-accent rounded-none"
                         onClick={() => setSelectedCardForOwners(card.id)}
                       >
-                        <CardContent className="p-3">
-                          <div className="aspect-square overflow-hidden rounded-lg bg-muted mb-2">
+                        <CardContent className="p-0">
+                          <div className="aspect-square overflow-hidden bg-muted">
                             {card.imageUrl ? (
                               <img
                                 src={card.imageUrl}
@@ -197,10 +197,12 @@ export function HomePageClient() {
                               </div>
                             )}
                           </div>
-                          <p className="font-medium text-sm truncate">{card.name}</p>
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            {card.category}
-                          </Badge>
+                          <div className="p-2">
+                            <p className="font-medium text-sm truncate">{card.name}</p>
+                            <Badge variant="secondary" className="text-xs mt-1">
+                              {card.category}
+                            </Badge>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
@@ -286,7 +288,7 @@ export function HomePageClient() {
               <div
                 className={
                   viewMode === 'grid'
-                    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3'
+                    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0'
                     : 'space-y-3'
                 }
               >
@@ -302,7 +304,7 @@ export function HomePageClient() {
                 まだカードを登録していません
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0">
                 {haveCards.map((item) => (
                   <CardListItem
                     key={item.id}
@@ -360,7 +362,7 @@ export function HomePageClient() {
               <div
                 className={
                   viewMode === 'grid'
-                    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3'
+                    ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0'
                     : 'space-y-3'
                 }
               >
@@ -376,7 +378,7 @@ export function HomePageClient() {
                 まだ欲しいカードを登録していません
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-0">
                 {wantCards.map((item) => (
                   <CardListItem
                     key={item.id}
