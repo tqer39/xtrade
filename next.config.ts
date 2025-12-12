@@ -70,6 +70,13 @@ const nextConfig: NextConfig = {
         hostname: '*.r2.dev',
         pathname: '/**',
       },
+      // LocalStack（ローカル開発用）
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '4566',
+        pathname: '/**',
+      },
     ],
   },
 };
