@@ -272,8 +272,12 @@ export function UserProfileClient({ userId }: Props) {
                         : card.description
                       : null;
                     return (
-                      <div key={card.id} className="mb-1 break-inside-avoid">
-                        <div className="relative overflow-hidden rounded-lg bg-muted">
+                      <Link
+                        key={card.id}
+                        href={`/cards/${card.id}`}
+                        className="mb-1 break-inside-avoid block"
+                      >
+                        <div className="relative overflow-hidden rounded-lg bg-muted cursor-pointer hover:opacity-90 transition-opacity">
                           {card.imageUrl ? (
                             <img
                               src={card.imageUrl}
@@ -299,40 +303,42 @@ export function UserProfileClient({ userId }: Props) {
                             )}
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
               ) : (
                 <div className="space-y-2">
                   {filteredListings.map((card) => (
-                    <Card key={card.id}>
-                      <CardContent className="p-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
-                            {card.imageUrl ? (
-                              <img
-                                src={card.imageUrl}
-                                alt={card.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                              </div>
-                            )}
+                    <Link key={card.id} href={`/cards/${card.id}`} className="block">
+                      <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
+                              {card.imageUrl ? (
+                                <img
+                                  src={card.imageUrl}
+                                  alt={card.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center">
+                                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium truncate">{card.name}</p>
+                              {card.category && (
+                                <p className="text-sm text-muted-foreground truncate">
+                                  {card.category}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium truncate">{card.name}</p>
-                            {card.category && (
-                              <p className="text-sm text-muted-foreground truncate">
-                                {card.category}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               )}

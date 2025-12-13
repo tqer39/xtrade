@@ -366,3 +366,58 @@ export async function getUserListingCards(userId: string): Promise<Card[]> {
 
   return cards;
 }
+
+/**
+ * カード詳細を作成者情報付きで取得する
+ */
+export async function getCardWithCreator(cardId: string): Promise<CardWithCreator | null> {
+  const cards = await db
+    .select({
+      id: schema.card.id,
+      name: schema.card.name,
+      category: schema.card.category,
+      description: schema.card.description,
+      imageUrl: schema.card.imageUrl,
+      createdByUserId: schema.card.createdByUserId,
+      createdAt: schema.card.createdAt,
+      updatedAt: schema.card.updatedAt,
+      creator: {
+        id: schema.user.id,
+        name: schema.user.name,
+        image: schema.user.image,
+        twitterUsername: schema.user.twitterUsername,
+        trustScore: schema.user.trustScore,
+        trustGrade: schema.user.trustGrade,
+      },
+    })
+    .from(schema.card)
+    .leftJoin(schema.user, eq(schema.card.createdByUserId, schema.user.id))
+    .where(eq(schema.card.id, cardId))
+    .limit(1);
+
+  const card = cards[0];
+  if (!card) {
+    return null;
+  }
+
+  return {
+    id: card.id,
+    name: card.name,
+    category: card.category,
+    description: card.description,
+    imageUrl: card.imageUrl,
+    createdByUserId: card.createdByUserId,
+    createdAt: card.createdAt,
+    updatedAt: card.updatedAt,
+    creator: card.creator?.id
+      ? {
+          id: card.creator.id,
+          name: card.creator.name,
+          image: card.creator.image,
+          twitterUsername: card.creator.twitterUsername,
+          trustScore: card.creator.trustScore,
+          trustGrade: card.creator.trustGrade,
+        }
+      : null,
+  };
+}
