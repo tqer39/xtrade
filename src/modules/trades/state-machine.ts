@@ -105,3 +105,36 @@ export function isFinalStatus(status: TradeStatus): boolean {
 export function canParticipate(trade: Trade, userId: string): boolean {
   return trade.initiatorUserId === userId || trade.responderUserId === userId;
 }
+
+/**
+ * キャンセル取り消しが可能かどうかを検証
+ *
+ * @param trade - トレード情報
+ * @param userId - 操作を行うユーザーID
+ * @returns エラーがあれば TradeTransitionError をスロー
+ */
+export function validateUncancel(trade: Trade, userId: string): void {
+  // 1. 現在のステータスがcanceledであることを確認
+  if (trade.status !== 'canceled') {
+    throw new TradeTransitionError(
+      `Cannot uncancel a trade that is not canceled (current: ${trade.status})`,
+      'INVALID_TRANSITION'
+    );
+  }
+
+  // 2. キャンセル前のステータスが保存されていることを確認
+  if (!trade.statusBeforeCancel) {
+    throw new TradeTransitionError(
+      'Cannot uncancel: no previous status recorded',
+      'INVALID_TRANSITION'
+    );
+  }
+
+  // 3. 権限チェック（参加者のみ取り消し可能）
+  const isInitiator = userId === trade.initiatorUserId;
+  const isResponder = userId === trade.responderUserId;
+
+  if (!isInitiator && !isResponder) {
+    throw new TradeTransitionError('You are not a participant in this trade', 'UNAUTHORIZED');
+  }
+}

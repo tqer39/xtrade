@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
 import type { TrustGrade } from '@/modules/trust';
-import { canParticipate, validateTransition } from './state-machine';
+import { canParticipate, validateTransition, validateUncancel } from './state-machine';
 import type { CreateTradeInput, Trade, TradeDetail, TradeStatus, UpdateOfferInput } from './types';
 import { TradeTransitionError } from './types';
 
@@ -64,6 +64,7 @@ export async function getTradeByRoomSlug(roomSlug: string): Promise<Trade | null
   return {
     ...trades[0],
     status: trades[0].status as TradeStatus,
+    statusBeforeCancel: trades[0].statusBeforeCancel as TradeStatus | null,
   };
 }
 
@@ -203,6 +204,11 @@ export async function transitionTrade(
     updatedAt: new Date(),
   };
 
+  // キャンセルに遷移する場合は、元のステータスを保存
+  if (toStatus === 'canceled') {
+    updateData.statusBeforeCancel = trade.status;
+  }
+
   // agreed に遷移する場合は期限を設定
   if (toStatus === 'agreed' && options.agreedExpiredAt) {
     updateData.agreedExpiredAt = options.agreedExpiredAt;
@@ -241,6 +247,40 @@ async function updateTradeStatsForParticipants(trade: Trade): Promise<void> {
   } catch {
     // 統計更新の失敗は無視
   }
+}
+
+/**
+ * キャンセルを取り消し、元のステータスに戻す
+ */
+export async function uncancelTrade(trade: Trade, userId: string): Promise<TradeStatus> {
+  // バリデーション
+  validateUncancel(trade, userId);
+
+  // statusBeforeCancel は validateUncancel で確認済み
+  const previousStatus = trade.statusBeforeCancel as TradeStatus;
+
+  // 状態を元に戻す
+  await db
+    .update(schema.trade)
+    .set({
+      status: previousStatus,
+      statusBeforeCancel: null, // クリア
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.trade.id, trade.id));
+
+  // 履歴を記録
+  await db.insert(schema.tradeHistory).values({
+    id: randomUUID(),
+    tradeId: trade.id,
+    fromStatus: 'canceled',
+    toStatus: previousStatus,
+    changedByUserId: userId,
+    reason: 'キャンセル取り消し',
+    createdAt: new Date(),
+  });
+
+  return previousStatus;
 }
 
 /**

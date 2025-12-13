@@ -4,6 +4,7 @@ export {
   getTradeDetail,
   setResponder,
   transitionTrade,
+  uncancelTrade,
   updateOffer,
 } from './service';
 export {

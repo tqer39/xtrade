@@ -10,6 +10,7 @@ import {
   Loader2,
   MessageSquare,
   Plus,
+  RotateCcw,
   Send,
   Trash2,
   User,
@@ -212,7 +213,9 @@ export default function TradeRoomPage({ params }: Props) {
     }
   };
 
-  const handleAction = async (action: 'propose' | 'agree' | 'complete' | 'cancel' | 'dispute') => {
+  const handleAction = async (
+    action: 'propose' | 'agree' | 'complete' | 'cancel' | 'dispute' | 'uncancel'
+  ) => {
     if (!trade || isActionLoading) return;
 
     setIsActionLoading(true);
@@ -299,6 +302,7 @@ export default function TradeRoomPage({ params }: Props) {
   const canComplete = trade.status === 'agreed' && isParticipant;
   const canCancel = ['draft', 'proposed', 'agreed'].includes(trade.status) && isParticipant;
   const canDispute = trade.status === 'agreed' && isParticipant;
+  const canUncancel = trade.status === 'canceled' && isParticipant;
   const isTerminal = ['completed', 'canceled', 'disputed', 'expired'].includes(trade.status);
 
   return (
@@ -523,6 +527,16 @@ export default function TradeRoomPage({ params }: Props) {
             >
               <XCircle className="h-4 w-4 mr-2" />
               キャンセル
+            </Button>
+          )}
+          {canUncancel && (
+            <Button
+              variant="outline"
+              onClick={() => handleAction('uncancel')}
+              disabled={isActionLoading}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              キャンセルを取り消す
             </Button>
           )}
         </div>
