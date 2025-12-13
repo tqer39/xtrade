@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, ImageIcon, Plus, Search, User } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Clock, ImageIcon, Plus, Search, User } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { LoginButton, UserMenu } from '@/components/auth';
@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ViewToggle } from '@/components/view-toggle';
 import { useLatestCards } from '@/hooks/use-latest-cards';
 import { useMyCards } from '@/hooks/use-my-cards';
+import { type MyTrade, useMyTrades } from '@/hooks/use-my-trades';
 import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
@@ -21,6 +22,61 @@ import type { TrustGrade } from '@/modules/trust/types';
 import { CardEditModal } from './card-edit-modal';
 import { CardListItem } from './card-list-item';
 import { CardOwnerList } from './card-owner-list';
+
+// 取引ステータスの設定
+const tradeStatusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  draft: { label: '下書き', color: 'bg-gray-500', icon: <Clock className="h-3 w-3" /> },
+  proposed: { label: '提案中', color: 'bg-blue-500', icon: <Clock className="h-3 w-3" /> },
+  agreed: { label: '合意済み', color: 'bg-amber-500', icon: <Clock className="h-3 w-3" /> },
+  completed: { label: '完了', color: 'bg-green-500', icon: <CheckCircle2 className="h-3 w-3" /> },
+  canceled: { label: 'キャンセル', color: 'bg-gray-500', icon: <Clock className="h-3 w-3" /> },
+  disputed: { label: '問題発生', color: 'bg-red-500', icon: <Clock className="h-3 w-3" /> },
+  expired: { label: '期限切れ', color: 'bg-gray-500', icon: <Clock className="h-3 w-3" /> },
+};
+
+// 取引カードコンポーネント
+function TradeCard({ trade }: { trade: MyTrade }) {
+  const status = tradeStatusConfig[trade.status];
+
+  return (
+    <Link href={`/trades/${trade.roomSlug}`}>
+      <Card className="cursor-pointer transition-colors hover:bg-accent">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            {/* 相手のアバター */}
+            <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
+              {trade.partner?.image ? (
+                <img
+                  src={trade.partner.image}
+                  alt={trade.partner.name ?? ''}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <User className="h-6 w-6 text-muted-foreground" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-medium truncate">{trade.partner?.name ?? '相手未定'}</span>
+                {trade.partner && <TrustBadge grade={trade.partner.trustGrade} size="sm" />}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Badge className={`${status.color} text-white text-xs gap-1`}>
+                  {status.icon}
+                  {status.label}
+                </Badge>
+                <span>
+                  {trade.myItemCount}個 ↔ {trade.theirItemCount}個
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
 
 export function HomePageClient() {
   const { data: session, isPending: isSessionPending } = useSession();
@@ -35,6 +91,7 @@ export function HomePageClient() {
     removeHaveCard,
     removeWantCard,
   } = useMyCards();
+  const { activeTrades, completedTrades, isLoading: isTradesLoading } = useMyTrades();
   const { latestCards, isLoading: isLatestLoading } = useLatestCards(20);
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
   const [selectedCardForOwners, setSelectedCardForOwners] = useState<string | null>(null);
@@ -204,6 +261,13 @@ export function HomePageClient() {
                             {card.category}
                           </span>
                         )}
+                        {card.description && (
+                          <p className="text-[10px] text-zinc-300 mt-1 line-clamp-2">
+                            {card.description.length > 80
+                              ? `${card.description.slice(0, 80)}...`
+                              : card.description}
+                          </p>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -240,6 +304,13 @@ export function HomePageClient() {
                                 </Badge>
                               </div>
                             )}
+                            {card.description && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {card.description.length > 80
+                                  ? `${card.description.slice(0, 80)}...`
+                                  : card.description}
+                              </p>
+                            )}
                           </div>
                           {/* 作成者の信頼性スコア */}
                           {card.creator && (
@@ -271,14 +342,20 @@ export function HomePageClient() {
               )}
             </div>
 
-            {/* タブ（持っている/欲しい） */}
+            {/* タブ（持っている/欲しい/取引中/成約済） */}
             <Tabs defaultValue="have" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="have">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="have" className="text-xs sm:text-sm">
                   持っている {isLoggedIn && `(${haveCards.length})`}
                 </TabsTrigger>
-                <TabsTrigger value="want">
+                <TabsTrigger value="want" className="text-xs sm:text-sm">
                   欲しい {isLoggedIn && `(${wantCards.length})`}
+                </TabsTrigger>
+                <TabsTrigger value="trading" className="text-xs sm:text-sm">
+                  取引中 {isLoggedIn && `(${activeTrades.length})`}
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="text-xs sm:text-sm">
+                  成約済 {isLoggedIn && `(${completedTrades.length})`}
                 </TabsTrigger>
               </TabsList>
 
@@ -437,6 +514,58 @@ export function HomePageClient() {
                         viewMode="list"
                         onClick={() => setEditingCard({ item, type: 'want' })}
                       />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="trading" className="mt-4">
+                {!isLoggedIn ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">ログインすると、取引を管理できます</p>
+                    <LoginButton />
+                  </div>
+                ) : isTradesLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }, (_, i) => `skeleton-trade-${i}`).map((key) => (
+                      <Skeleton key={key} className="h-20 w-full" />
+                    ))}
+                  </div>
+                ) : activeTrades.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    進行中の取引はありません
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {activeTrades.map((trade) => (
+                      <TradeCard key={trade.id} trade={trade} />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="completed" className="mt-4">
+                {!isLoggedIn ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">
+                      ログインすると、取引履歴を確認できます
+                    </p>
+                    <LoginButton />
+                  </div>
+                ) : isTradesLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }, (_, i) => `skeleton-completed-${i}`).map((key) => (
+                      <Skeleton key={key} className="h-20 w-full" />
+                    ))}
+                  </div>
+                ) : completedTrades.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    成約した取引はありません
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {completedTrades.map((trade) => (
+                      <TradeCard key={trade.id} trade={trade} />
                     ))}
                   </div>
                 )}

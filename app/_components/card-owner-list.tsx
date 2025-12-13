@@ -1,7 +1,9 @@
 'use client';
 
-import { ArrowLeft, ImageIcon, Mail, User } from 'lucide-react';
+import { ArrowLeft, ImageIcon, Loader2, Mail, User } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { LoginButton } from '@/components/auth';
 import { TrustBadge } from '@/components/trust/trust-badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +19,36 @@ interface CardOwnerListProps {
 }
 
 export function CardOwnerList({ cardId, onBack, isLoggedIn }: CardOwnerListProps) {
+  const router = useRouter();
   const { card, owners, isLoading, error } = useCardOwners(cardId);
+  const [isCreatingTrade, setIsCreatingTrade] = useState(false);
+  const [tradeError, setTradeError] = useState<string | null>(null);
+
+  const handleCreateTrade = async () => {
+    if (!owners[0]) return;
+
+    setIsCreatingTrade(true);
+    setTradeError(null);
+
+    try {
+      const res = await fetch('/api/trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ responderUserId: owners[0].userId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '取引の作成に失敗しました');
+      }
+
+      const data = await res.json();
+      router.push(`/trades/${data.trade.roomSlug}`);
+    } catch (err) {
+      setTradeError(err instanceof Error ? err.message : '取引の作成に失敗しました');
+      setIsCreatingTrade(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -136,10 +167,21 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn }: CardOwnerListProps
       {/* 取引申し込みボタン */}
       <div className="pt-2">
         {isLoggedIn ? (
-          <Button className="w-full gap-2" disabled>
-            <Mail className="h-4 w-4" />
-            取引を申し込む（準備中）
-          </Button>
+          <div className="space-y-2">
+            <Button
+              className="w-full gap-2"
+              onClick={handleCreateTrade}
+              disabled={isCreatingTrade || !owner}
+            >
+              {isCreatingTrade ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Mail className="h-4 w-4" />
+              )}
+              {isCreatingTrade ? '作成中...' : '取引を申し込む'}
+            </Button>
+            {tradeError && <p className="text-sm text-destructive text-center">{tradeError}</p>}
+          </div>
         ) : (
           <div className="space-y-3 text-center">
             <p className="text-sm text-muted-foreground">取引を申し込むにはログインが必要です</p>

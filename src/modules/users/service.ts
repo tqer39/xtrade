@@ -1,4 +1,4 @@
-import { like, or, sql } from 'drizzle-orm';
+import { or, sql } from 'drizzle-orm';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
 import type { SearchUserResult } from './types';
