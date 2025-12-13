@@ -1,16 +1,17 @@
 'use client';
 
-import { ArrowLeft, ImageIcon, User } from 'lucide-react';
+import { ArrowLeft, ImageIcon, Loader2, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 
-import { CardOwnerList } from '@/app/_components/card-owner-list';
+import { LoginButton } from '@/components/auth';
 import { TrustBadge } from '@/components/trust';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { CardWithCreator } from '@/modules/cards/types';
+import { useSession } from '@/lib/auth-client';
+import type { CardOwner, CardWithCreator } from '@/modules/cards/types';
 import type { TrustGrade } from '@/modules/trust';
 
 interface Props {
@@ -20,24 +21,39 @@ interface Props {
 export default function CardDetailPage({ params }: Props) {
   const { cardId } = use(params);
   const router = useRouter();
+  const { data: session } = useSession();
   const [card, setCard] = useState<CardWithCreator | null>(null);
+  const [owners, setOwners] = useState<CardOwner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreatingTrade, setIsCreatingTrade] = useState(false);
+  const [tradeError, setTradeError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchCard() {
+    async function fetchData() {
       try {
-        const res = await fetch(`/api/cards/${cardId}`);
-        if (!res.ok) {
-          if (res.status === 404) {
+        // カード詳細と所有者一覧を並列取得
+        const [cardRes, ownersRes] = await Promise.all([
+          fetch(`/api/cards/${cardId}`),
+          fetch(`/api/cards/${cardId}/owners`),
+        ]);
+
+        if (!cardRes.ok) {
+          if (cardRes.status === 404) {
             setError('カードが見つかりません');
           } else {
             throw new Error('データの取得に失敗しました');
           }
           return;
         }
-        const data = await res.json();
-        setCard(data.card);
+
+        const cardData = await cardRes.json();
+        setCard(cardData.card);
+
+        if (ownersRes.ok) {
+          const ownersData = await ownersRes.json();
+          setOwners(ownersData.owners ?? []);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'エラーが発生しました');
       } finally {
@@ -45,8 +61,32 @@ export default function CardDetailPage({ params }: Props) {
       }
     }
 
-    fetchCard();
+    fetchData();
   }, [cardId]);
+
+  const handleCreateTrade = async (ownerUserId: string) => {
+    setIsCreatingTrade(true);
+    setTradeError(null);
+
+    try {
+      const res = await fetch('/api/trades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ responderUserId: ownerUserId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '取引の作成に失敗しました');
+      }
+
+      const data = await res.json();
+      router.push(`/trades/${data.trade.roomSlug}`);
+    } catch (err) {
+      setTradeError(err instanceof Error ? err.message : '取引の作成に失敗しました');
+      setIsCreatingTrade(false);
+    }
+  };
 
   if (error) {
     return (
@@ -73,6 +113,9 @@ export default function CardDetailPage({ params }: Props) {
       </div>
     );
   }
+
+  const isLoggedIn = !!session?.user;
+  const currentUserId = session?.user?.id;
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-2xl">
@@ -148,7 +191,75 @@ export default function CardDetailPage({ params }: Props) {
       {/* 所有者一覧 */}
       <div>
         <h2 className="text-lg font-semibold mb-4">このアイテムを持っているユーザー</h2>
-        <CardOwnerList cardId={cardId} />
+        {owners.length === 0 ? (
+          <Card>
+            <CardContent className="py-8">
+              <p className="text-muted-foreground text-center">
+                このアイテムを持っているユーザーはいません
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {owners.map((owner) => (
+              <Card key={owner.userId}>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/users/${owner.userId}`}
+                      className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                    >
+                      {owner.image ? (
+                        <img
+                          src={owner.image}
+                          alt={owner.name}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">
+                          {owner.twitterUsername ? `@${owner.twitterUsername}` : owner.name}
+                        </p>
+                        <TrustBadge
+                          grade={owner.trustGrade as TrustGrade | null}
+                          size="sm"
+                          showScore
+                          score={owner.trustScore}
+                        />
+                      </div>
+                    </Link>
+                    {isLoggedIn && owner.userId !== currentUserId && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleCreateTrade(owner.userId)}
+                        disabled={isCreatingTrade}
+                        className="gap-1"
+                      >
+                        {isCreatingTrade ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Mail className="h-4 w-4" />
+                        )}
+                        取引
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {tradeError && <p className="text-sm text-destructive text-center">{tradeError}</p>}
+          </div>
+        )}
+        {!isLoggedIn && owners.length > 0 && (
+          <div className="mt-4 text-center space-y-2">
+            <p className="text-sm text-muted-foreground">取引を申し込むにはログインが必要です</p>
+            <LoginButton />
+          </div>
+        )}
       </div>
     </div>
   );
