@@ -1,5 +1,6 @@
 'use client';
 
+import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { LoginButton } from './login-button';
 
 interface UserData {
   role: string;
+  twitterUsername?: string;
 }
 
 /**
@@ -40,29 +42,36 @@ export function UserMenu() {
   }
 
   const isAdmin = userData?.role === 'admin';
+  const twitterUsername = userData?.twitterUsername;
 
   return (
-    <div className="flex items-center gap-3">
-      {session.user.image && (
-        <img
-          src={session.user.image}
-          alt={session.user.name || 'User'}
-          className="w-10 h-10 rounded-full"
-        />
+    <div className="flex items-center gap-2">
+      <Link href={`/users/${session.user.id}`} className="flex items-center gap-2 hover:opacity-80">
+        {session.user.image && (
+          <img
+            src={session.user.image}
+            alt={session.user.name || 'User'}
+            className="w-8 h-8 rounded-full"
+          />
+        )}
+        <span className="text-sm text-muted-foreground">
+          {twitterUsername ? `@${twitterUsername}` : session.user.name}
+        </span>
+      </Link>
+      {isAdmin && (
+        <Button variant="default" size="sm" asChild className="text-xs">
+          <Link href="/admin/users">管理画面</Link>
+        </Button>
       )}
-      <div>
-        <div className="font-semibold">{session.user.name}</div>
-        <div className="flex gap-2 mt-1">
-          {isAdmin && (
-            <Button variant="default" size="sm" asChild className="text-xs">
-              <Link href="/admin/users">管理画面</Link>
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={() => signOut()} className="text-xs">
-            ログアウト
-          </Button>
-        </div>
-      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => signOut()}
+        className="h-8 w-8"
+        title="ログアウト"
+      >
+        <LogOut className="h-4 w-4" />
+      </Button>
     </div>
   );
 }

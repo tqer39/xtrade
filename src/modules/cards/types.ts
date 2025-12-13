@@ -160,6 +160,15 @@ export interface AddCardToSetInput {
 // =====================================
 
 /**
+ * カード所有者が欲しいカードの簡易情報
+ */
+export interface CardOwnerWantCard {
+  cardId: string;
+  cardName: string;
+  cardImageUrl: string | null;
+}
+
+/**
  * カード所有者の情報
  */
 export interface CardOwner {
@@ -170,6 +179,7 @@ export interface CardOwner {
   trustScore: number | null;
   trustGrade: string | null;
   quantity: number;
+  wantCards?: CardOwnerWantCard[];
 }
 
 /**

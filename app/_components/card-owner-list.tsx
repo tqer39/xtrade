@@ -155,6 +155,39 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn, currentUserId }: Car
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
             </Link>
+
+            {/* 出品者が欲しいアイテム */}
+            {owner.wantCards && owner.wantCards.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">欲しいアイテム</h4>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {owner.wantCards.map((wantCard) => (
+                    <div
+                      key={wantCard.cardId}
+                      className="flex-shrink-0 w-16 group"
+                      title={wantCard.cardName}
+                    >
+                      <div className="aspect-[3/4] bg-muted rounded overflow-hidden">
+                        {wantCard.cardImageUrl ? (
+                          <img
+                            src={wantCard.cardImageUrl}
+                            alt={wantCard.cardName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 truncate">
+                        {wantCard.cardName}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (

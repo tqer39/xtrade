@@ -1,104 +1,49 @@
 'use client';
 
-import { CheckCircle2, ChevronRight, Clock, ImageIcon, Plus, Search, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ImageIcon, Search, Shield, User, X } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
-import { LoginButton, UserMenu } from '@/components/auth';
+import { useEffect, useState } from 'react';
+import { UserMenu } from '@/components/auth';
 import { Footer } from '@/components/layout';
 import { TrustBadge } from '@/components/trust/trust-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ViewToggle } from '@/components/view-toggle';
+import { useDebounce } from '@/hooks/use-debounce';
 import { useLatestCards } from '@/hooks/use-latest-cards';
-import { useMyCards } from '@/hooks/use-my-cards';
-import { type MyTrade, useMyTrades } from '@/hooks/use-my-trades';
 import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
-import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
 import type { TrustGrade } from '@/modules/trust/types';
-import { CardEditModal } from './card-edit-modal';
-import { CardListItem } from './card-list-item';
 import { CardOwnerList } from './card-owner-list';
-
-// 取引ステータスの設定
-const tradeStatusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  draft: { label: '下書き', color: 'bg-gray-500', icon: <Clock className="h-3 w-3" /> },
-  proposed: { label: '提案中', color: 'bg-blue-500', icon: <Clock className="h-3 w-3" /> },
-  agreed: { label: '合意済み', color: 'bg-amber-500', icon: <Clock className="h-3 w-3" /> },
-  completed: { label: '完了', color: 'bg-green-500', icon: <CheckCircle2 className="h-3 w-3" /> },
-  canceled: { label: 'キャンセル', color: 'bg-gray-500', icon: <Clock className="h-3 w-3" /> },
-  disputed: { label: '問題発生', color: 'bg-red-500', icon: <Clock className="h-3 w-3" /> },
-  expired: { label: '期限切れ', color: 'bg-gray-500', icon: <Clock className="h-3 w-3" /> },
-};
-
-// 取引カードコンポーネント
-function TradeCard({ trade }: { trade: MyTrade }) {
-  const status = tradeStatusConfig[trade.status];
-
-  return (
-    <Link href={`/trades/${trade.roomSlug}`}>
-      <Card className="cursor-pointer transition-colors hover:bg-accent">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            {/* 相手のアバター */}
-            <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
-              {trade.partner?.image ? (
-                <img
-                  src={trade.partner.image}
-                  alt={trade.partner.name ?? ''}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <User className="h-6 w-6 text-muted-foreground" />
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-medium truncate">{trade.partner?.name ?? '相手未定'}</span>
-                {trade.partner && <TrustBadge grade={trade.partner.trustGrade} size="sm" />}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Badge className={`${status.color} text-white text-xs gap-1`}>
-                  {status.icon}
-                  {status.label}
-                </Badge>
-                <span>
-                  {trade.myItemCount}個 ↔ {trade.theirItemCount}個
-                </span>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
 
 export function HomePageClient() {
   const { data: session, isPending: isSessionPending } = useSession();
+
+  // 検索入力値とデバウンス
+  const [searchInput, setSearchInput] = useState('');
+  const debouncedSearch = useDebounce(searchInput, 500);
+
   const {
-    haveCards,
-    wantCards,
-    isLoading,
+    latestCards,
+    isLoading: isLatestLoading,
     error,
+    page,
+    totalPages,
+    setPage,
+    setQuery,
     refetch,
-    updateHaveCard,
-    updateWantCard,
-    removeHaveCard,
-    removeWantCard,
-  } = useMyCards();
-  const { activeTrades, completedTrades, isLoading: isTradesLoading } = useMyTrades();
-  const { latestCards, isLoading: isLatestLoading } = useLatestCards(20);
+  } = useLatestCards({ limit: 12 });
+
+  // デバウンスされた検索値を反映
+  useEffect(() => {
+    setQuery(debouncedSearch);
+  }, [debouncedSearch, setQuery]);
+
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
   const [selectedCardForOwners, setSelectedCardForOwners] = useState<string | null>(null);
-  const [editingCard, setEditingCard] = useState<{
-    item: UserHaveCard | UserWantCard;
-    type: 'have' | 'want';
-  } | null>(null);
 
   // 広告スロット ID（環境変数から取得）
   const adSlot = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FOOTER;
@@ -138,7 +83,7 @@ export function HomePageClient() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="container mx-auto px-4 py-8 flex-1">
+      <div className="container mx-auto px-4 py-4 flex-1">
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-6">
           <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
@@ -150,9 +95,9 @@ export function HomePageClient() {
               <Link
                 href={`/users/${session.user.id}/trust`}
                 className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted hover:bg-muted/80 transition-colors text-sm text-muted-foreground hover:text-foreground"
+                title="信頼性スコア"
               >
-                <span>信頼性スコア</span>
-                <ChevronRight className="h-3.5 w-3.5" />
+                <Shield className="h-3.5 w-3.5" />
               </Link>
             )}
             <UserMenu />
@@ -190,6 +135,27 @@ export function HomePageClient() {
                 <h2 className="text-lg font-medium">最近登録されたアイテム</h2>
                 {isHydrated && <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
               </div>
+
+              {/* インライン検索フォーム */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="アイテム名で検索..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchInput('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
               {isLatestLoading ? (
                 <div
                   className={
@@ -211,7 +177,9 @@ export function HomePageClient() {
                 </div>
               ) : latestCards.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
-                  まだアイテムが登録されていません
+                  {searchInput
+                    ? `「${searchInput}」に一致するアイテムが見つかりませんでした`
+                    : 'まだアイテムが登録されていません'}
                 </p>
               ) : !isHydrated || viewMode === 'grid' ? (
                 <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
@@ -341,260 +309,36 @@ export function HomePageClient() {
                   ))}
                 </div>
               )}
+
+              {/* ページネーション */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPage(page - 1)}
+                    disabled={page <= 1}
+                    className="h-8 w-8"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+                    {page} / {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setPage(page + 1)}
+                    disabled={page >= totalPages}
+                    className="h-8 w-8"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
-
-            {/* タブ（持っている/欲しい/取引中/成約済） */}
-            <Tabs defaultValue="have" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="have" className="text-xs sm:text-sm">
-                  持っている {isLoggedIn && `(${haveCards.length})`}
-                </TabsTrigger>
-                <TabsTrigger value="want" className="text-xs sm:text-sm">
-                  欲しい {isLoggedIn && `(${wantCards.length})`}
-                </TabsTrigger>
-                <TabsTrigger value="trading" className="text-xs sm:text-sm">
-                  取引中 {isLoggedIn && `(${activeTrades.length})`}
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="text-xs sm:text-sm">
-                  成約済 {isLoggedIn && `(${completedTrades.length})`}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="have" className="mt-4">
-                <div className="mb-4 flex items-center justify-between">
-                  <Button asChild className="gap-2">
-                    <Link
-                      href={isLoggedIn ? '/cards/search?mode=have&returnTo=/' : '/cards/search'}
-                    >
-                      {isLoggedIn ? (
-                        <>
-                          <Plus className="h-4 w-4" />
-                          アイテムを追加
-                        </>
-                      ) : (
-                        <>
-                          <Search className="h-4 w-4" />
-                          アイテムを検索
-                        </>
-                      )}
-                    </Link>
-                  </Button>
-                  {isLoggedIn && isHydrated && haveCards.length > 0 && (
-                    <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-                  )}
-                </div>
-                {!isLoggedIn ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">
-                      ログインすると、持っているアイテムを登録・管理できます
-                    </p>
-                    <LoginButton />
-                  </div>
-                ) : isLoading ? (
-                  <div
-                    className={
-                      !isHydrated || viewMode === 'grid'
-                        ? 'columns-2 sm:columns-3 md:columns-4 gap-0.5'
-                        : 'space-y-3'
-                    }
-                  >
-                    {Array.from({ length: 4 }, (_, i) => `skeleton-have-${i}`).map((key) => (
-                      <Skeleton
-                        key={key}
-                        className={
-                          !isHydrated || viewMode === 'grid'
-                            ? 'aspect-[3/4] w-full mb-0.5 rounded-sm'
-                            : 'h-20 w-full'
-                        }
-                      />
-                    ))}
-                  </div>
-                ) : haveCards.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    まだアイテムを登録していません
-                  </div>
-                ) : !isHydrated || viewMode === 'grid' ? (
-                  <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
-                    {haveCards.map((item) => (
-                      <CardListItem
-                        key={item.id}
-                        item={item}
-                        type="have"
-                        viewMode="grid"
-                        onClick={() => setEditingCard({ item, type: 'have' })}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {haveCards.map((item) => (
-                      <CardListItem
-                        key={item.id}
-                        item={item}
-                        type="have"
-                        viewMode="list"
-                        onClick={() => setEditingCard({ item, type: 'have' })}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="want" className="mt-4">
-                <div className="mb-4 flex items-center justify-between">
-                  <Button asChild className="gap-2">
-                    <Link
-                      href={isLoggedIn ? '/cards/search?mode=want&returnTo=/' : '/cards/search'}
-                    >
-                      {isLoggedIn ? (
-                        <>
-                          <Plus className="h-4 w-4" />
-                          アイテムを追加
-                        </>
-                      ) : (
-                        <>
-                          <Search className="h-4 w-4" />
-                          アイテムを検索
-                        </>
-                      )}
-                    </Link>
-                  </Button>
-                  {isLoggedIn && isHydrated && wantCards.length > 0 && (
-                    <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-                  )}
-                </div>
-                {!isLoggedIn ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">
-                      ログインすると、欲しいアイテムを登録・管理できます
-                    </p>
-                    <LoginButton />
-                  </div>
-                ) : isLoading ? (
-                  <div
-                    className={
-                      !isHydrated || viewMode === 'grid'
-                        ? 'columns-2 sm:columns-3 md:columns-4 gap-0.5'
-                        : 'space-y-3'
-                    }
-                  >
-                    {Array.from({ length: 4 }, (_, i) => `skeleton-want-${i}`).map((key) => (
-                      <Skeleton
-                        key={key}
-                        className={
-                          !isHydrated || viewMode === 'grid'
-                            ? 'aspect-[3/4] w-full mb-0.5 rounded-sm'
-                            : 'h-20 w-full'
-                        }
-                      />
-                    ))}
-                  </div>
-                ) : wantCards.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    まだ欲しいアイテムを登録していません
-                  </div>
-                ) : !isHydrated || viewMode === 'grid' ? (
-                  <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
-                    {wantCards.map((item) => (
-                      <CardListItem
-                        key={item.id}
-                        item={item}
-                        type="want"
-                        viewMode="grid"
-                        onClick={() => setEditingCard({ item, type: 'want' })}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {wantCards.map((item) => (
-                      <CardListItem
-                        key={item.id}
-                        item={item}
-                        type="want"
-                        viewMode="list"
-                        onClick={() => setEditingCard({ item, type: 'want' })}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="trading" className="mt-4">
-                {!isLoggedIn ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">ログインすると、取引を管理できます</p>
-                    <LoginButton />
-                  </div>
-                ) : isTradesLoading ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 3 }, (_, i) => `skeleton-trade-${i}`).map((key) => (
-                      <Skeleton key={key} className="h-20 w-full" />
-                    ))}
-                  </div>
-                ) : activeTrades.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    進行中の取引はありません
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {activeTrades.map((trade) => (
-                      <TradeCard key={trade.id} trade={trade} />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="completed" className="mt-4">
-                {!isLoggedIn ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">
-                      ログインすると、取引履歴を確認できます
-                    </p>
-                    <LoginButton />
-                  </div>
-                ) : isTradesLoading ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 3 }, (_, i) => `skeleton-completed-${i}`).map((key) => (
-                      <Skeleton key={key} className="h-20 w-full" />
-                    ))}
-                  </div>
-                ) : completedTrades.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    成約した取引はありません
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {completedTrades.map((trade) => (
-                      <TradeCard key={trade.id} trade={trade} />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
           </>
         )}
-
-        <CardEditModal
-          open={!!editingCard}
-          onOpenChange={(open) => !open && setEditingCard(null)}
-          item={editingCard?.item ?? null}
-          type={editingCard?.type ?? 'have'}
-          onUpdate={async (cardId, value) => {
-            if (editingCard?.type === 'have') {
-              await updateHaveCard(cardId, value);
-            } else {
-              await updateWantCard(cardId, value);
-            }
-          }}
-          onRemove={async (cardId) => {
-            if (editingCard?.type === 'have') {
-              await removeHaveCard(cardId);
-            } else {
-              await removeWantCard(cardId);
-            }
-          }}
-        />
       </div>
 
       {/* フッター（ゲストユーザーにのみ広告表示） */}
