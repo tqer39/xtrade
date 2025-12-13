@@ -347,22 +347,6 @@ export function UserProfileClient({ userId }: Props) {
                   ))}
                 </div>
               )}
-
-              {/* 全体検索への誘導 */}
-              <div className="mt-4 text-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    router.push(
-                      `/cards/search?creator=${userId}&creatorName=${encodeURIComponent(userData.user.name ?? '')}`
-                    )
-                  }
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  このユーザーのアイテムを検索
-                </Button>
-              </div>
             </>
           )}
         </TabsContent>
