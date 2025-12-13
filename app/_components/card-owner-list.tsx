@@ -93,7 +93,7 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn }: CardOwnerListProps
       </Button>
 
       {/* カード詳細 */}
-      <Card>
+      <Card className="py-0 overflow-hidden">
         <CardContent className="p-0">
           {/* カード画像 */}
           <div className="w-full aspect-[3/4] bg-muted rounded-t-lg overflow-hidden">
