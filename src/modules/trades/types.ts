@@ -21,6 +21,7 @@ export interface Trade {
   initiatorUserId: string;
   responderUserId: string | null;
   status: TradeStatus;
+  statusBeforeCancel: TradeStatus | null; // キャンセル前のステータス（取り消し用）
   proposedExpiredAt: Date | null;
   agreedExpiredAt: Date | null;
   createdAt: Date;
