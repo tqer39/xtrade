@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ViewToggle } from '@/components/view-toggle';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useLatestCards } from '@/hooks/use-latest-cards';
@@ -104,21 +105,6 @@ export function HomePageClient() {
           </div>
         </div>
 
-        {/* 未ログイン時のみログイン促進 */}
-        {!isLoggedIn && (
-          <div className="mb-6">
-            <Button asChild className="gap-2" size="lg">
-              <Link href="/cards/search">
-                <Search className="h-4 w-4" />
-                アイテムを検索
-              </Link>
-            </Button>
-            <p className="mt-2 text-sm text-muted-foreground">
-              アイテムを追加・管理するにはログインが必要です
-            </p>
-          </div>
-        )}
-
         {/* カード所有者一覧表示（選択時） */}
         {selectedCardForOwners ? (
           <CardOwnerList
@@ -206,20 +192,43 @@ export function HomePageClient() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
                       {/* 作成者の信頼性スコア（左上） */}
                       {card.creator && (
-                        <div className="absolute top-1 left-1 flex items-center gap-1 bg-black/60 rounded-full pl-0.5 pr-1.5 py-0.5 backdrop-blur-sm">
-                          <div className="h-4 w-4 rounded-full overflow-hidden bg-zinc-700 flex items-center justify-center">
-                            {card.creator.image ? (
-                              <img
-                                src={card.creator.image}
-                                alt={card.creator.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <User className="h-2.5 w-2.5 text-zinc-400" />
-                            )}
-                          </div>
-                          <TrustBadge grade={card.creator.trustGrade as TrustGrade} size="sm" />
-                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="absolute top-1 left-1 flex items-center gap-1 bg-black/60 rounded-full pl-0.5 pr-1.5 py-0.5 backdrop-blur-sm">
+                                <div className="h-4 w-4 rounded-full overflow-hidden bg-zinc-700 flex items-center justify-center">
+                                  {card.creator.image ? (
+                                    <img
+                                      src={card.creator.image}
+                                      alt={card.creator.name}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    <User className="h-2.5 w-2.5 text-zinc-400" />
+                                  )}
+                                </div>
+                                <TrustBadge
+                                  grade={card.creator.trustGrade as TrustGrade}
+                                  size="sm"
+                                />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-[200px]">
+                              <p className="font-medium">
+                                {card.creator.twitterUsername
+                                  ? `@${card.creator.twitterUsername}`
+                                  : card.creator.name}
+                              </p>
+                              {card.creator.bio && (
+                                <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">
+                                  {card.creator.bio.length > 100
+                                    ? `${card.creator.bio.slice(0, 100)}...`
+                                    : card.creator.bio}
+                                </p>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                       <div className="absolute bottom-0 left-0 right-0 p-2">
                         <p className="font-medium text-white text-xs truncate drop-shadow-lg">

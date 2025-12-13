@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq, or } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
@@ -22,12 +22,13 @@ export async function createTrade(
   initiatorUserId: string,
   input: CreateTradeInput = {}
 ): Promise<Trade> {
-  const newTrade = {
+  const newTrade: Trade = {
     id: randomUUID(),
     roomSlug: generateRoomSlug(),
     initiatorUserId,
     responderUserId: input.responderUserId ?? null,
     status: 'draft' as const,
+    statusBeforeCancel: null,
     proposedExpiredAt: input.proposedExpiredAt ?? null,
     agreedExpiredAt: null,
     createdAt: new Date(),
@@ -302,4 +303,89 @@ export async function setResponder(trade: Trade, responderUserId: string): Promi
       updatedAt: new Date(),
     })
     .where(eq(schema.trade.id, trade.id));
+}
+
+export interface UserTradeListItem {
+  id: string;
+  roomSlug: string;
+  status: TradeStatus;
+  partner: {
+    id: string;
+    name: string | null;
+    twitterUsername: string | null;
+    image: string | null;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * ユーザーの取引一覧を取得
+ */
+export async function getUserTrades(
+  userId: string,
+  statusFilter?: 'active' | 'completed'
+): Promise<UserTradeListItem[]> {
+  // ユーザーが参加している取引を取得
+  let whereCondition = or(
+    eq(schema.trade.initiatorUserId, userId),
+    eq(schema.trade.responderUserId, userId)
+  );
+
+  // ステータスフィルター
+  if (statusFilter === 'active') {
+    // 進行中: draft, proposed, agreed
+    whereCondition = and(
+      whereCondition,
+      or(
+        eq(schema.trade.status, 'draft'),
+        eq(schema.trade.status, 'proposed'),
+        eq(schema.trade.status, 'agreed')
+      )
+    );
+  } else if (statusFilter === 'completed') {
+    // 成約済: completed
+    whereCondition = and(whereCondition, eq(schema.trade.status, 'completed'));
+  }
+
+  const trades = await db
+    .select()
+    .from(schema.trade)
+    .where(whereCondition)
+    .orderBy(desc(schema.trade.updatedAt));
+
+  // 取引相手の情報を取得
+  const results: UserTradeListItem[] = [];
+
+  for (const trade of trades) {
+    // 取引相手のIDを特定
+    const partnerId =
+      trade.initiatorUserId === userId ? trade.responderUserId : trade.initiatorUserId;
+
+    let partner = null;
+    if (partnerId) {
+      const partners = await db
+        .select({
+          id: schema.user.id,
+          name: schema.user.name,
+          twitterUsername: schema.user.twitterUsername,
+          image: schema.user.image,
+        })
+        .from(schema.user)
+        .where(eq(schema.user.id, partnerId))
+        .limit(1);
+      partner = partners[0] ?? null;
+    }
+
+    results.push({
+      id: trade.id,
+      roomSlug: trade.roomSlug,
+      status: trade.status as TradeStatus,
+      partner,
+      createdAt: trade.createdAt.toISOString(),
+      updatedAt: trade.updatedAt.toISOString(),
+    });
+  }
+
+  return results;
 }

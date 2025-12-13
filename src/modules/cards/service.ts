@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, desc, eq, like, sql } from 'drizzle-orm';
+import { and, desc, eq, like, or, sql } from 'drizzle-orm';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
 import type {
@@ -313,12 +313,16 @@ export async function searchLatestCardsWithCreator(
   const offset = (page - 1) * limit;
   const safeLimit = Math.min(limit, 100);
 
-  const whereConditions = [];
-  if (query && query.trim()) {
-    whereConditions.push(like(schema.card.name, `%${query.trim()}%`));
+  // 全文検索: カード名、カテゴリ、説明文のいずれかにマッチ
+  let whereClause: ReturnType<typeof or> | undefined;
+  if (query?.trim()) {
+    const searchTerm = `%${query.trim()}%`;
+    whereClause = or(
+      like(schema.card.name, searchTerm),
+      like(schema.card.category, searchTerm),
+      like(schema.card.description, searchTerm)
+    );
   }
-
-  const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
   // 総件数を取得
   const countResult = await db
@@ -345,6 +349,7 @@ export async function searchLatestCardsWithCreator(
         twitterUsername: schema.user.twitterUsername,
         trustScore: schema.user.trustScore,
         trustGrade: schema.user.trustGrade,
+        bio: schema.user.bio,
       },
     })
     .from(schema.card)
@@ -372,6 +377,7 @@ export async function searchLatestCardsWithCreator(
             twitterUsername: card.creator.twitterUsername,
             trustScore: card.creator.trustScore,
             trustGrade: card.creator.trustGrade,
+            bio: card.creator.bio,
           }
         : null,
     })),
