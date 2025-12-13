@@ -180,6 +180,7 @@ export function HomePageClient() {
             cardId={selectedCardForOwners}
             onBack={() => setSelectedCardForOwners(null)}
             isLoggedIn={isLoggedIn}
+            currentUserId={session?.user?.id}
           />
         ) : (
           <>
