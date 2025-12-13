@@ -306,6 +306,9 @@ export default function TradeRoomPage({ params }: Props) {
       {/* ヘッダー */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
+          <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
+            xtrade
+          </Link>
           <Button
             variant="ghost"
             size="sm"
@@ -315,9 +318,6 @@ export default function TradeRoomPage({ params }: Props) {
             <ArrowLeft className="h-4 w-4" />
             戻る
           </Button>
-          <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
-            xtrade
-          </Link>
         </div>
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">取引ルーム</h1>

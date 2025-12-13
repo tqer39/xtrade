@@ -579,6 +579,7 @@ export const trade = pgTable(
       onDelete: 'set null',
     }),
     status: text('status').notNull().default('draft'), // draft|proposed|agreed|completed|disputed|canceled|expired
+    statusBeforeCancel: text('status_before_cancel'), // キャンセル前のステータス（取り消し用）
     proposedExpiredAt: timestamp('proposed_expired_at'), // 出品者が仮設定する期限
     agreedExpiredAt: timestamp('agreed_expired_at'), // 合意後の確定期限
     createdAt: timestamp('created_at').defaultNow().notNull(),
