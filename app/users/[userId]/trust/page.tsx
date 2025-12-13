@@ -201,23 +201,22 @@ export default function TrustDetailPage({ params }: Props) {
   return (
     <div className="container mx-auto py-8 px-4 max-w-3xl">
       {/* ヘッダー */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="gap-1 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            戻る
-          </Button>
-          <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
-            xtrade
-          </Link>
-        </div>
-        <h1 className="text-2xl font-bold">信頼性スコア詳細</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="gap-1 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          戻る
+        </Button>
+        <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
+          xtrade
+        </Link>
       </div>
+
+      <h1 className="text-2xl font-bold mb-6">信頼性スコア詳細</h1>
 
       {/* ユーザー情報 */}
       <Card className="mb-6">
