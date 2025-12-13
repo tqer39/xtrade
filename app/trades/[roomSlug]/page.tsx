@@ -3,9 +3,11 @@
 import {
   AlertTriangle,
   ArrowLeft,
+  Check,
   CheckCircle2,
   Clock,
   ImageIcon,
+  Loader2,
   MessageSquare,
   Plus,
   Send,
@@ -22,8 +24,16 @@ import { TrustBadge } from '@/components/trust';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { useMyCards } from '@/hooks/use-my-cards';
 import { useSession } from '@/lib/auth-client';
 import type { TradeDetail, TradeStatus } from '@/modules/trades/types';
 
@@ -83,11 +93,15 @@ export default function TradeRoomPage({ params }: Props) {
   const { roomSlug } = use(params);
   const router = useRouter();
   const { data: session, isPending: isSessionPending } = useSession();
+  const { haveCards, isLoading: isCardsLoading } = useMyCards();
   const [trade, setTrade] = useState<TradeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [comment, setComment] = useState('');
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+  const [selectedCardIds, setSelectedCardIds] = useState<Set<string>>(new Set());
+  const [isUpdatingOffer, setIsUpdatingOffer] = useState(false);
 
   const fetchTrade = useCallback(async () => {
     if (!session?.user) return;
@@ -116,6 +130,87 @@ export default function TradeRoomPage({ params }: Props) {
   useEffect(() => {
     fetchTrade();
   }, [fetchTrade]);
+
+  const handleOpenAddItemModal = () => {
+    if (!trade) return;
+    // 現在のオファーアイテムを選択状態に設定
+    const isInitiator = session?.user?.id === trade.initiator.id;
+    const myItems = isInitiator ? trade.initiatorItems : trade.responderItems;
+    setSelectedCardIds(new Set(myItems.map((item) => item.cardId)));
+    setIsAddItemModalOpen(true);
+  };
+
+  const handleToggleCard = (cardId: string) => {
+    setSelectedCardIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(cardId)) {
+        newSet.delete(cardId);
+      } else {
+        newSet.add(cardId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleUpdateOffer = async () => {
+    if (!trade || isUpdatingOffer) return;
+
+    setIsUpdatingOffer(true);
+    try {
+      const items = Array.from(selectedCardIds).map((cardId) => ({
+        cardId,
+        quantity: 1,
+      }));
+
+      const res = await fetch(`/api/trades/${roomSlug}/offer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'オファーの更新に失敗しました');
+      }
+
+      await fetchTrade();
+      setIsAddItemModalOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsUpdatingOffer(false);
+    }
+  };
+
+  const handleRemoveItem = async (cardId: string) => {
+    if (!trade || isUpdatingOffer) return;
+
+    setIsUpdatingOffer(true);
+    try {
+      const isInitiator = session?.user?.id === trade.initiator.id;
+      const myItems = isInitiator ? trade.initiatorItems : trade.responderItems;
+      const newItems = myItems
+        .filter((item) => item.cardId !== cardId)
+        .map((item) => ({ cardId: item.cardId, quantity: item.quantity }));
+
+      const res = await fetch(`/api/trades/${roomSlug}/offer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: newItems }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'アイテムの削除に失敗しました');
+      }
+
+      await fetchTrade();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsUpdatingOffer(false);
+    }
+  };
 
   const handleAction = async (action: 'propose' | 'agree' | 'complete' | 'cancel' | 'dispute') => {
     if (!trade || isActionLoading) return;
@@ -326,7 +421,13 @@ export default function TradeRoomPage({ params }: Props) {
                       ×{item.quantity}
                     </Badge>
                     {!isTerminal && (
-                      <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleRemoveItem(item.cardId)}
+                        disabled={isUpdatingOffer}
+                      >
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     )}
@@ -340,7 +441,12 @@ export default function TradeRoomPage({ params }: Props) {
             )}
 
             {!isTerminal && (
-              <Button variant="outline" size="sm" className="w-full mt-4 gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-4 gap-1"
+                onClick={handleOpenAddItemModal}
+              >
                 <Plus className="h-4 w-4" />
                 アイテムを追加
               </Button>
@@ -449,6 +555,96 @@ export default function TradeRoomPage({ params }: Props) {
           )}
         </CardContent>
       </Card>
+
+      {/* アイテム追加モーダル */}
+      <Dialog open={isAddItemModalOpen} onOpenChange={setIsAddItemModalOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>オファーするアイテムを選択</DialogTitle>
+            <DialogDescription>取引でオファーするアイテムを選んでください</DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto py-4">
+            {isCardsLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : haveCards.length === 0 ? (
+              <div className="text-center py-8">
+                <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  持っているアイテムがありません。
+                  <br />
+                  先にアイテムを登録してください。
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {haveCards.map((haveCard) => {
+                  const isSelected = selectedCardIds.has(haveCard.cardId);
+                  return (
+                    <button
+                      key={haveCard.cardId}
+                      type="button"
+                      onClick={() => handleToggleCard(haveCard.cardId)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                        isSelected ? 'border-primary bg-primary/10' : 'border-border hover:bg-muted'
+                      }`}
+                    >
+                      <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded bg-muted">
+                        {haveCard.card?.imageUrl ? (
+                          <img
+                            src={haveCard.card.imageUrl}
+                            alt={haveCard.card.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="font-medium truncate">{haveCard.card?.name ?? 'Unknown'}</p>
+                        {haveCard.card?.category && (
+                          <p className="text-sm text-muted-foreground truncate">
+                            {haveCard.card.category}
+                          </p>
+                        )}
+                      </div>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          isSelected ? 'border-primary bg-primary' : 'border-muted-foreground'
+                        }`}
+                      >
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 pt-4 border-t">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setIsAddItemModalOpen(false)}
+            >
+              キャンセル
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handleUpdateOffer}
+              disabled={isUpdatingOffer || haveCards.length === 0}
+            >
+              {isUpdatingOffer ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {selectedCardIds.size > 0 ? `${selectedCardIds.size}件を選択` : 'クリアする'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

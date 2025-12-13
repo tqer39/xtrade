@@ -159,35 +159,6 @@ export default function CardDetailPage({ params }: Props) {
         )}
       </div>
 
-      {/* 登録者情報 */}
-      {card.creator && (
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground mb-2">登録者</p>
-            <Link
-              href={`/users/${card.creator.id}`}
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-            >
-              {card.creator.image ? (
-                <img
-                  src={card.creator.image}
-                  alt={card.creator.name ?? ''}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-muted-foreground" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{card.creator.name ?? '名前未設定'}</p>
-                <TrustBadge grade={card.creator.trustGrade as TrustGrade | null} size="sm" />
-              </div>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
-
       {/* 所有者一覧 */}
       <div>
         <h2 className="text-lg font-semibold mb-4">このアイテムを持っているユーザー</h2>

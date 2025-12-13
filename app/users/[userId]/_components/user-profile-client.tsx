@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ChevronRight, ImageIcon, Search, User } from 'lucide-react';
+import { ArrowLeft, ChevronRight, ImageIcon, Search, Twitter, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -209,9 +209,9 @@ export function UserProfileClient({ userId }: Props) {
               href={`https://x.com/${userData.user.twitterUsername}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
             >
-              @{userData.user.twitterUsername}
+              <Twitter className="w-4 h-4" />@{userData.user.twitterUsername}
             </a>
           )}
           {/* 信頼性詳細ページへのリンク */}
@@ -313,7 +313,7 @@ export function UserProfileClient({ userId }: Props) {
                     <Link key={card.id} href={`/cards/${card.id}`} className="block">
                       <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
                         <CardContent className="p-3">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-start gap-3">
                             <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
                               {card.imageUrl ? (
                                 <img
@@ -332,6 +332,11 @@ export function UserProfileClient({ userId }: Props) {
                               {card.category && (
                                 <p className="text-sm text-muted-foreground truncate">
                                   {card.category}
+                                </p>
+                              )}
+                              {card.description && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {card.description}
                                 </p>
                               )}
                             </div>
