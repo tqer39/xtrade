@@ -255,7 +255,7 @@ function CardSearchContent() {
           {searchResults.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-                <span>登録済みカード</span>
+                <span>登録済みアイテム</span>
               </div>
               {viewMode === 'grid' ? (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">

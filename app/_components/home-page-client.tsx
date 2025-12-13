@@ -108,11 +108,11 @@ export function HomePageClient() {
             <Button asChild className="gap-2" size="lg">
               <Link href="/cards/search">
                 <Search className="h-4 w-4" />
-                カードを検索
+                アイテムを検索
               </Link>
             </Button>
             <p className="mt-2 text-sm text-muted-foreground">
-              カードを追加・管理するにはログインが必要です
+              アイテムを追加・管理するにはログインが必要です
             </p>
           </div>
         )}
@@ -129,7 +129,7 @@ export function HomePageClient() {
             {/* 最近登録されたカード一覧 */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-medium">最近登録されたカード</h2>
+                <h2 className="text-lg font-medium">最近登録されたアイテム</h2>
                 {isHydrated && <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
               </div>
               {isLatestLoading ? (
@@ -153,7 +153,7 @@ export function HomePageClient() {
                 </div>
               ) : latestCards.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
-                  まだカードが登録されていません
+                  まだアイテムが登録されていません
                 </p>
               ) : !isHydrated || viewMode === 'grid' ? (
                 <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
@@ -291,12 +291,12 @@ export function HomePageClient() {
                       {isLoggedIn ? (
                         <>
                           <Plus className="h-4 w-4" />
-                          カードを追加
+                          アイテムを追加
                         </>
                       ) : (
                         <>
                           <Search className="h-4 w-4" />
-                          カードを検索
+                          アイテムを検索
                         </>
                       )}
                     </Link>
@@ -308,7 +308,7 @@ export function HomePageClient() {
                 {!isLoggedIn ? (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground mb-4">
-                      ログインすると、持っているカードを登録・管理できます
+                      ログインすると、持っているアイテムを登録・管理できます
                     </p>
                     <LoginButton />
                   </div>
@@ -333,7 +333,7 @@ export function HomePageClient() {
                   </div>
                 ) : haveCards.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    まだカードを登録していません
+                    まだアイテムを登録していません
                   </div>
                 ) : !isHydrated || viewMode === 'grid' ? (
                   <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
@@ -371,12 +371,12 @@ export function HomePageClient() {
                       {isLoggedIn ? (
                         <>
                           <Plus className="h-4 w-4" />
-                          カードを追加
+                          アイテムを追加
                         </>
                       ) : (
                         <>
                           <Search className="h-4 w-4" />
-                          カードを検索
+                          アイテムを検索
                         </>
                       )}
                     </Link>
@@ -388,7 +388,7 @@ export function HomePageClient() {
                 {!isLoggedIn ? (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground mb-4">
-                      ログインすると、欲しいカードを登録・管理できます
+                      ログインすると、欲しいアイテムを登録・管理できます
                     </p>
                     <LoginButton />
                   </div>
@@ -413,7 +413,7 @@ export function HomePageClient() {
                   </div>
                 ) : wantCards.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    まだ欲しいカードを登録していません
+                    まだ欲しいアイテムを登録していません
                   </div>
                 ) : !isHydrated || viewMode === 'grid' ? (
                   <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
