@@ -5,6 +5,7 @@ export {
   getLatestCards,
   getLatestCardsWithCreator,
   getUserHaveCards,
+  getUserListingCards,
   getUserWantCards,
   removeWantCard,
   searchCards,
