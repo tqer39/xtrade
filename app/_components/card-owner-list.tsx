@@ -16,9 +16,10 @@ interface CardOwnerListProps {
   cardId: string;
   onBack: () => void;
   isLoggedIn: boolean;
+  currentUserId?: string;
 }
 
-export function CardOwnerList({ cardId, onBack, isLoggedIn }: CardOwnerListProps) {
+export function CardOwnerList({ cardId, onBack, isLoggedIn, currentUserId }: CardOwnerListProps) {
   const router = useRouter();
   const { card, owners, isLoading, error } = useCardOwners(cardId);
   const [isCreatingTrade, setIsCreatingTrade] = useState(false);
@@ -164,31 +165,33 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn }: CardOwnerListProps
         </Card>
       )}
 
-      {/* 取引申し込みボタン */}
-      <div className="pt-2">
-        {isLoggedIn ? (
-          <div className="space-y-2">
-            <Button
-              className="w-full gap-2"
-              onClick={handleCreateTrade}
-              disabled={isCreatingTrade || !owner}
-            >
-              {isCreatingTrade ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Mail className="h-4 w-4" />
-              )}
-              {isCreatingTrade ? '作成中...' : '取引を申し込む'}
-            </Button>
-            {tradeError && <p className="text-sm text-destructive text-center">{tradeError}</p>}
-          </div>
-        ) : (
-          <div className="space-y-3 text-center">
-            <p className="text-sm text-muted-foreground">取引を申し込むにはログインが必要です</p>
-            <LoginButton />
-          </div>
-        )}
-      </div>
+      {/* 取引申し込みボタン（自分自身のアイテムの場合は非表示） */}
+      {owner && owner.userId !== currentUserId && (
+        <div className="pt-2">
+          {isLoggedIn ? (
+            <div className="space-y-2">
+              <Button
+                className="w-full gap-2"
+                onClick={handleCreateTrade}
+                disabled={isCreatingTrade}
+              >
+                {isCreatingTrade ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mail className="h-4 w-4" />
+                )}
+                {isCreatingTrade ? '作成中...' : '取引を申し込む'}
+              </Button>
+              {tradeError && <p className="text-sm text-destructive text-center">{tradeError}</p>}
+            </div>
+          ) : (
+            <div className="space-y-3 text-center">
+              <p className="text-sm text-muted-foreground">取引を申し込むにはログインが必要です</p>
+              <LoginButton />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

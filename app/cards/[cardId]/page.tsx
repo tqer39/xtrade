@@ -215,7 +215,7 @@ export default function CardDetailPage({ params }: Props) {
                         ) : (
                           <Mail className="h-4 w-4" />
                         )}
-                        取引
+                        取引を申し込む
                       </Button>
                     )}
                   </div>
