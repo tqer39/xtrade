@@ -343,3 +343,26 @@ export async function getUserCategories(userId: string): Promise<string[]> {
 
   return Array.from(allCategories).sort();
 }
+
+/**
+ * ユーザーが出品しているカード一覧を取得する（公開API用）
+ */
+export async function getUserListingCards(userId: string): Promise<Card[]> {
+  const cards = await db
+    .select({
+      id: schema.card.id,
+      name: schema.card.name,
+      category: schema.card.category,
+      description: schema.card.description,
+      imageUrl: schema.card.imageUrl,
+      createdByUserId: schema.card.createdByUserId,
+      createdAt: schema.card.createdAt,
+      updatedAt: schema.card.updatedAt,
+    })
+    .from(schema.userHaveCard)
+    .innerJoin(schema.card, eq(schema.userHaveCard.cardId, schema.card.id))
+    .where(eq(schema.userHaveCard.userId, userId))
+    .orderBy(desc(schema.card.createdAt));
+
+  return cards;
+}

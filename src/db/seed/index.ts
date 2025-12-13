@@ -38,9 +38,10 @@ async function main() {
     `);
 
     // テストユーザーを削除して再作成（セッションなども CASCADE で削除）
-    await db.execute(sql`
-      DELETE FROM "user" WHERE id IN ('test-user-1', 'test-user-2', 'test-admin')
-    `);
+    const userIds = seedUsers.map((u) => u.id);
+    for (const userId of userIds) {
+      await db.execute(sql`DELETE FROM "user" WHERE id = ${userId}`);
+    }
 
     // テストユーザーの作成
     console.log('👤 テストユーザーを作成中...');
@@ -54,35 +55,58 @@ async function main() {
         role: userData.role,
         trustScore: userData.trustScore,
         trustGrade: userData.trustGrade,
+        twitterScore: userData.twitterScore,
+        totalTradeScore: userData.totalTradeScore,
+        recentTradeScore: userData.recentTradeScore,
+        image: userData.image,
       });
     }
     console.log(`  ✓ ${seedUsers.length} 件のユーザーを作成しました`);
 
-    // アイテムマスタの投入
+    // 各カードに出品者を割り当てる（ユーザーをラウンドロビンで割り当て）
+    // 管理者以外のユーザーをリストアップ
+    const normalUsers = seedUsers.filter((u) => u.role !== 'admin');
+
+    // アイテムマスタの投入（各カードに出品者を割り当て）
     console.log('📦 アイテムマスタデータを投入中...');
-    for (const cardData of seedCards) {
+    const userHaveCards: Array<{
+      id: string;
+      userId: string;
+      cardId: string;
+      quantity: number;
+    }> = [];
+
+    for (let i = 0; i < seedCards.length; i++) {
+      const cardData = seedCards[i];
+      // ラウンドロビンでユーザーを割り当て
+      const assignedUser = normalUsers[i % normalUsers.length];
+
       await db.insert(schema.item).values({
         id: cardData.id,
         name: cardData.name,
         category: cardData.category,
         description: cardData.description,
         imageUrl: cardData.imageUrl,
-        createdByUserId: 'test-admin',
+        createdByUserId: assignedUser.id,
+      });
+
+      // 出品者として userHaveCard にも登録
+      userHaveCards.push({
+        id: generateId(),
+        userId: assignedUser.id,
+        cardId: cardData.id,
+        quantity: 1, // 1枚のみ
       });
     }
     console.log(`  ✓ ${seedCards.length} 件のアイテムを作成しました`);
 
     // 許可ユーザー（ホワイトリスト）
     console.log('📋 許可ユーザーリストを作成中...');
-    const allowedUsers = [
-      { id: generateId(), twitterUsername: 'testuser1', addedBy: 'test-admin' },
-      { id: generateId(), twitterUsername: 'testuser2', addedBy: 'test-admin' },
-      {
-        id: generateId(),
-        twitterUsername: 'testadmin',
-        addedBy: 'test-admin',
-      },
-    ];
+    const allowedUsers = seedUsers.map((user) => ({
+      id: generateId(),
+      twitterUsername: user.twitterUsername,
+      addedBy: 'test-admin',
+    }));
     for (const data of allowedUsers) {
       await db.insert(schema.allowedUser).values(data);
     }
@@ -90,59 +114,12 @@ async function main() {
 
     // ユーザーが持っているカード
     console.log('📦 ユーザーカードデータを作成中...');
-    const userHaveCards = [
-      // test-user-1 の持っているカード
-      {
-        id: generateId(),
-        userId: 'test-user-1',
-        cardId: 'card-pokemon-001',
-        quantity: 2,
-      },
-      {
-        id: generateId(),
-        userId: 'test-user-1',
-        cardId: 'card-pokemon-002',
-        quantity: 1,
-      },
-      {
-        id: generateId(),
-        userId: 'test-user-1',
-        cardId: 'card-onepiece-001',
-        quantity: 3,
-      },
-      // test-user-2 の持っているカード
-      {
-        id: generateId(),
-        userId: 'test-user-2',
-        cardId: 'card-yugioh-001',
-        quantity: 1,
-      },
-      {
-        id: generateId(),
-        userId: 'test-user-2',
-        cardId: 'card-yugioh-002',
-        quantity: 2,
-      },
-      // test-admin の持っているカード
-      {
-        id: generateId(),
-        userId: 'test-admin',
-        cardId: 'card-mtg-001',
-        quantity: 1,
-      },
-      {
-        id: generateId(),
-        userId: 'test-admin',
-        cardId: 'card-mtg-002',
-        quantity: 1,
-      },
-    ];
     for (const data of userHaveCards) {
       await db.insert(schema.userHaveCard).values(data);
     }
     console.log(`  ✓ ${userHaveCards.length} 件の所持カードを作成しました`);
 
-    // ユーザーが欲しいカード
+    // ユーザーが欲しいカード（いくつかランダムに設定）
     const userWantCards = [
       // test-user-1 の欲しいカード
       {
@@ -167,8 +144,15 @@ async function main() {
       {
         id: generateId(),
         userId: 'test-user-2',
-        cardId: 'card-pokemon-002',
+        cardId: 'card-ini-001',
         priority: 2,
+      },
+      // test-user-3 の欲しいカード
+      {
+        id: generateId(),
+        userId: 'test-user-3',
+        cardId: 'card-onepiece-001',
+        priority: 0,
       },
     ];
     for (const data of userWantCards) {
