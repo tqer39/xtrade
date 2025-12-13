@@ -1,7 +1,9 @@
+export type { UserTradeListItem } from './service';
 export {
   createTrade,
   getTradeByRoomSlug,
   getTradeDetail,
+  getUserTrades,
   setResponder,
   transitionTrade,
   uncancelTrade,

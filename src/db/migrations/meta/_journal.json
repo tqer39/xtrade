@@ -113,6 +113,13 @@
       "when": 1765660000000,
       "tag": "0015_add_status_before_cancel",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1765750000000,
+      "tag": "0016_add_user_bio",
+      "breakpoints": true
     }
   ]
 }

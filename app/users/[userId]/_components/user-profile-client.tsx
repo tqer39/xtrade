@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ChevronRight, ImageIcon, Search, Twitter, User } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Edit2, ImageIcon, Search, Twitter, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -8,15 +8,18 @@ import { useEffect, useState } from 'react';
 import { LoginButton } from '@/components/auth/login-button';
 import { type ReviewItem, ReviewList } from '@/components/reviews';
 import { TrustBadge } from '@/components/trust';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { ViewToggle } from '@/components/view-toggle';
 import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
 import type { Card as CardType } from '@/modules/cards/types';
+import type { UserTradeListItem } from '@/modules/trades';
 import type { TrustGrade } from '@/modules/trust';
 
 interface UserTrustData {
@@ -25,6 +28,7 @@ interface UserTrustData {
     name: string | null;
     twitterUsername: string | null;
     image: string | null;
+    bio?: string | null;
   };
   trustScore: number | null;
   trustGrade: TrustGrade | null;
@@ -41,6 +45,17 @@ interface Props {
   userId: string;
 }
 
+interface WantCard {
+  id: string;
+  card: {
+    id: string;
+    name: string;
+    category: string | null;
+    description: string | null;
+    imageUrl: string | null;
+  };
+}
+
 export function UserProfileClient({ userId }: Props) {
   const router = useRouter();
   const { data: session, isPending: isSessionPending } = useSession();
@@ -48,9 +63,15 @@ export function UserProfileClient({ userId }: Props) {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [listings, setListings] = useState<CardType[]>([]);
   const [filteredListings, setFilteredListings] = useState<CardType[]>([]);
+  const [wantCards, setWantCards] = useState<WantCard[]>([]);
+  const [activeTrades, setActiveTrades] = useState<UserTradeListItem[]>([]);
+  const [completedTrades, setCompletedTrades] = useState<UserTradeListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [bio, setBio] = useState<string>('');
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [isSavingBio, setIsSavingBio] = useState(false);
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
 
   useEffect(() => {
@@ -62,10 +83,22 @@ export function UserProfileClient({ userId }: Props) {
 
       try {
         // 並列でデータを取得
-        const [trustRes, reviewsRes, cardsRes] = await Promise.all([
+        const [
+          trustRes,
+          reviewsRes,
+          cardsRes,
+          wantCardsRes,
+          activeTradesRes,
+          completedTradesRes,
+          userRes,
+        ] = await Promise.all([
           fetch(`/api/users/${userId}/trust`),
           fetch(`/api/users/${userId}/reviews`),
           fetch(`/api/users/${userId}/cards`),
+          fetch(`/api/users/${userId}/want-cards`),
+          fetch(`/api/users/${userId}/trades?status=active`),
+          fetch(`/api/users/${userId}/trades?status=completed`),
+          fetch(`/api/users/${userId}`),
         ]);
 
         if (!trustRes.ok) {
@@ -88,6 +121,26 @@ export function UserProfileClient({ userId }: Props) {
           const cardsData = await cardsRes.json();
           setListings(cardsData.cards ?? []);
           setFilteredListings(cardsData.cards ?? []);
+        }
+
+        if (wantCardsRes.ok) {
+          const wantCardsData = await wantCardsRes.json();
+          setWantCards(wantCardsData.wantCards ?? []);
+        }
+
+        if (activeTradesRes.ok) {
+          const activeTradesData = await activeTradesRes.json();
+          setActiveTrades(activeTradesData.trades ?? []);
+        }
+
+        if (completedTradesRes.ok) {
+          const completedTradesData = await completedTradesRes.json();
+          setCompletedTrades(completedTradesData.trades ?? []);
+        }
+
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setBio(userData.user?.bio ?? '');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'エラーが発生しました');
@@ -113,6 +166,26 @@ export function UserProfileClient({ userId }: Props) {
       );
     }
   }, [searchQuery, listings]);
+
+  // bio保存
+  const handleSaveBio = async () => {
+    setIsSavingBio(true);
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bio }),
+      });
+      if (!res.ok) {
+        throw new Error('保存に失敗しました');
+      }
+      setIsEditingBio(false);
+    } catch {
+      // エラー時は何もしない（UIにはエラーを表示しない）
+    } finally {
+      setIsSavingBio(false);
+    }
+  };
 
   if (isSessionPending) {
     return (
@@ -225,9 +298,56 @@ export function UserProfileClient({ userId }: Props) {
         </div>
       </div>
 
+      {/* 自己紹介 (bio) */}
+      <div className="mb-6">
+        {isEditingBio ? (
+          <div className="space-y-2">
+            <Textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="自己紹介を入力..."
+              className="min-h-[80px]"
+              maxLength={500}
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">{bio.length}/500</span>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setIsEditingBio(false)}>
+                  キャンセル
+                </Button>
+                <Button size="sm" onClick={handleSaveBio} disabled={isSavingBio}>
+                  {isSavingBio ? '保存中...' : '保存'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="group relative">
+            {bio ? (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{bio}</p>
+            ) : isOwnProfile ? (
+              <p className="text-sm text-muted-foreground italic">自己紹介を追加...</p>
+            ) : null}
+            {isOwnProfile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => setIsEditingBio(true)}
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
       <Tabs defaultValue="listings">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4 flex-wrap h-auto gap-1">
           <TabsTrigger value="listings">出品中 ({listings.length})</TabsTrigger>
+          <TabsTrigger value="wantCards">欲しいもの ({wantCards.length})</TabsTrigger>
+          <TabsTrigger value="activeTrades">取引中 ({activeTrades.length})</TabsTrigger>
+          <TabsTrigger value="completedTrades">成約済 ({completedTrades.length})</TabsTrigger>
           <TabsTrigger value="reviews">レビュー ({userData.stats.reviewCount})</TabsTrigger>
         </TabsList>
 
@@ -348,6 +468,145 @@ export function UserProfileClient({ userId }: Props) {
                 </div>
               )}
             </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="wantCards">
+          {wantCards.length === 0 ? (
+            <Card>
+              <CardContent className="py-8">
+                <p className="text-muted-foreground text-center">欲しいアイテムはありません</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="columns-2 sm:columns-3 gap-1">
+              {wantCards.map((wantCard) => (
+                <Link
+                  key={wantCard.id}
+                  href={`/cards/${wantCard.card.id}`}
+                  className="mb-1 break-inside-avoid block"
+                >
+                  <div className="relative overflow-hidden rounded-lg bg-muted cursor-pointer hover:opacity-90 transition-opacity">
+                    {wantCard.card.imageUrl ? (
+                      <img
+                        src={wantCard.card.imageUrl}
+                        alt={wantCard.card.name}
+                        className="w-full object-cover"
+                      />
+                    ) : (
+                      <div className="aspect-[3/4] flex items-center justify-center">
+                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
+                      <p className="text-sm font-medium truncate">{wantCard.card.name}</p>
+                      {wantCard.card.category && (
+                        <p className="text-xs opacity-80 truncate">{wantCard.card.category}</p>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="activeTrades">
+          {activeTrades.length === 0 ? (
+            <Card>
+              <CardContent className="py-8">
+                <p className="text-muted-foreground text-center">取引中のアイテムはありません</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {activeTrades.map((trade) => (
+                <Link key={trade.id} href={`/trades/${trade.roomSlug}`} className="block">
+                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
+                          {trade.partner?.image ? (
+                            <img
+                              src={trade.partner.image}
+                              alt={trade.partner.name ?? ''}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">
+                            {trade.partner?.twitterUsername
+                              ? `@${trade.partner.twitterUsername}`
+                              : (trade.partner?.name ?? '相手未確定')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(trade.updatedAt).toLocaleDateString('ja-JP')}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="shrink-0">
+                          {trade.status === 'draft'
+                            ? '下書き'
+                            : trade.status === 'proposed'
+                              ? '提案中'
+                              : '合意済'}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="completedTrades">
+          {completedTrades.length === 0 ? (
+            <Card>
+              <CardContent className="py-8">
+                <p className="text-muted-foreground text-center">成約済の取引はありません</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {completedTrades.map((trade) => (
+                <Link key={trade.id} href={`/trades/${trade.roomSlug}`} className="block">
+                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
+                          {trade.partner?.image ? (
+                            <img
+                              src={trade.partner.image}
+                              alt={trade.partner.name ?? ''}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <User className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">
+                            {trade.partner?.twitterUsername
+                              ? `@${trade.partner.twitterUsername}`
+                              : (trade.partner?.name ?? '相手未確定')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(trade.updatedAt).toLocaleDateString('ja-JP')}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" className="shrink-0">
+                          成約済
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
           )}
         </TabsContent>
 
