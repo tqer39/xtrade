@@ -2,6 +2,7 @@ export {
   createCard,
   getCardById,
   getCardOwners,
+  getCardOwnersWithWantCards,
   getCardWithCreator,
   getLatestCards,
   getLatestCardsWithCreator,
@@ -10,6 +11,7 @@ export {
   getUserWantCards,
   removeWantCard,
   searchCards,
+  searchLatestCardsWithCreator,
   upsertHaveCard,
   upsertWantCard,
 } from './service';
@@ -19,6 +21,7 @@ export type {
   Card,
   CardCreator,
   CardOwner,
+  CardOwnerWantCard,
   CardWithCreator,
   CreateCardInput,
   UserHaveCard,

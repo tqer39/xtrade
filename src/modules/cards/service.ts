@@ -7,6 +7,7 @@ import type {
   AddWantCardInput,
   Card,
   CardOwner,
+  CardOwnerWantCard,
   CardWithCreator,
   CreateCardInput,
 } from './types';
@@ -289,6 +290,97 @@ export async function getLatestCardsWithCreator(limit = 20): Promise<CardWithCre
   }));
 }
 
+interface SearchLatestCardsOptions {
+  query?: string;
+  page?: number;
+  limit?: number;
+}
+
+interface SearchLatestCardsResult {
+  cards: CardWithCreator[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+/**
+ * 最新登録カードを検索・ページネーション付きで取得する（公開API用）
+ */
+export async function searchLatestCardsWithCreator(
+  options: SearchLatestCardsOptions = {}
+): Promise<SearchLatestCardsResult> {
+  const { query, page = 1, limit = 12 } = options;
+  const offset = (page - 1) * limit;
+  const safeLimit = Math.min(limit, 100);
+
+  const whereConditions = [];
+  if (query && query.trim()) {
+    whereConditions.push(like(schema.card.name, `%${query.trim()}%`));
+  }
+
+  const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+  // 総件数を取得
+  const countResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.card)
+    .where(whereClause);
+  const total = Number(countResult[0]?.count ?? 0);
+
+  // カード取得
+  const cards = await db
+    .select({
+      id: schema.card.id,
+      name: schema.card.name,
+      category: schema.card.category,
+      description: schema.card.description,
+      imageUrl: schema.card.imageUrl,
+      createdByUserId: schema.card.createdByUserId,
+      createdAt: schema.card.createdAt,
+      updatedAt: schema.card.updatedAt,
+      creator: {
+        id: schema.user.id,
+        name: schema.user.name,
+        image: schema.user.image,
+        twitterUsername: schema.user.twitterUsername,
+        trustScore: schema.user.trustScore,
+        trustGrade: schema.user.trustGrade,
+      },
+    })
+    .from(schema.card)
+    .leftJoin(schema.user, eq(schema.card.createdByUserId, schema.user.id))
+    .where(whereClause)
+    .orderBy(desc(schema.card.createdAt))
+    .limit(safeLimit)
+    .offset(offset);
+
+  return {
+    cards: cards.map((card) => ({
+      id: card.id,
+      name: card.name,
+      category: card.category,
+      description: card.description,
+      imageUrl: card.imageUrl,
+      createdByUserId: card.createdByUserId,
+      createdAt: card.createdAt,
+      updatedAt: card.updatedAt,
+      creator: card.creator?.id
+        ? {
+            id: card.creator.id,
+            name: card.creator.name,
+            image: card.creator.image,
+            twitterUsername: card.creator.twitterUsername,
+            trustScore: card.creator.trustScore,
+            trustGrade: card.creator.trustGrade,
+          }
+        : null,
+    })),
+    total,
+    page,
+    totalPages: Math.ceil(total / safeLimit),
+  };
+}
+
 /**
  * カードを持っているユーザー一覧を取得する（公開API用）
  */
@@ -309,6 +401,41 @@ export async function getCardOwners(cardId: string): Promise<CardOwner[]> {
     .orderBy(desc(schema.user.trustScore));
 
   return owners;
+}
+
+/**
+ * カードを持っているユーザー一覧を取得する（欲しいカード情報付き）
+ */
+export async function getCardOwnersWithWantCards(
+  cardId: string,
+  wantCardsLimit = 5
+): Promise<CardOwner[]> {
+  // 所有者を取得
+  const owners = await getCardOwners(cardId);
+
+  // 各所有者の欲しいカードを取得
+  const ownersWithWantCards = await Promise.all(
+    owners.map(async (owner) => {
+      const wantCards = await db
+        .select({
+          cardId: schema.userWantCard.cardId,
+          cardName: schema.card.name,
+          cardImageUrl: schema.card.imageUrl,
+        })
+        .from(schema.userWantCard)
+        .innerJoin(schema.card, eq(schema.userWantCard.cardId, schema.card.id))
+        .where(eq(schema.userWantCard.userId, owner.userId))
+        .orderBy(sql`${schema.userWantCard.priority} DESC NULLS LAST`)
+        .limit(wantCardsLimit);
+
+      return {
+        ...owner,
+        wantCards: wantCards as CardOwnerWantCard[],
+      };
+    })
+  );
+
+  return ownersWithWantCards;
 }
 
 /**

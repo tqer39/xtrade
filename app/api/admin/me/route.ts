@@ -25,6 +25,8 @@ export async function GET() {
       image: schema.user.image,
       twitterUsername: schema.user.twitterUsername,
       role: schema.user.role,
+      trustScore: schema.user.trustScore,
+      trustGrade: schema.user.trustGrade,
     })
     .from(schema.user)
     .where(eq(schema.user.id, session.user.id))
