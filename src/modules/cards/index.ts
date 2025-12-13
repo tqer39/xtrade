@@ -2,6 +2,7 @@ export {
   createCard,
   getCardById,
   getCardOwners,
+  getCardWithCreator,
   getLatestCards,
   getLatestCardsWithCreator,
   getUserHaveCards,
