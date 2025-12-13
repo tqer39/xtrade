@@ -1,12 +1,13 @@
 'use client';
 
-import { User } from 'lucide-react';
+import { ChevronRight, User } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { LoginButton } from '@/components/auth/login-button';
 import { type ReviewItem, ReviewList } from '@/components/reviews';
-import { TrustScoreCard } from '@/components/trust';
+import { TrustBadge, TrustScoreCard } from '@/components/trust';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSession } from '@/lib/auth-client';
@@ -145,11 +146,19 @@ export function UserProfileClient({ userId }: Props) {
             <User className="w-10 h-10 text-muted-foreground" />
           </div>
         )}
-        <div>
-          <h1 className="text-2xl font-bold">
-            {userData.user.name ?? '名前未設定'}
-            {isOwnProfile && <span className="ml-2 text-sm text-muted-foreground">(自分)</span>}
-          </h1>
+        <div className="flex-1">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl font-bold">
+              {userData.user.name ?? '名前未設定'}
+              {isOwnProfile && <span className="ml-2 text-sm text-muted-foreground">(自分)</span>}
+            </h1>
+            <TrustBadge
+              grade={userData.trustGrade}
+              size="default"
+              showScore
+              score={userData.trustScore}
+            />
+          </div>
           {userData.user.twitterUsername && (
             <a
               href={`https://x.com/${userData.user.twitterUsername}`}
@@ -160,6 +169,14 @@ export function UserProfileClient({ userId }: Props) {
               @{userData.user.twitterUsername}
             </a>
           )}
+          {/* 信頼性詳細ページへのリンク */}
+          <Link
+            href={`/users/${userId}/trust`}
+            className="flex items-center gap-1 text-sm text-primary hover:underline mt-1"
+          >
+            信頼性スコアの詳細を見る
+            <ChevronRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
 
