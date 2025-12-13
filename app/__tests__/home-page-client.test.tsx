@@ -5,7 +5,6 @@ import { HomePageClient } from '../_components/home-page-client';
 // モック設定
 const mockUseSession = vi.fn();
 const mockUseMyCards = vi.fn();
-const mockUseMySets = vi.fn();
 const mockUseLatestCards = vi.fn();
 const mockPush = vi.fn();
 
@@ -21,10 +20,6 @@ vi.mock('@/hooks/use-my-cards', () => ({
   useMyCards: () => mockUseMyCards(),
 }));
 
-vi.mock('@/hooks/use-my-sets', () => ({
-  useMySets: () => mockUseMySets(),
-}));
-
 vi.mock('@/hooks/use-latest-cards', () => ({
   useLatestCards: () => mockUseLatestCards(),
 }));
@@ -38,19 +33,6 @@ vi.mock('@/components/layout', () => ({
   Footer: () => <footer data-testid="footer">Footer</footer>,
 }));
 
-const defaultSetsReturn = {
-  sets: [],
-  isLoading: false,
-  error: null,
-  createSet: vi.fn(),
-  updateSet: vi.fn(),
-  deleteSet: vi.fn(),
-  getSetDetail: vi.fn(),
-  addCardToSet: vi.fn(),
-  removeCardFromSet: vi.fn(),
-  refetch: vi.fn(),
-};
-
 const defaultLatestCardsReturn = {
   latestCards: [],
   isLoading: false,
@@ -61,7 +43,6 @@ const defaultLatestCardsReturn = {
 describe('HomePageClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseMySets.mockReturnValue(defaultSetsReturn);
     mockUseLatestCards.mockReturnValue(defaultLatestCardsReturn);
   });
 
@@ -103,7 +84,7 @@ describe('HomePageClient', () => {
       expect(screen.getByText('ログイン')).toBeInTheDocument();
     });
 
-    it('最新カード一覧セクションを表示', () => {
+    it('最近登録されたアイテムセクションを表示', () => {
       mockUseSession.mockReturnValue({ data: null, isPending: false });
       mockUseMyCards.mockReturnValue({
         haveCards: [],
@@ -117,7 +98,7 @@ describe('HomePageClient', () => {
 
       render(<HomePageClient />);
 
-      expect(screen.getByText('最近登録されたカード')).toBeInTheDocument();
+      expect(screen.getByText('最近登録されたアイテム')).toBeInTheDocument();
     });
 
     it('フッターを表示', () => {
@@ -189,11 +170,10 @@ describe('HomePageClient', () => {
       expect(screen.getByText('xtrade')).toBeInTheDocument();
       expect(screen.getByText('持っている (1)')).toBeInTheDocument();
       expect(screen.getByText('欲しい (0)')).toBeInTheDocument();
-      expect(screen.getByText('セット (0)')).toBeInTheDocument();
       expect(screen.getByText('Test Card')).toBeInTheDocument();
     });
 
-    it('カードがない場合は空の状態を表示', () => {
+    it('アイテムがない場合は空の状態を表示', () => {
       mockUseSession.mockReturnValue({
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
@@ -210,7 +190,7 @@ describe('HomePageClient', () => {
 
       render(<HomePageClient />);
 
-      expect(screen.getByText('まだカードを登録していません')).toBeInTheDocument();
+      expect(screen.getByText('まだアイテムを登録していません')).toBeInTheDocument();
     });
 
     it('UserMenuを表示', () => {

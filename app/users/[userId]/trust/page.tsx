@@ -1,8 +1,8 @@
 'use client';
 
 import { ArrowLeft, User } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 
 import { LoginButton } from '@/components/auth/login-button';
@@ -77,6 +77,7 @@ function ScoreBar({
 
 export default function TrustDetailPage({ params }: Props) {
   const { userId } = use(params);
+  const router = useRouter();
   const { data: session, isPending: isSessionPending } = useSession();
   const [userData, setUserData] = useState<UserTrustDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -202,15 +203,17 @@ export default function TrustDetailPage({ params }: Props) {
       {/* ヘッダー */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
-            xtrade
-          </Link>
-          <Link
-            href={`/users/${userId}`}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="gap-1 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            プロフィールに戻る
+            戻る
+          </Button>
+          <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
+            xtrade
           </Link>
         </div>
         <h1 className="text-2xl font-bold">信頼性スコア詳細</h1>
@@ -221,11 +224,9 @@ export default function TrustDetailPage({ params }: Props) {
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
             {userData.user.image ? (
-              <Image
+              <img
                 src={userData.user.image}
                 alt={userData.user.name ?? ''}
-                width={64}
-                height={64}
                 className="w-16 h-16 rounded-full object-cover"
               />
             ) : (

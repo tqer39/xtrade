@@ -1,25 +1,15 @@
 'use client';
 
-import { ChevronRight, Clock, ImageIcon, RefreshCw, Search, Twitter, User } from 'lucide-react';
+import { ArrowLeft, ChevronRight, ImageIcon, Search, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 
 import { LoginButton } from '@/components/auth/login-button';
 import { type ReviewItem, ReviewList } from '@/components/reviews';
 import { TrustBadge } from '@/components/trust';
-import { TrustRadarChart } from '@/components/trust/trust-radar-chart';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,7 +18,6 @@ import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
 import type { Card as CardType } from '@/modules/cards/types';
 import type { TrustGrade } from '@/modules/trust';
-import type { TrustScoreBreakdown } from '@/modules/trust/types';
 
 interface UserTrustData {
   user: {
@@ -39,11 +28,6 @@ interface UserTrustData {
   };
   trustScore: number | null;
   trustGrade: TrustGrade | null;
-  newBreakdown: {
-    twitter: { score: number; maxScore: number };
-    totalTrade: { score: number; maxScore: number };
-    recentTrade: { score: number; maxScore: number };
-  };
   stats: {
     completedTrades: number;
     successRate: number | null;
@@ -51,103 +35,10 @@ interface UserTrustData {
     reviewCount: number;
   };
   updatedAt: string | null;
-  scoreHistory?: Array<{
-    date: string;
-    score: number;
-  }>;
 }
 
 interface Props {
   userId: string;
-}
-
-function ScoreBar({
-  label,
-  icon,
-  score,
-  maxScore,
-  color,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  score: number;
-  maxScore: number;
-  color: string;
-}) {
-  const percentage = (score / maxScore) * 100;
-
-  return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground flex items-center gap-1.5">
-          {icon}
-          {label}
-        </span>
-        <span className="font-medium">
-          {score}/{maxScore}
-        </span>
-      </div>
-      <div className="h-2 w-full rounded-full bg-muted">
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${color}`}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// スコア履歴グラフコンポーネント
-function ScoreHistoryChart({ history }: { history: Array<{ date: string; score: number }> }) {
-  if (history.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
-        履歴データがありません
-      </div>
-    );
-  }
-
-  return (
-    <ResponsiveContainer width="100%" height={120}>
-      <LineChart data={history} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-        <XAxis
-          dataKey="date"
-          tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-          tickFormatter={(value) => {
-            const date = new Date(value);
-            return `${date.getMonth() + 1}/${date.getDate()}`;
-          }}
-        />
-        <YAxis
-          domain={[0, 100]}
-          tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-          tickCount={3}
-        />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: 'hsl(var(--background))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
-            fontSize: '12px',
-          }}
-          formatter={(value: number) => [`${value}点`, 'スコア']}
-          labelFormatter={(label) => {
-            const date = new Date(label);
-            return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
-          }}
-        />
-        <Line
-          type="monotone"
-          dataKey="score"
-          stroke="hsl(var(--primary))"
-          strokeWidth={2}
-          dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 3 }}
-          activeDot={{ r: 5 }}
-        />
-      </LineChart>
-    </ResponsiveContainer>
-  );
 }
 
 export function UserProfileClient({ userId }: Props) {
@@ -186,10 +77,7 @@ export function UserProfileClient({ userId }: Props) {
           return;
         }
         const trustData = await trustRes.json();
-
-        // モックの履歴データを追加（本番では API から取得）
-        const mockHistory = generateMockHistory(trustData.trustScore ?? 50);
-        setUserData({ ...trustData, scoreHistory: mockHistory });
+        setUserData(trustData);
 
         if (reviewsRes.ok) {
           const reviewsData = await reviewsRes.json();
@@ -271,36 +159,19 @@ export function UserProfileClient({ userId }: Props) {
 
   const isOwnProfile = session.user.id === userId;
 
-  // レーダーチャート用のデータ変換
-  const breakdownForChart: TrustScoreBreakdown = {
-    total: userData.trustScore ?? 0,
-    grade: (userData.trustGrade ?? 'E') as TrustScoreBreakdown['grade'],
-    twitter: {
-      score: userData.newBreakdown.twitter.score,
-      accountAgeDays: 0,
-      followerCount: 0,
-      postFrequency: 0,
-      hasVerifiedBadge: false,
-    },
-    totalTrade: {
-      score: userData.newBreakdown.totalTrade.score,
-      completionRate: 0,
-      totalCount: userData.stats.completedTrades,
-      troubleRate: 0,
-      averageRating: userData.stats.avgRating ?? 0,
-    },
-    recentTrade: {
-      score: userData.newBreakdown.recentTrade.score,
-      completionRate: 0,
-      averageRating: 0,
-      troubleRate: 0,
-    },
-  };
-
   return (
     <div className="container mx-auto py-8 px-4 max-w-2xl">
       {/* ヘッダー */}
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="gap-1 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          戻る
+        </Button>
         <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
           xtrade
         </Link>
@@ -354,63 +225,6 @@ export function UserProfileClient({ userId }: Props) {
         </div>
       </div>
 
-      {/* 信頼性スコア詳細（レーダーチャート + スコアバー） */}
-      <div className="grid gap-4 md:grid-cols-2 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">スコア分布</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TrustRadarChart breakdown={breakdownForChart} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">スコア内訳</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <ScoreBar
-              label="Twitter"
-              icon={<Twitter className="h-3.5 w-3.5 text-sky-500" />}
-              score={userData.newBreakdown.twitter.score}
-              maxScore={40}
-              color="bg-sky-500"
-            />
-            <ScoreBar
-              label="取引実績"
-              icon={<RefreshCw className="h-3.5 w-3.5 text-emerald-500" />}
-              score={userData.newBreakdown.totalTrade.score}
-              maxScore={40}
-              color="bg-emerald-500"
-            />
-            <ScoreBar
-              label="直近取引"
-              icon={<Clock className="h-3.5 w-3.5 text-amber-500" />}
-              score={userData.newBreakdown.recentTrade.score}
-              maxScore={20}
-              color="bg-amber-500"
-            />
-            <div className="pt-2 border-t">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">総合</span>
-                <span className="text-xl font-bold">{userData.trustScore ?? 0} 点</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* スコア履歴グラフ */}
-      <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">スコア推移</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScoreHistoryChart history={userData.scoreHistory ?? []} />
-        </CardContent>
-      </Card>
-
       <Tabs defaultValue="listings">
         <TabsList className="mb-4">
           <TabsTrigger value="listings">出品中 ({listings.length})</TabsTrigger>
@@ -449,30 +263,45 @@ export function UserProfileClient({ userId }: Props) {
                   </CardContent>
                 </Card>
               ) : !isHydrated || viewMode === 'grid' ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {filteredListings.map((card) => (
-                    <Card key={card.id} className="overflow-hidden">
-                      <div className="aspect-[3/4] bg-muted">
-                        {card.imageUrl ? (
-                          <img
-                            src={card.imageUrl}
-                            alt={card.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                <div className="columns-2 sm:columns-3 gap-1">
+                  {filteredListings.map((card) => {
+                    // 説明文を80文字に制限
+                    const description = card.description
+                      ? card.description.length > 80
+                        ? `${card.description.slice(0, 80)}...`
+                        : card.description
+                      : null;
+                    return (
+                      <div key={card.id} className="mb-1 break-inside-avoid">
+                        <div className="relative overflow-hidden rounded-lg bg-muted">
+                          {card.imageUrl ? (
+                            <img
+                              src={card.imageUrl}
+                              alt={card.name}
+                              className="w-full object-cover"
+                            />
+                          ) : (
+                            <div className="aspect-[3/4] flex items-center justify-center">
+                              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          {/* 画像上のオーバーレイ */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                          <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
+                            <p className="text-sm font-medium truncate">{card.name}</p>
+                            {card.category && (
+                              <p className="text-xs opacity-80 truncate">{card.category}</p>
+                            )}
+                            {description && (
+                              <p className="text-xs opacity-70 mt-0.5 line-clamp-2">
+                                {description}
+                              </p>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
-                      <CardContent className="p-2">
-                        <p className="text-sm font-medium truncate">{card.name}</p>
-                        {card.category && (
-                          <p className="text-xs text-muted-foreground truncate">{card.category}</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -537,31 +366,4 @@ export function UserProfileClient({ userId }: Props) {
       </Tabs>
     </div>
   );
-}
-
-// モックの履歴データを生成（本番では API から取得）
-function generateMockHistory(currentScore: number): Array<{ date: string; score: number }> {
-  const history: Array<{ date: string; score: number }> = [];
-  const now = new Date();
-
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i * 7);
-
-    // スコアに若干の変動を加える
-    const variation = Math.floor(Math.random() * 10) - 5;
-    const score = Math.max(0, Math.min(100, currentScore + variation - (6 - i) * 2));
-
-    history.push({
-      date: date.toISOString().split('T')[0],
-      score,
-    });
-  }
-
-  // 最新のスコアは現在のスコアに合わせる
-  if (history.length > 0) {
-    history[history.length - 1].score = currentScore;
-  }
-
-  return history;
 }
