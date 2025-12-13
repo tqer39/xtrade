@@ -88,7 +88,7 @@ export function CardEditModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isHave ? '持っているカードを編集' : '欲しいカードを編集'}</DialogTitle>
+          <DialogTitle>{isHave ? '持っているアイテムを編集' : '欲しいアイテムを編集'}</DialogTitle>
           <DialogDescription>数量や優先度を変更できます</DialogDescription>
         </DialogHeader>
 

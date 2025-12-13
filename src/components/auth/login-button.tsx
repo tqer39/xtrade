@@ -1,16 +1,27 @@
 'use client';
 
+import { usePathname, useSearchParams } from 'next/navigation';
+
 import { Button } from '@/components/ui/button';
 import { signIn } from '@/lib/auth-client';
 
 /**
  * X (Twitter) ログインボタン
+ * ログイン後は現在のページにリダイレクトする
  */
 export function LoginButton() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const handleLogin = async () => {
+    // 現在のURLを構築（パス + クエリパラメータ）
+    const currentUrl = searchParams.toString()
+      ? `${pathname}?${searchParams.toString()}`
+      : pathname;
+
     await signIn.social({
       provider: 'twitter',
-      callbackURL: '/',
+      callbackURL: currentUrl || '/',
     });
   };
 

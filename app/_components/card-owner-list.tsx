@@ -42,7 +42,7 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn }: CardOwnerListProps
   if (!card) {
     return (
       <div className="py-8 text-center">
-        <p className="text-muted-foreground mb-4">カードが見つかりません</p>
+        <p className="text-muted-foreground mb-4">アイテムが見つかりません</p>
         <Button variant="outline" onClick={onBack}>
           戻る
         </Button>
