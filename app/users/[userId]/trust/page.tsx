@@ -201,13 +201,18 @@ export default function TrustDetailPage({ params }: Props) {
     <div className="container mx-auto py-8 px-4 max-w-3xl">
       {/* ヘッダー */}
       <div className="mb-6">
-        <Link
-          href={`/users/${userId}`}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          プロフィールに戻る
-        </Link>
+        <div className="flex items-center justify-between mb-4">
+          <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
+            xtrade
+          </Link>
+          <Link
+            href={`/users/${userId}`}
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            プロフィールに戻る
+          </Link>
+        </div>
         <h1 className="text-2xl font-bold">信頼性スコア詳細</h1>
       </div>
 

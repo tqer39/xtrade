@@ -66,7 +66,9 @@ export function HomePageClient() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">xtrade</h1>
+          <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
+            xtrade
+          </Link>
           <UserMenu />
         </div>
         <div className="text-center py-12">
@@ -82,7 +84,9 @@ export function HomePageClient() {
       <div className="container mx-auto px-4 py-8 flex-1">
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">xtrade</h1>
+          <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
+            xtrade
+          </Link>
           <div className="flex items-center gap-3">
             {/* ログイン済みの場合、信頼性詳細画面へのリンクを表示 */}
             {isLoggedIn && session?.user && (
