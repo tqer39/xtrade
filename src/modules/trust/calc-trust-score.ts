@@ -3,10 +3,16 @@ import type {
   CombinedTrustScoreResult,
   CombinedTrustScoreWithEmailResult,
   EmailVerificationInput,
+  NewTrustGrade,
+  NewTrustScoreInput,
+  RecentTradeScoreDetails,
   ReviewScoreInput,
+  TotalTradeScoreDetails,
   TrustGrade,
+  TrustScoreBreakdown,
   TrustScoreInput,
   TrustScoreResult,
+  TwitterScoreDetails,
 } from './types';
 
 /**
@@ -274,5 +280,164 @@ export function calcCombinedTrustScoreWithEmail(
       review: reviewScore,
       emailVerification: emailVerificationScore,
     },
+  };
+}
+
+// =====================================
+// 新しい3軸スコアリングシステム
+// =====================================
+
+/**
+ * 新しいスコアをグレードに変換
+ * S: 90+, A: 75-89, B: 60-74, C: 45-59, D: 30-44, E: 0-29
+ */
+function scoreToNewGrade(score: number): NewTrustGrade {
+  if (score >= 90) return 'S';
+  if (score >= 75) return 'A';
+  if (score >= 60) return 'B';
+  if (score >= 45) return 'C';
+  if (score >= 30) return 'D';
+  return 'E';
+}
+
+/**
+ * Twitter スコアを計算する（0〜40点）
+ */
+export function calcTwitterScore(input: NewTrustScoreInput): TwitterScoreDetails {
+  let score = 0;
+  let accountAgeDays = 0;
+  let postFrequency = 0;
+
+  // アカウント年齢（最大15点）
+  if (input.xAccountCreatedAt) {
+    accountAgeDays = Math.floor(
+      (Date.now() - input.xAccountCreatedAt.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    // 月ごとに0.5点、最大15点
+    score += Math.min(15, Math.floor(accountAgeDays / 30) * 0.5);
+  }
+
+  // フォロワー数（最大10点）
+  if (input.xFollowersCount) {
+    // 対数スケールで評価
+    score += Math.min(10, Math.log10(input.xFollowersCount + 1) * 2);
+  }
+
+  // 投稿頻度（最大10点）
+  if (input.xStatusesCount && input.xAccountCreatedAt) {
+    const monthsSinceCreation = Math.max(
+      1,
+      (Date.now() - input.xAccountCreatedAt.getTime()) / (1000 * 60 * 60 * 24 * 30)
+    );
+    postFrequency = input.xStatusesCount / monthsSinceCreation;
+    score += Math.min(10, Math.log10(postFrequency + 1) * 3);
+  }
+
+  // 認証バッジ（5点）
+  if (input.xVerified) {
+    score += 5;
+  }
+
+  return {
+    score: Math.round(Math.max(0, Math.min(40, score))),
+    accountAgeDays,
+    followerCount: input.xFollowersCount ?? 0,
+    postFrequency: Math.round(postFrequency * 10) / 10,
+    hasVerifiedBadge: input.xVerified ?? false,
+  };
+}
+
+/**
+ * トータル取引スコアを計算する（0〜40点）
+ */
+export function calcTotalTradeScore(input: NewTrustScoreInput): TotalTradeScoreDetails {
+  let score = 0;
+
+  const completionRate = input.totalTrades > 0 ? input.completedTrades / input.totalTrades : 0;
+  const troubleRate = input.totalTrades > 0 ? input.troubledTrades / input.totalTrades : 0;
+
+  // 成約率（最大15点）
+  score += completionRate * 15;
+
+  // 取引総数（最大10点）
+  score += Math.min(10, Math.log10(input.totalTrades + 1) * 3);
+
+  // トラブル率（マイナス10点まで）
+  score -= troubleRate * 10;
+
+  // 平均評価（最大5点）
+  score += (input.averageRating / 5) * 5;
+
+  return {
+    score: Math.round(Math.max(0, Math.min(40, score))),
+    completionRate: Math.round(completionRate * 100) / 100,
+    totalCount: input.totalTrades,
+    troubleRate: Math.round(troubleRate * 100) / 100,
+    averageRating: Math.round(input.averageRating * 10) / 10,
+  };
+}
+
+/**
+ * 直近取引スコアを計算する（0〜20点）
+ */
+export function calcRecentTradeScore(input: NewTrustScoreInput): RecentTradeScoreDetails {
+  const recent = input.recentTrades.slice(0, 10);
+
+  if (recent.length === 0) {
+    return {
+      score: 0,
+      completionRate: 0,
+      averageRating: 0,
+      troubleRate: 0,
+    };
+  }
+
+  const completed = recent.filter((t) => t.completed).length;
+  const troubled = recent.filter((t) => t.troubled).length;
+  const totalRating = recent.reduce((sum, t) => sum + t.rating, 0);
+
+  const completionRate = completed / recent.length;
+  const troubleRate = troubled / recent.length;
+  const averageRating = totalRating / recent.length;
+
+  let score = 0;
+  // 成約率（最大10点）
+  score += completionRate * 10;
+  // トラブル率（マイナス5点まで）
+  score -= troubleRate * 5;
+  // 平均評価（最大5点）
+  score += (averageRating / 5) * 5;
+
+  return {
+    score: Math.round(Math.max(0, Math.min(20, score))),
+    completionRate: Math.round(completionRate * 100) / 100,
+    averageRating: Math.round(averageRating * 10) / 10,
+    troubleRate: Math.round(troubleRate * 100) / 100,
+  };
+}
+
+/**
+ * 新しい3軸信頼性スコアを計算する
+ *
+ * 配分:
+ * - Twitter アカウント信頼性: 0〜40点
+ * - トータル取引信頼性: 0〜40点
+ * - 直近取引信頼性: 0〜20点
+ * - 合計: 0〜100点
+ */
+export function calcNewTrustScore(input: NewTrustScoreInput): TrustScoreBreakdown {
+  const twitter = calcTwitterScore(input);
+  const totalTrade = calcTotalTradeScore(input);
+  const recentTrade = calcRecentTradeScore(input);
+
+  const total = twitter.score + totalTrade.score + recentTrade.score;
+  const grade = scoreToNewGrade(total);
+
+  return {
+    total,
+    grade,
+    twitter,
+    totalTrade,
+    recentTrade,
   };
 }

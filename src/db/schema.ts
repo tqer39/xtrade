@@ -21,11 +21,15 @@ export const user = pgTable('user', {
   subscriptionPlan: text('subscription_plan').default('free'), // free|basic|premium
   // 信頼スコア関連
   trustScore: integer('trust_score'), // 0〜100（3要素の合計）
-  trustGrade: text('trust_grade'), // S/A/B/C/D/U
-  // スコア内訳
-  xProfileScore: integer('x_profile_score'), // 0〜40（Xプロフィールスコア）
-  behaviorScore: integer('behavior_score'), // 0〜40（xtrade行動スコア）
-  reviewScore: integer('review_score'), // 0〜20（レビュースコア）
+  trustGrade: text('trust_grade'), // S/A/B/C/D/E
+  // スコア内訳（新3軸）
+  twitterScore: integer('twitter_score'), // 0〜40（Twitterアカウント信頼性）
+  totalTradeScore: integer('total_trade_score'), // 0〜40（トータル取引信頼性）
+  recentTradeScore: integer('recent_trade_score'), // 0〜20（直近取引信頼性）
+  // 旧スコア（後方互換性のため一時残す）
+  xProfileScore: integer('x_profile_score'), // 0〜40（Xプロフィールスコア）- 廃止予定
+  behaviorScore: integer('behavior_score'), // 0〜40（xtrade行動スコア）- 廃止予定
+  reviewScore: integer('review_score'), // 0〜20（レビュースコア）- 廃止予定
   trustScoreUpdatedAt: timestamp('trust_score_updated_at'),
   trustScoreRefreshRequestedAt: timestamp('trust_score_refresh_requested_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -208,6 +212,43 @@ export const userTrustJob = pgTable(
 export const userTrustJobRelations = relations(userTrustJob, ({ one }) => ({
   user: one(user, {
     fields: [userTrustJob.userId],
+    references: [user.id],
+  }),
+}));
+
+// =====================================
+// 信頼スコア履歴
+// =====================================
+
+/**
+ * 信頼スコア履歴テーブル
+ * スコアの推移を記録し、折れ線グラフで可視化
+ */
+export const trustScoreHistory = pgTable(
+  'trust_score_history',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // スコア記録
+    trustScore: integer('trust_score').notNull(),
+    twitterScore: integer('twitter_score').notNull(),
+    totalTradeScore: integer('total_trade_score').notNull(),
+    recentTradeScore: integer('recent_trade_score').notNull(),
+    // 記録理由
+    reason: text('reason'), // "trade_completed", "monthly_update" など
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('trust_score_history_user_id_idx').on(table.userId),
+    index('trust_score_history_created_at_idx').on(table.createdAt),
+  ]
+);
+
+export const trustScoreHistoryRelations = relations(trustScoreHistory, ({ one }) => ({
+  user: one(user, {
+    fields: [trustScoreHistory.userId],
     references: [user.id],
   }),
 }));

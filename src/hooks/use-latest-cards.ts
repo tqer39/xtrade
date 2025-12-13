@@ -1,17 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { Card } from '@/modules/cards/types';
+import type { CardWithCreator } from '@/modules/cards/types';
 
 interface UseLatestCardsReturn {
-  latestCards: Card[];
+  latestCards: CardWithCreator[];
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
 }
 
 export function useLatestCards(limit = 20): UseLatestCardsReturn {
-  const [latestCards, setLatestCards] = useState<Card[]>([]);
+  const [latestCards, setLatestCards] = useState<CardWithCreator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

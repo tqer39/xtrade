@@ -135,3 +135,111 @@ export interface XUserProfile {
  * 信頼スコアジョブのステータス
  */
 export type TrustJobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+
+// =====================================
+// 新しい3軸スコアリングシステム
+// =====================================
+
+/**
+ * 新しい信頼性グレード
+ * S: 90+, A: 75-89, B: 60-74, C: 45-59, D: 30-44, E: 0-29
+ */
+export type NewTrustGrade = 'S' | 'A' | 'B' | 'C' | 'D' | 'E';
+
+/**
+ * Twitter スコアの詳細
+ */
+export interface TwitterScoreDetails {
+  /** スコア（0〜40） */
+  score: number;
+  /** アカウント年齢（日数） */
+  accountAgeDays: number;
+  /** フォロワー数 */
+  followerCount: number;
+  /** 月平均投稿数 */
+  postFrequency: number;
+  /** 認証バッジの有無 */
+  hasVerifiedBadge: boolean;
+}
+
+/**
+ * トータル取引スコアの詳細
+ */
+export interface TotalTradeScoreDetails {
+  /** スコア（0〜40） */
+  score: number;
+  /** 成約率（0〜1） */
+  completionRate: number;
+  /** 取引総数 */
+  totalCount: number;
+  /** トラブル率（0〜1） */
+  troubleRate: number;
+  /** 平均評価（0〜5） */
+  averageRating: number;
+}
+
+/**
+ * 直近取引スコアの詳細
+ */
+export interface RecentTradeScoreDetails {
+  /** スコア（0〜20） */
+  score: number;
+  /** 直近10件の成約率（0〜1） */
+  completionRate: number;
+  /** 直近の平均評価（0〜5） */
+  averageRating: number;
+  /** 直近のトラブル率（0〜1） */
+  troubleRate: number;
+}
+
+/**
+ * 新しい3軸信頼性スコアの結果
+ */
+export interface TrustScoreBreakdown {
+  /** 総合スコア（0〜100） */
+  total: number;
+  /** グレード */
+  grade: NewTrustGrade;
+  /** Twitter アカウント信頼性 */
+  twitter: TwitterScoreDetails;
+  /** トータル取引信頼性 */
+  totalTrade: TotalTradeScoreDetails;
+  /** 直近取引信頼性 */
+  recentTrade: RecentTradeScoreDetails;
+}
+
+/**
+ * 信頼スコア履歴エントリ
+ */
+export interface TrustScoreHistoryEntry {
+  id: string;
+  userId: string;
+  trustScore: number;
+  twitterScore: number;
+  totalTradeScore: number;
+  recentTradeScore: number;
+  reason: string | null;
+  createdAt: Date;
+}
+
+/**
+ * 新しいスコア計算の入力データ
+ */
+export interface NewTrustScoreInput {
+  // Twitter データ
+  xAccountCreatedAt?: Date;
+  xFollowersCount?: number;
+  xStatusesCount?: number;
+  xVerified?: boolean;
+
+  // 取引データ
+  totalTrades: number;
+  completedTrades: number;
+  troubledTrades: number;
+  averageRating: number;
+  recentTrades: Array<{
+    completed: boolean;
+    troubled: boolean;
+    rating: number;
+  }>;
+}

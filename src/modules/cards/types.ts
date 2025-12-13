@@ -171,3 +171,22 @@ export interface CardOwner {
   trustGrade: string | null;
   quantity: number;
 }
+
+/**
+ * カード作成者の簡易情報
+ */
+export interface CardCreator {
+  id: string;
+  name: string;
+  image: string | null;
+  twitterUsername: string | null;
+  trustScore: number | null;
+  trustGrade: string | null;
+}
+
+/**
+ * 作成者情報付きのカード
+ */
+export interface CardWithCreator extends Card {
+  creator: CardCreator | null;
+}
