@@ -73,7 +73,10 @@ export default function ItemDetailPage({ params }: Props) {
       const res = await fetch('/api/trades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ responderUserId: ownerUserId }),
+        body: JSON.stringify({
+          responderUserId: ownerUserId,
+          initialCardId: cardId,
+        }),
       });
 
       if (!res.ok) {

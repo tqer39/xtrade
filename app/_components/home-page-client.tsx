@@ -298,13 +298,13 @@ export function HomePageClient() {
                 ))}
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {latestCards.map((card) => (
                   <Link key={card.id} href={`/items/${card.id}`}>
-                    <Card className="cursor-pointer transition-colors hover:bg-accent">
-                      <CardContent className="p-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
+                    <Card className="cursor-pointer transition-colors hover:bg-accent rounded-none border-x-0 first:border-t-0">
+                      <CardContent className="p-2">
+                        <div className="flex items-center gap-2">
+                          <div className="h-12 w-12 flex-shrink-0 overflow-hidden bg-muted">
                             {card.imageUrl ? (
                               <img
                                 src={card.imageUrl}
@@ -313,31 +313,22 @@ export function HomePageClient() {
                               />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center">
-                                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
                               </div>
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium truncate">{card.name}</p>
+                            <p className="font-medium truncate text-sm">{card.name}</p>
                             {card.category && (
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary" className="text-xs">
-                                  {card.category}
-                                </Badge>
-                              </div>
-                            )}
-                            {card.description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                {card.description.length > 80
-                                  ? `${card.description.slice(0, 80)}...`
-                                  : card.description}
-                              </p>
+                              <Badge variant="secondary" className="text-xs mt-0.5">
+                                {card.category}
+                              </Badge>
                             )}
                           </div>
                           {/* 作成者の信頼性スコア */}
                           {card.creator && (
-                            <div className="flex items-center gap-2 shrink-0">
-                              <div className="h-8 w-8 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <div className="h-6 w-6 rounded-full overflow-hidden bg-muted flex items-center justify-center">
                                 {card.creator.image ? (
                                   <img
                                     src={card.creator.image}
@@ -345,7 +336,7 @@ export function HomePageClient() {
                                     className="h-full w-full object-cover"
                                   />
                                 ) : (
-                                  <User className="h-4 w-4 text-muted-foreground" />
+                                  <User className="h-3 w-3 text-muted-foreground" />
                                 )}
                               </div>
                               <TrustBadge

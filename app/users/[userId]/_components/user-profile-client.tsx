@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { LoginButton } from '@/components/auth/login-button';
+import { Footer } from '@/components/layout';
 import { type ReviewItem, ReviewList } from '@/components/reviews';
 import { TrustBadge } from '@/components/trust';
 import { Badge } from '@/components/ui/badge';
@@ -198,14 +199,29 @@ export function UserProfileClient({ userId }: Props) {
 
   if (!session?.user) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center py-12">
-          <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground mb-4">
-            ユーザープロフィールを表示するにはログインが必要です
-          </p>
-          <LoginButton />
+      <div className="min-h-screen flex flex-col">
+        <div className="container mx-auto px-4 py-4 flex-1">
+          {/* ヘッダー */}
+          <div className="flex items-center justify-between mb-6">
+            <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
+              xtrade
+            </Link>
+          </div>
+          {/* コンテンツ */}
+          <div className="text-center py-12">
+            <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-4">
+              ユーザープロフィールを表示するにはログインが必要です
+            </p>
+            <LoginButton />
+            <div className="mt-4">
+              <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
+                トップページへ戻る
+              </Link>
+            </div>
+          </div>
         </div>
+        <Footer showAd={false} />
       </div>
     );
   }
