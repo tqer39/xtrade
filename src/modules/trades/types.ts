@@ -37,6 +37,7 @@ export interface TradeParticipant {
   twitterUsername: string | null;
   image: string | null;
   trustGrade: TrustGrade | null;
+  trustScore: number | null;
 }
 
 /**
@@ -94,4 +95,28 @@ export class TradeTransitionError extends Error {
     super(message);
     this.name = 'TradeTransitionError';
   }
+}
+
+/**
+ * ユーザーの取引一覧アイテム
+ */
+export interface UserTradeListItem {
+  id: string;
+  roomSlug: string;
+  status: TradeStatus;
+  partner: {
+    id: string;
+    name: string | null;
+    twitterUsername: string | null;
+    image: string | null;
+  } | null;
+  items: Array<{
+    cardId: string;
+    cardName: string;
+    cardCategory: string | null;
+    cardImageUrl: string | null;
+    offeredByUserId: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
 }

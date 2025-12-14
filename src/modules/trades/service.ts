@@ -4,7 +4,14 @@ import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
 import type { TrustGrade } from '@/modules/trust';
 import { canParticipate, validateTransition, validateUncancel } from './state-machine';
-import type { CreateTradeInput, Trade, TradeDetail, TradeStatus, UpdateOfferInput } from './types';
+import type {
+  CreateTradeInput,
+  Trade,
+  TradeDetail,
+  TradeStatus,
+  UpdateOfferInput,
+  UserTradeListItem,
+} from './types';
 import { TradeTransitionError } from './types';
 
 /**
@@ -94,6 +101,7 @@ export async function getTradeDetail(roomSlug: string): Promise<TradeDetail | nu
       twitterUsername: schema.user.twitterUsername,
       image: schema.user.image,
       trustGrade: schema.user.trustGrade,
+      trustScore: schema.user.trustScore,
     })
     .from(schema.user)
     .where(eq(schema.user.id, trade.initiatorUserId))
@@ -112,6 +120,7 @@ export async function getTradeDetail(roomSlug: string): Promise<TradeDetail | nu
         twitterUsername: schema.user.twitterUsername,
         image: schema.user.image,
         trustGrade: schema.user.trustGrade,
+        trustScore: schema.user.trustScore,
       })
       .from(schema.user)
       .where(eq(schema.user.id, trade.responderUserId))
@@ -140,11 +149,13 @@ export async function getTradeDetail(roomSlug: string): Promise<TradeDetail | nu
     initiator: {
       ...initiator,
       trustGrade: initiator.trustGrade as TrustGrade | null,
+      trustScore: initiator.trustScore,
     },
     responder: responder
       ? {
           ...responder,
           trustGrade: responder.trustGrade as TrustGrade | null,
+          trustScore: responder.trustScore,
         }
       : null,
     initiatorItems,
@@ -313,20 +324,6 @@ export async function setResponder(trade: Trade, responderUserId: string): Promi
     .where(eq(schema.trade.id, trade.id));
 }
 
-export interface UserTradeListItem {
-  id: string;
-  roomSlug: string;
-  status: TradeStatus;
-  partner: {
-    id: string;
-    name: string | null;
-    twitterUsername: string | null;
-    image: string | null;
-  } | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 /**
  * ユーザーの取引一覧を取得
  */
@@ -362,7 +359,7 @@ export async function getUserTrades(
     .where(whereCondition)
     .orderBy(desc(schema.trade.updatedAt));
 
-  // 取引相手の情報を取得
+  // 取引相手の情報とアイテム情報を取得
   const results: UserTradeListItem[] = [];
 
   for (const trade of trades) {
@@ -385,11 +382,25 @@ export async function getUserTrades(
       partner = partners[0] ?? null;
     }
 
+    // トレードアイテムを取得
+    const tradeItems = await db
+      .select({
+        cardId: schema.tradeItem.cardId,
+        cardName: schema.card.name,
+        cardCategory: schema.card.category,
+        cardImageUrl: schema.card.imageUrl,
+        offeredByUserId: schema.tradeItem.offeredByUserId,
+      })
+      .from(schema.tradeItem)
+      .innerJoin(schema.card, eq(schema.tradeItem.cardId, schema.card.id))
+      .where(eq(schema.tradeItem.tradeId, trade.id));
+
     results.push({
       id: trade.id,
       roomSlug: trade.roomSlug,
       status: trade.status as TradeStatus,
       partner,
+      items: tradeItems,
       createdAt: trade.createdAt.toISOString(),
       updatedAt: trade.updatedAt.toISOString(),
     });

@@ -3,7 +3,7 @@
 import { ArrowLeft, Gift, ImageIcon, Loader2, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { LoginButton } from '@/components/auth';
 import { FavoriteButton } from '@/components/favorites/favorite-button';
@@ -33,6 +33,16 @@ export default function ItemDetailPage({ params }: Props) {
   const [isFavorited, setIsFavorited] = useState(false);
 
   const isLoggedIn = !!session?.user;
+
+  // 外部サイト（Twitter/X認証）からの遷移時はトップページに戻す
+  const handleBack = useCallback(() => {
+    const referrer = document.referrer;
+    if (!referrer || !referrer.includes(window.location.hostname)) {
+      router.push('/');
+    } else {
+      router.back();
+    }
+  }, [router]);
 
   useEffect(() => {
     async function fetchData() {
@@ -82,7 +92,7 @@ export default function ItemDetailPage({ params }: Props) {
         });
         if (res.ok) {
           const data = await res.json();
-          setIsFavorited(data.favorites?.[cardId] ?? false);
+          setIsFavorited(data.cards?.[cardId] ?? false);
         }
       } catch {
         // エラー時は何もしない
@@ -151,7 +161,7 @@ export default function ItemDetailPage({ params }: Props) {
         <div className="text-center py-12">
           <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button variant="outline" onClick={handleBack}>
             戻る
           </Button>
         </div>
@@ -183,7 +193,7 @@ export default function ItemDetailPage({ params }: Props) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.back()}
+          onClick={handleBack}
           className="gap-1 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />

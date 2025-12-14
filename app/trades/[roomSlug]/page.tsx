@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  ChevronRight,
   Clock,
   ImageIcon,
   Loader2,
@@ -48,6 +49,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { useMyCards } from '@/hooks/use-my-cards';
 import { useSession } from '@/lib/auth-client';
 import type { TradeDetail, TradeStatus } from '@/modules/trades/types';
+
+// 外部サイト（Twitter/X認証）からの遷移時はトップページに戻す
+function useHandleBack() {
+  const router = useRouter();
+  return useCallback(() => {
+    const referrer = document.referrer;
+    if (!referrer || !referrer.includes(window.location.hostname)) {
+      router.push('/');
+    } else {
+      router.back();
+    }
+  }, [router]);
+}
 
 interface Props {
   params: Promise<{ roomSlug: string }>;
@@ -104,6 +118,7 @@ const statusConfig: Record<
 export default function TradeRoomPage({ params }: Props) {
   const { roomSlug } = use(params);
   const router = useRouter();
+  const handleBack = useHandleBack();
   const { data: session, isPending: isSessionPending } = useSession();
   const { haveCards, isLoading: isCardsLoading } = useMyCards();
   const [trade, setTrade] = useState<TradeDetail | null>(null);
@@ -280,7 +295,7 @@ export default function TradeRoomPage({ params }: Props) {
         <div className="text-center py-12">
           <AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Button variant="outline" onClick={() => router.back()}>
+          <Button variant="outline" onClick={handleBack}>
             戻る
           </Button>
         </div>
@@ -332,7 +347,7 @@ export default function TradeRoomPage({ params }: Props) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.back()}
+            onClick={handleBack}
             className="gap-1 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -372,7 +387,29 @@ export default function TradeRoomPage({ params }: Props) {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{theirProfile.name ?? '名前未設定'}</p>
-                  <TrustBadge grade={theirProfile.trustGrade} size="sm" />
+                  {theirProfile.twitterUsername && (
+                    <a
+                      href={`https://x.com/${theirProfile.twitterUsername}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:text-primary"
+                    >
+                      @{theirProfile.twitterUsername}
+                    </a>
+                  )}
+                  <TrustBadge
+                    grade={theirProfile.trustGrade}
+                    score={theirProfile.trustScore}
+                    showScore
+                    size="sm"
+                  />
+                  <Link
+                    href={`/users/${theirProfile.id}/trust`}
+                    className="flex items-center gap-0.5 text-xs text-primary hover:underline"
+                  >
+                    スコア詳細
+                    <ChevronRight className="w-3 h-3" />
+                  </Link>
                 </div>
               </div>
             ) : (
@@ -420,7 +457,29 @@ export default function TradeRoomPage({ params }: Props) {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{myProfile.name ?? '名前未設定'}</p>
-                  <TrustBadge grade={myProfile.trustGrade} size="sm" />
+                  {myProfile.twitterUsername && (
+                    <a
+                      href={`https://x.com/${myProfile.twitterUsername}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:text-primary"
+                    >
+                      @{myProfile.twitterUsername}
+                    </a>
+                  )}
+                  <TrustBadge
+                    grade={myProfile.trustGrade}
+                    score={myProfile.trustScore}
+                    showScore
+                    size="sm"
+                  />
+                  <Link
+                    href={`/users/${myProfile.id}/trust`}
+                    className="flex items-center gap-0.5 text-xs text-primary hover:underline"
+                  >
+                    スコア詳細
+                    <ChevronRight className="w-3 h-3" />
+                  </Link>
                 </div>
               </div>
             )}

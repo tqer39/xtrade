@@ -6,12 +6,13 @@ import {
   Edit2,
   Gift,
   ImageIcon,
+  Plus,
   Search,
   Twitter,
   User,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { LoginButton } from '@/components/auth/login-button';
@@ -31,6 +32,19 @@ import { useSession } from '@/lib/auth-client';
 import type { Card as CardType } from '@/modules/cards/types';
 import type { UserTradeListItem } from '@/modules/trades';
 import type { TrustGrade } from '@/modules/trust';
+
+// 外部サイト（Twitter/X認証）からの遷移時はトップページに戻す
+function useHandleBack() {
+  const router = useRouter();
+  return useCallback(() => {
+    const referrer = document.referrer;
+    if (!referrer || !referrer.includes(window.location.hostname)) {
+      router.push('/');
+    } else {
+      router.back();
+    }
+  }, [router]);
+}
 
 interface UserTrustData {
   user: {
@@ -67,6 +81,8 @@ interface WantCard {
 
 export function UserProfileClient({ userId }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const handleBack = useHandleBack();
   const { data: session, isPending: isSessionPending } = useSession();
   const [userData, setUserData] = useState<UserTrustData | null>(null);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -83,6 +99,19 @@ export function UserProfileClient({ userId }: Props) {
   const [isSavingWantText, setIsSavingWantText] = useState(false);
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
   const wantTextRef = useRef<HTMLTextAreaElement>(null);
+
+  // URLクエリパラメータからタブを取得（デフォルトは'listings'）
+  const activeTab = searchParams.get('tab') || 'listings';
+
+  // タブ変更時にURLを更新
+  const handleTabChange = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', value);
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   // テキストエリアの高さを内容に応じて自動調整（最大50行分 = 約750px）
   const adjustTextareaHeight = useCallback(() => {
@@ -286,7 +315,7 @@ export function UserProfileClient({ userId }: Props) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.back()}
+          onClick={handleBack}
           className="gap-1 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -397,11 +426,18 @@ export function UserProfileClient({ userId }: Props) {
         )}
       </div>
 
-      <Tabs defaultValue="listings">
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="mb-4 flex-wrap h-auto gap-1">
           <TabsTrigger value="listings">出品中 ({listings.length})</TabsTrigger>
           <TabsTrigger value="wantCards">欲しいもの ({wantCards.length})</TabsTrigger>
-          <TabsTrigger value="activeTrades">トレード中 ({activeTrades.length})</TabsTrigger>
+          {isOwnProfile && (
+            <TabsTrigger value="draftTrades">
+              下書き ({activeTrades.filter((t) => t.status === 'draft').length})
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="activeTrades">
+            トレード中 ({activeTrades.filter((t) => t.status !== 'draft').length})
+          </TabsTrigger>
           <TabsTrigger value="completedTrades">成約済 ({completedTrades.length})</TabsTrigger>
           {isOwnProfile && (
             <TabsTrigger value="reviews">レビュー ({userData.stats.reviewCount})</TabsTrigger>
@@ -409,6 +445,17 @@ export function UserProfileClient({ userId }: Props) {
         </TabsList>
 
         <TabsContent value="listings">
+          {/* 出品するボタン（自分のプロフィールのみ） */}
+          {isOwnProfile && (
+            <div className="mb-4">
+              <Link href={`/items/search?mode=have&returnTo=/users/${userId}?tab=listings`}>
+                <Button className="w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  出品する
+                </Button>
+              </Link>
+            </div>
+          )}
           {listings.length === 0 ? (
             <Card>
               <CardContent className="py-8">
@@ -529,6 +576,17 @@ export function UserProfileClient({ userId }: Props) {
         </TabsContent>
 
         <TabsContent value="wantCards">
+          {/* 欲しいもの追加ボタン（自分のプロフィールのみ） */}
+          {isOwnProfile && (
+            <div className="mb-4">
+              <Link href={`/items/search?mode=want&returnTo=/users/${userId}?tab=wantCards`}>
+                <Button className="w-full sm:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  欲しいものを追加
+                </Button>
+              </Link>
+            </div>
+          )}
           {wantCards.length === 0 ? (
             <Card>
               <CardContent className="py-8">
@@ -569,8 +627,138 @@ export function UserProfileClient({ userId }: Props) {
           )}
         </TabsContent>
 
+        {/* 下書きタブ（自分のプロフィールのみ） */}
+        {isOwnProfile && (
+          <TabsContent value="draftTrades">
+            {activeTrades.filter((t) => t.status === 'draft').length === 0 ? (
+              <Card>
+                <CardContent className="py-8">
+                  <p className="text-muted-foreground text-center">下書きのトレードはありません</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {activeTrades
+                  .filter((t) => t.status === 'draft')
+                  .map((trade) => {
+                    const myItems = trade.items?.filter((i) => i.offeredByUserId === userId) ?? [];
+                    const partnerItems =
+                      trade.items?.filter((i) => i.offeredByUserId !== userId) ?? [];
+                    return (
+                      <Link key={trade.id} href={`/trades/${trade.roomSlug}`} className="block">
+                        <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                          <CardContent className="p-3">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
+                                {trade.partner?.image ? (
+                                  <img
+                                    src={trade.partner.image}
+                                    alt={trade.partner.name ?? ''}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <User className="h-5 w-5 text-muted-foreground" />
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium truncate">
+                                  {trade.partner?.twitterUsername
+                                    ? `@${trade.partner.twitterUsername}`
+                                    : (trade.partner?.name ?? '相手未確定')}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(trade.updatedAt).toLocaleDateString('ja-JP')}
+                                </p>
+                              </div>
+                              <Badge variant="outline" className="shrink-0">
+                                下書き
+                              </Badge>
+                            </div>
+                            {/* アイテム情報 */}
+                            {(myItems.length > 0 || partnerItems.length > 0) && (
+                              <div className="mt-3 pt-3 border-t">
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                  {/* 相手のアイテム */}
+                                  <div>
+                                    <p className="text-muted-foreground mb-1">相手のアイテム</p>
+                                    {partnerItems.length > 0 ? (
+                                      <div className="flex gap-1">
+                                        {partnerItems.slice(0, 3).map((item) => (
+                                          <div
+                                            key={item.cardId}
+                                            className="h-10 w-10 overflow-hidden rounded bg-muted"
+                                          >
+                                            {item.cardImageUrl ? (
+                                              <img
+                                                src={item.cardImageUrl}
+                                                alt={item.cardName}
+                                                className="h-full w-full object-cover"
+                                              />
+                                            ) : (
+                                              <div className="flex h-full w-full items-center justify-center">
+                                                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                        {partnerItems.length > 3 && (
+                                          <div className="h-10 w-10 flex items-center justify-center text-muted-foreground">
+                                            +{partnerItems.length - 3}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <p className="text-muted-foreground">なし</p>
+                                    )}
+                                  </div>
+                                  {/* 自分のアイテム */}
+                                  <div>
+                                    <p className="text-muted-foreground mb-1">自分のアイテム</p>
+                                    {myItems.length > 0 ? (
+                                      <div className="flex gap-1">
+                                        {myItems.slice(0, 3).map((item) => (
+                                          <div
+                                            key={item.cardId}
+                                            className="h-10 w-10 overflow-hidden rounded bg-muted"
+                                          >
+                                            {item.cardImageUrl ? (
+                                              <img
+                                                src={item.cardImageUrl}
+                                                alt={item.cardName}
+                                                className="h-full w-full object-cover"
+                                              />
+                                            ) : (
+                                              <div className="flex h-full w-full items-center justify-center">
+                                                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                        {myItems.length > 3 && (
+                                          <div className="h-10 w-10 flex items-center justify-center text-muted-foreground">
+                                            +{myItems.length - 3}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <p className="text-muted-foreground">なし</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    );
+                  })}
+              </div>
+            )}
+          </TabsContent>
+        )}
+
         <TabsContent value="activeTrades">
-          {activeTrades.length === 0 ? (
+          {activeTrades.filter((t) => t.status !== 'draft').length === 0 ? (
             <Card>
               <CardContent className="py-8">
                 <p className="text-muted-foreground text-center">
@@ -580,44 +768,120 @@ export function UserProfileClient({ userId }: Props) {
             </Card>
           ) : (
             <div className="space-y-2">
-              {activeTrades.map((trade) => (
-                <Link key={trade.id} href={`/trades/${trade.roomSlug}`} className="block">
-                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
-                          {trade.partner?.image ? (
-                            <img
-                              src={trade.partner.image}
-                              alt={trade.partner.name ?? ''}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-5 w-5 text-muted-foreground" />
+              {activeTrades
+                .filter((t) => t.status !== 'draft')
+                .map((trade) => {
+                  const myItems = trade.items?.filter((i) => i.offeredByUserId === userId) ?? [];
+                  const partnerItems =
+                    trade.items?.filter((i) => i.offeredByUserId !== userId) ?? [];
+                  return (
+                    <Link key={trade.id} href={`/trades/${trade.roomSlug}`} className="block">
+                      <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
+                              {trade.partner?.image ? (
+                                <img
+                                  src={trade.partner.image}
+                                  alt={trade.partner.name ?? ''}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium truncate">
+                                {trade.partner?.twitterUsername
+                                  ? `@${trade.partner.twitterUsername}`
+                                  : (trade.partner?.name ?? '相手未確定')}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(trade.updatedAt).toLocaleDateString('ja-JP')}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="shrink-0">
+                              {trade.status === 'proposed' ? '提案中' : '合意済'}
+                            </Badge>
+                          </div>
+                          {/* アイテム情報 */}
+                          {(myItems.length > 0 || partnerItems.length > 0) && (
+                            <div className="mt-3 pt-3 border-t">
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                {/* 相手のアイテム */}
+                                <div>
+                                  <p className="text-muted-foreground mb-1">相手のアイテム</p>
+                                  {partnerItems.length > 0 ? (
+                                    <div className="flex gap-1">
+                                      {partnerItems.slice(0, 3).map((item) => (
+                                        <div
+                                          key={item.cardId}
+                                          className="h-10 w-10 overflow-hidden rounded bg-muted"
+                                        >
+                                          {item.cardImageUrl ? (
+                                            <img
+                                              src={item.cardImageUrl}
+                                              alt={item.cardName}
+                                              className="h-full w-full object-cover"
+                                            />
+                                          ) : (
+                                            <div className="flex h-full w-full items-center justify-center">
+                                              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                      {partnerItems.length > 3 && (
+                                        <div className="h-10 w-10 flex items-center justify-center text-muted-foreground">
+                                          +{partnerItems.length - 3}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-muted-foreground">なし</p>
+                                  )}
+                                </div>
+                                {/* 自分のアイテム */}
+                                <div>
+                                  <p className="text-muted-foreground mb-1">自分のアイテム</p>
+                                  {myItems.length > 0 ? (
+                                    <div className="flex gap-1">
+                                      {myItems.slice(0, 3).map((item) => (
+                                        <div
+                                          key={item.cardId}
+                                          className="h-10 w-10 overflow-hidden rounded bg-muted"
+                                        >
+                                          {item.cardImageUrl ? (
+                                            <img
+                                              src={item.cardImageUrl}
+                                              alt={item.cardName}
+                                              className="h-full w-full object-cover"
+                                            />
+                                          ) : (
+                                            <div className="flex h-full w-full items-center justify-center">
+                                              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                      {myItems.length > 3 && (
+                                        <div className="h-10 w-10 flex items-center justify-center text-muted-foreground">
+                                          +{myItems.length - 3}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-muted-foreground">なし</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate">
-                            {trade.partner?.twitterUsername
-                              ? `@${trade.partner.twitterUsername}`
-                              : (trade.partner?.name ?? '相手未確定')}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(trade.updatedAt).toLocaleDateString('ja-JP')}
-                          </p>
-                        </div>
-                        <Badge variant="outline" className="shrink-0">
-                          {trade.status === 'draft'
-                            ? '下書き'
-                            : trade.status === 'proposed'
-                              ? '提案中'
-                              : '合意済'}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
             </div>
           )}
         </TabsContent>
@@ -631,40 +895,117 @@ export function UserProfileClient({ userId }: Props) {
             </Card>
           ) : (
             <div className="space-y-2">
-              {completedTrades.map((trade) => (
-                <Link key={trade.id} href={`/trades/${trade.roomSlug}`} className="block">
-                  <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
-                          {trade.partner?.image ? (
-                            <img
-                              src={trade.partner.image}
-                              alt={trade.partner.name ?? ''}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-5 w-5 text-muted-foreground" />
-                          )}
+              {completedTrades.map((trade) => {
+                const myItems = trade.items?.filter((i) => i.offeredByUserId === userId) ?? [];
+                const partnerItems = trade.items?.filter((i) => i.offeredByUserId !== userId) ?? [];
+                return (
+                  <Link key={trade.id} href={`/trades/${trade.roomSlug}`} className="block">
+                    <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                      <CardContent className="p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
+                            {trade.partner?.image ? (
+                              <img
+                                src={trade.partner.image}
+                                alt={trade.partner.name ?? ''}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <User className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">
+                              {trade.partner?.twitterUsername
+                                ? `@${trade.partner.twitterUsername}`
+                                : (trade.partner?.name ?? '相手未確定')}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(trade.updatedAt).toLocaleDateString('ja-JP')}
+                            </p>
+                          </div>
+                          <Badge variant="secondary" className="shrink-0">
+                            成約済
+                          </Badge>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate">
-                            {trade.partner?.twitterUsername
-                              ? `@${trade.partner.twitterUsername}`
-                              : (trade.partner?.name ?? '相手未確定')}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(trade.updatedAt).toLocaleDateString('ja-JP')}
-                          </p>
-                        </div>
-                        <Badge variant="secondary" className="shrink-0">
-                          成約済
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                        {/* アイテム情報 */}
+                        {(myItems.length > 0 || partnerItems.length > 0) && (
+                          <div className="mt-3 pt-3 border-t">
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              {/* 相手のアイテム */}
+                              <div>
+                                <p className="text-muted-foreground mb-1">相手のアイテム</p>
+                                {partnerItems.length > 0 ? (
+                                  <div className="flex gap-1">
+                                    {partnerItems.slice(0, 3).map((item) => (
+                                      <div
+                                        key={item.cardId}
+                                        className="h-10 w-10 overflow-hidden rounded bg-muted"
+                                      >
+                                        {item.cardImageUrl ? (
+                                          <img
+                                            src={item.cardImageUrl}
+                                            alt={item.cardName}
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="flex h-full w-full items-center justify-center">
+                                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                    {partnerItems.length > 3 && (
+                                      <div className="h-10 w-10 flex items-center justify-center text-muted-foreground">
+                                        +{partnerItems.length - 3}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="text-muted-foreground">なし</p>
+                                )}
+                              </div>
+                              {/* 自分のアイテム */}
+                              <div>
+                                <p className="text-muted-foreground mb-1">自分のアイテム</p>
+                                {myItems.length > 0 ? (
+                                  <div className="flex gap-1">
+                                    {myItems.slice(0, 3).map((item) => (
+                                      <div
+                                        key={item.cardId}
+                                        className="h-10 w-10 overflow-hidden rounded bg-muted"
+                                      >
+                                        {item.cardImageUrl ? (
+                                          <img
+                                            src={item.cardImageUrl}
+                                            alt={item.cardName}
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="flex h-full w-full items-center justify-center">
+                                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                    {myItems.length > 3 && (
+                                      <div className="h-10 w-10 flex items-center justify-center text-muted-foreground">
+                                        +{myItems.length - 3}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="text-muted-foreground">なし</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </TabsContent>
