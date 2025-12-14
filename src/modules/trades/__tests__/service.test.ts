@@ -249,7 +249,7 @@ describe('trades/service', () => {
       expect(mockDelete).toHaveBeenCalled();
     });
 
-    it('proposed 状態でオファー更新可能', async () => {
+    it('proposed 状態ではオファー更新不可', async () => {
       const trade = {
         id: 'trade-1',
         roomSlug: 'abc123',
@@ -263,7 +263,9 @@ describe('trades/service', () => {
         updatedAt: new Date(),
       };
 
-      await expect(updateOffer(trade, 'user-1', { items: [] })).resolves.not.toThrow();
+      await expect(updateOffer(trade, 'user-1', { items: [] })).rejects.toThrow(
+        TradeTransitionError
+      );
     });
 
     it('agreed 状態ではオファー更新不可', async () => {

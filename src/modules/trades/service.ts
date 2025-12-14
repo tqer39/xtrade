@@ -172,8 +172,8 @@ export async function updateOffer(
     throw new TradeTransitionError('You are not a participant in this trade', 'UNAUTHORIZED');
   }
 
-  // draft または proposed 状態でのみオファー更新可能
-  if (!['draft', 'proposed'].includes(trade.status)) {
+  // draft 状態でのみオファー更新可能（提案後は編集不可）
+  if (trade.status !== 'draft') {
     throw new TradeTransitionError('Cannot update offer in current status', 'INVALID_TRANSITION');
   }
 
