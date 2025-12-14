@@ -30,7 +30,7 @@ vi.mock('@/db/schema', () => ({
     id: 'card.id',
     name: 'card.name',
     category: 'card.category',
-    rarity: 'card.rarity',
+    description: 'card.description',
     imageUrl: 'card.imageUrl',
     createdByUserId: 'card.createdByUserId',
     createdAt: 'card.createdAt',
@@ -44,11 +44,13 @@ vi.mock('@/db/schema', () => ({
     trustGrade: 'user.trustGrade',
     trustScore: 'user.trustScore',
   },
-  userFavoriteCard: {
-    id: 'userFavoriteCard.id',
-    userId: 'userFavoriteCard.userId',
-    cardId: 'userFavoriteCard.cardId',
-    createdAt: 'userFavoriteCard.createdAt',
+  userWantCard: {
+    id: 'userWantCard.id',
+    userId: 'userWantCard.userId',
+    cardId: 'userWantCard.cardId',
+    priority: 'userWantCard.priority',
+    createdAt: 'userWantCard.createdAt',
+    updatedAt: 'userWantCard.updatedAt',
   },
   userFavoriteUser: {
     id: 'userFavoriteUser.id',
