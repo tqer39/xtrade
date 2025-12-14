@@ -1,6 +1,15 @@
 'use client';
 
-import { ArrowLeft, ChevronRight, Edit2, ImageIcon, Search, Twitter, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronRight,
+  Edit2,
+  Gift,
+  ImageIcon,
+  Search,
+  Twitter,
+  User,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -71,6 +80,7 @@ export function UserProfileClient({ userId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [bio, setBio] = useState<string>('');
+  const [wantText, setWantText] = useState<string>('');
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [isSavingBio, setIsSavingBio] = useState(false);
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
@@ -142,6 +152,7 @@ export function UserProfileClient({ userId }: Props) {
         if (userRes.ok) {
           const userData = await userRes.json();
           setBio(userData.user?.bio ?? '');
+          setWantText(userData.user?.wantText ?? '');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'エラーが発生しました');
@@ -357,6 +368,17 @@ export function UserProfileClient({ userId }: Props) {
           </div>
         )}
       </div>
+
+      {/* 欲しいもの（wantText） */}
+      {wantText && (
+        <div className="mb-6 p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-1">
+            <Gift className="h-4 w-4" />
+            <span className="font-medium">欲しいもの</span>
+          </div>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{wantText}</p>
+        </div>
+      )}
 
       <Tabs defaultValue="listings">
         <TabsList className="mb-4 flex-wrap h-auto gap-1">

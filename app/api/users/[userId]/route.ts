@@ -22,6 +22,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       image: schema.user.image,
       twitterUsername: schema.user.twitterUsername,
       bio: schema.user.bio,
+      wantText: schema.user.wantText,
       trustScore: schema.user.trustScore,
       trustGrade: schema.user.trustGrade,
     })
