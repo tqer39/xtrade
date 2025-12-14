@@ -193,6 +193,7 @@ export interface CardCreator {
   trustScore: number | null;
   trustGrade: string | null;
   bio?: string | null;
+  wantCards?: CardOwnerWantCard[];
 }
 
 /**

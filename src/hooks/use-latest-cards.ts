@@ -5,7 +5,7 @@ import type { CardWithCreator } from '@/modules/cards/types';
 
 interface UseLatestCardsOptions {
   limit?: number;
-  page?: number;
+  initialPage?: number;
   query?: string;
 }
 
@@ -22,12 +22,12 @@ interface UseLatestCardsReturn {
 }
 
 export function useLatestCards(options: UseLatestCardsOptions = {}): UseLatestCardsReturn {
-  const { limit = 12 } = options;
+  const { limit = 12, initialPage = 1 } = options;
   const [latestCards, setLatestCards] = useState<CardWithCreator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(options.page ?? 1);
+  const [page, setPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(0);
   const [query, setQuery] = useState(options.query ?? '');
 
@@ -41,7 +41,7 @@ export function useLatestCards(options: UseLatestCardsOptions = {}): UseLatestCa
         params.set('q', query);
       }
 
-      const res = await fetch(`/api/cards/latest?${params.toString()}`);
+      const res = await fetch(`/api/items/latest?${params.toString()}`);
       if (!res.ok) {
         throw new Error('Failed to fetch latest cards');
       }

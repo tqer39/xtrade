@@ -359,6 +359,43 @@ export async function searchLatestCardsWithCreator(
     .limit(safeLimit)
     .offset(offset);
 
+  // 作成者のIDを収集
+  const creatorIds = cards.map((c) => c.creator?.id).filter((id): id is string => id != null);
+
+  // 作成者の欲しいカードを一括取得（N+1回避）
+  const creatorWantCards =
+    creatorIds.length > 0
+      ? await db
+          .select({
+            userId: schema.userWantCard.userId,
+            cardId: schema.userWantCard.cardId,
+            cardName: schema.card.name,
+            cardImageUrl: schema.card.imageUrl,
+            priority: schema.userWantCard.priority,
+          })
+          .from(schema.userWantCard)
+          .innerJoin(schema.card, eq(schema.userWantCard.cardId, schema.card.id))
+          .where(sql`${schema.userWantCard.userId} IN ${creatorIds}`)
+          .orderBy(sql`${schema.userWantCard.priority} DESC NULLS LAST`)
+      : [];
+
+  // ユーザーIDごとにwantCardsをグループ化（上位3件）
+  const wantCardsByUser = new Map<
+    string,
+    { cardId: string; cardName: string; cardImageUrl: string | null }[]
+  >();
+  for (const wc of creatorWantCards) {
+    const existing = wantCardsByUser.get(wc.userId) ?? [];
+    if (existing.length < 3) {
+      existing.push({
+        cardId: wc.cardId,
+        cardName: wc.cardName,
+        cardImageUrl: wc.cardImageUrl,
+      });
+      wantCardsByUser.set(wc.userId, existing);
+    }
+  }
+
   return {
     cards: cards.map((card) => ({
       id: card.id,
@@ -378,6 +415,7 @@ export async function searchLatestCardsWithCreator(
             trustScore: card.creator.trustScore,
             trustGrade: card.creator.trustGrade,
             bio: card.creator.bio,
+            wantCards: wantCardsByUser.get(card.creator.id) ?? [],
           }
         : null,
     })),

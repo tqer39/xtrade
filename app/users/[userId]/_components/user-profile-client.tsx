@@ -236,6 +236,9 @@ export function UserProfileClient({ userId }: Props) {
     <div className="container mx-auto py-8 px-4 max-w-2xl">
       {/* ヘッダー */}
       <div className="mb-6 flex items-center justify-between">
+        <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
+          xtrade
+        </Link>
         <Button
           variant="ghost"
           size="sm"
@@ -245,9 +248,6 @@ export function UserProfileClient({ userId }: Props) {
           <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
-        <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
-          xtrade
-        </Link>
       </div>
 
       {/* ユーザーヘッダー */}
@@ -348,7 +348,9 @@ export function UserProfileClient({ userId }: Props) {
           <TabsTrigger value="wantCards">欲しいもの ({wantCards.length})</TabsTrigger>
           <TabsTrigger value="activeTrades">取引中 ({activeTrades.length})</TabsTrigger>
           <TabsTrigger value="completedTrades">成約済 ({completedTrades.length})</TabsTrigger>
-          <TabsTrigger value="reviews">レビュー ({userData.stats.reviewCount})</TabsTrigger>
+          {isOwnProfile && (
+            <TabsTrigger value="reviews">レビュー ({userData.stats.reviewCount})</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="listings">
@@ -394,7 +396,7 @@ export function UserProfileClient({ userId }: Props) {
                     return (
                       <Link
                         key={card.id}
-                        href={`/cards/${card.id}`}
+                        href={`/items/${card.id}`}
                         className="mb-1 break-inside-avoid block"
                       >
                         <div className="relative overflow-hidden rounded-lg bg-muted cursor-pointer hover:opacity-90 transition-opacity">
@@ -430,7 +432,7 @@ export function UserProfileClient({ userId }: Props) {
               ) : (
                 <div className="space-y-2">
                   {filteredListings.map((card) => (
-                    <Link key={card.id} href={`/cards/${card.id}`} className="block">
+                    <Link key={card.id} href={`/items/${card.id}`} className="block">
                       <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
                         <CardContent className="p-3">
                           <div className="flex items-start gap-3">
@@ -483,7 +485,7 @@ export function UserProfileClient({ userId }: Props) {
               {wantCards.map((wantCard) => (
                 <Link
                   key={wantCard.id}
-                  href={`/cards/${wantCard.card.id}`}
+                  href={`/items/${wantCard.card.id}`}
                   className="mb-1 break-inside-avoid block"
                 >
                   <div className="relative overflow-hidden rounded-lg bg-muted cursor-pointer hover:opacity-90 transition-opacity">
@@ -610,13 +612,15 @@ export function UserProfileClient({ userId }: Props) {
           )}
         </TabsContent>
 
-        <TabsContent value="reviews">
-          <ReviewList
-            reviews={reviews}
-            currentUserId={session.user.id}
-            emptyMessage="まだレビューがありません"
-          />
-        </TabsContent>
+        {isOwnProfile && (
+          <TabsContent value="reviews">
+            <ReviewList
+              reviews={reviews}
+              currentUserId={session.user.id}
+              emptyMessage="まだレビューがありません"
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

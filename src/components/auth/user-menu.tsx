@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { signOut, useSession } from '@/lib/auth-client';
+import { XIcon } from '../icons/x-icon';
 import { LoginButton } from './login-button';
 
 interface UserData {
@@ -54,9 +55,14 @@ export function UserMenu() {
             className="w-8 h-8 rounded-full"
           />
         )}
-        <span className="text-sm text-muted-foreground">
-          {twitterUsername ? `@${twitterUsername}` : session.user.name}
-        </span>
+        <div className="flex flex-col items-start">
+          <span className="text-sm">{session.user.name}</span>
+          {twitterUsername && (
+            <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+              <XIcon className="h-3 w-3" />@{twitterUsername}
+            </span>
+          )}
+        </div>
       </Link>
       {isAdmin && (
         <Button variant="default" size="sm" asChild className="text-xs">

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ImageIcon, Loader2, Mail, User } from 'lucide-react';
+import { ArrowLeft, Gift, ImageIcon, Loader2, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
@@ -15,11 +15,12 @@ import type { CardOwner, CardWithCreator } from '@/modules/cards/types';
 import type { TrustGrade } from '@/modules/trust';
 
 interface Props {
-  params: Promise<{ cardId: string }>;
+  params: Promise<{ itemId: string }>;
 }
 
-export default function CardDetailPage({ params }: Props) {
-  const { cardId } = use(params);
+export default function ItemDetailPage({ params }: Props) {
+  const { itemId } = use(params);
+  const cardId = itemId; // 内部的にはcardIdとして扱う
   const router = useRouter();
   const { data: session } = useSession();
   const [card, setCard] = useState<CardWithCreator | null>(null);
@@ -34,8 +35,8 @@ export default function CardDetailPage({ params }: Props) {
       try {
         // カード詳細と所有者一覧を並列取得
         const [cardRes, ownersRes] = await Promise.all([
-          fetch(`/api/cards/${cardId}`),
-          fetch(`/api/cards/${cardId}/owners`),
+          fetch(`/api/items/${cardId}`),
+          fetch(`/api/items/${cardId}/owners`),
         ]);
 
         if (!cardRes.ok) {
@@ -121,6 +122,9 @@ export default function CardDetailPage({ params }: Props) {
     <div className="container mx-auto py-8 px-4 max-w-2xl">
       {/* ヘッダー */}
       <div className="mb-6 flex items-center justify-between">
+        <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
+          xtrade
+        </Link>
         <Button
           variant="ghost"
           size="sm"
@@ -130,9 +134,6 @@ export default function CardDetailPage({ params }: Props) {
           <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
-        <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
-          xtrade
-        </Link>
       </div>
 
       {/* カード画像 */}
@@ -219,6 +220,44 @@ export default function CardDetailPage({ params }: Props) {
                       </Button>
                     )}
                   </div>
+                  {/* 所有者の欲しいもの */}
+                  {owner.wantCards && owner.wantCards.length > 0 && (
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-2">
+                        <Gift className="h-3.5 w-3.5" />
+                        <span>欲しいもの</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {owner.wantCards.slice(0, 5).map((wantCard) => (
+                          <Link
+                            key={wantCard.cardId}
+                            href={`/items/${wantCard.cardId}`}
+                            className="flex items-center gap-1.5 bg-muted rounded-full px-2 py-1 hover:bg-muted/80 transition-colors"
+                          >
+                            {wantCard.cardImageUrl ? (
+                              <img
+                                src={wantCard.cardImageUrl}
+                                alt={wantCard.cardName}
+                                className="w-5 h-5 rounded object-cover"
+                              />
+                            ) : (
+                              <div className="w-5 h-5 rounded bg-zinc-700 flex items-center justify-center">
+                                <ImageIcon className="h-3 w-3 text-zinc-500" />
+                              </div>
+                            )}
+                            <span className="text-xs truncate max-w-[100px]">
+                              {wantCard.cardName}
+                            </span>
+                          </Link>
+                        ))}
+                        {owner.wantCards.length > 5 && (
+                          <span className="text-xs text-muted-foreground self-center">
+                            他{owner.wantCards.length - 5}件
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

@@ -32,7 +32,7 @@ describe('useLatestCards', () => {
 
       expect(result.current.latestCards).toEqual(mockCards);
       expect(result.current.error).toBeNull();
-      expect(global.fetch).toHaveBeenCalledWith('/api/cards/latest?limit=20');
+      expect(global.fetch).toHaveBeenCalledWith('/api/items/latest?limit=12&page=1');
     });
 
     it('limit パラメーターを指定できる', async () => {
@@ -41,10 +41,10 @@ describe('useLatestCards', () => {
         json: () => Promise.resolve({ cards: [] }),
       });
 
-      renderHook(() => useLatestCards(50));
+      renderHook(() => useLatestCards({ limit: 50 }));
 
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith('/api/cards/latest?limit=50');
+        expect(global.fetch).toHaveBeenCalledWith('/api/items/latest?limit=50&page=1');
       });
     });
 

@@ -2,17 +2,18 @@ import { NextResponse } from 'next/server';
 import { getCardById, getCardOwnersWithWantCards } from '@/modules/cards';
 
 interface RouteParams {
-  params: Promise<{ cardId: string }>;
+  params: Promise<{ itemId: string }>;
 }
 
 /**
- * GET: カードを持っているユーザー一覧を取得（公開API、認証不要）
+ * GET: アイテムを持っているユーザー一覧を取得（公開API、認証不要）
  *
  * Response: { card: Card, owners: CardOwner[] }
  * 各所有者には欲しいカード情報（wantCards）も含まれる
  */
 export async function GET(_request: Request, { params }: RouteParams) {
-  const { cardId } = await params;
+  const { itemId } = await params;
+  const cardId = itemId; // 内部的にはcardIdとして扱う
 
   // カードの存在確認
   const card = await getCardById(cardId);

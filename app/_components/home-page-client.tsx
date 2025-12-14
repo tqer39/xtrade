@@ -1,7 +1,8 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, ImageIcon, Search, Shield, User, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Gift, ImageIcon, Search, Shield, User, X } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { UserMenu } from '@/components/auth';
 import { Footer } from '@/components/layout';
@@ -18,10 +19,14 @@ import { useLatestCards } from '@/hooks/use-latest-cards';
 import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
 import type { TrustGrade } from '@/modules/trust/types';
-import { CardOwnerList } from './card-owner-list';
 
 export function HomePageClient() {
   const { data: session, isPending: isSessionPending } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // URLからページ番号を取得
+  const initialPage = parseInt(searchParams.get('p') ?? '1', 10);
 
   // 検索入力値とデバウンス
   const [searchInput, setSearchInput] = useState('');
@@ -36,15 +41,28 @@ export function HomePageClient() {
     setPage,
     setQuery,
     refetch,
-  } = useLatestCards({ limit: 12 });
+  } = useLatestCards({ limit: 12, initialPage });
 
   // デバウンスされた検索値を反映
   useEffect(() => {
     setQuery(debouncedSearch);
   }, [debouncedSearch, setQuery]);
 
+  // ページ変更時にURLを更新
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    const params = new URLSearchParams(searchParams.toString());
+    if (newPage === 1) {
+      params.delete('p');
+    } else {
+      params.set('p', newPage.toString());
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/?${queryString}` : '/', { scroll: false });
+  };
+
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
-  const [selectedCardForOwners, setSelectedCardForOwners] = useState<string | null>(null);
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
 
   // 広告スロット ID（環境変数から取得）
   const adSlot = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FOOTER;
@@ -105,159 +123,185 @@ export function HomePageClient() {
           </div>
         </div>
 
-        {/* カード所有者一覧表示（選択時） */}
-        {selectedCardForOwners ? (
-          <CardOwnerList
-            cardId={selectedCardForOwners}
-            onBack={() => setSelectedCardForOwners(null)}
-            isLoggedIn={isLoggedIn}
-            currentUserId={session?.user?.id}
-          />
-        ) : (
-          <>
-            {/* 最近登録されたカード一覧 */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-medium">最近登録されたアイテム</h2>
-                {isHydrated && <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
-              </div>
+        {/* 最近登録されたカード一覧 */}
+        <>
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-medium">最近登録されたアイテム</h2>
+              {isHydrated && <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
+            </div>
 
-              {/* インライン検索フォーム */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="アイテム名で検索..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  className="pl-9 pr-9"
-                />
-                {searchInput && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchInput('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              {isLatestLoading ? (
-                <div
-                  className={
-                    !isHydrated || viewMode === 'grid'
-                      ? 'columns-2 sm:columns-3 md:columns-4 gap-0.5'
-                      : 'space-y-2'
-                  }
+            {/* インライン検索フォーム */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="アイテム名で検索..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="pl-9 pr-9"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((key) => (
-                    <Skeleton
-                      key={key}
-                      className={
-                        !isHydrated || viewMode === 'grid'
-                          ? 'aspect-[3/4] w-full mb-0.5 rounded-sm'
-                          : 'h-20 w-full'
-                      }
-                    />
-                  ))}
-                </div>
-              ) : latestCards.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  {searchInput
-                    ? `「${searchInput}」に一致するアイテムが見つかりませんでした`
-                    : 'まだアイテムが登録されていません'}
-                </p>
-              ) : !isHydrated || viewMode === 'grid' ? (
-                <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
-                  {latestCards.map((card) => (
-                    <button
-                      type="button"
-                      key={card.id}
-                      className="relative w-full mb-0.5 rounded-sm overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110 text-left"
-                      onClick={() => setSelectedCardForOwners(card.id)}
-                    >
-                      <div className="relative w-full">
-                        {card.imageUrl ? (
-                          <img
-                            src={card.imageUrl}
-                            alt={card.name}
-                            className="w-full h-auto object-cover"
-                          />
-                        ) : (
-                          <div className="aspect-[3/4] flex items-center justify-center bg-zinc-800">
-                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-                      {/* 作成者の信頼性スコア（左上） */}
-                      {card.creator && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="absolute top-1 left-1 flex items-center gap-1 bg-black/60 rounded-full pl-0.5 pr-1.5 py-0.5 backdrop-blur-sm">
-                                <div className="h-4 w-4 rounded-full overflow-hidden bg-zinc-700 flex items-center justify-center">
-                                  {card.creator.image ? (
-                                    <img
-                                      src={card.creator.image}
-                                      alt={card.creator.name}
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
-                                    <User className="h-2.5 w-2.5 text-zinc-400" />
-                                  )}
-                                </div>
-                                <TrustBadge
-                                  grade={card.creator.trustGrade as TrustGrade}
-                                  size="sm"
-                                />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-[200px]">
-                              <p className="font-medium">
-                                {card.creator.twitterUsername
-                                  ? `@${card.creator.twitterUsername}`
-                                  : card.creator.name}
-                              </p>
-                              {card.creator.bio && (
-                                <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">
-                                  {card.creator.bio.length > 100
-                                    ? `${card.creator.bio.slice(0, 100)}...`
-                                    : card.creator.bio}
-                                </p>
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {isLatestLoading ? (
+              <div
+                className={
+                  !isHydrated || viewMode === 'grid'
+                    ? 'columns-2 sm:columns-3 md:columns-4 gap-0.5'
+                    : 'space-y-2'
+                }
+              >
+                {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((key) => (
+                  <Skeleton
+                    key={key}
+                    className={
+                      !isHydrated || viewMode === 'grid'
+                        ? 'aspect-[3/4] w-full mb-0.5 rounded-sm'
+                        : 'h-20 w-full'
+                    }
+                  />
+                ))}
+              </div>
+            ) : latestCards.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                {searchInput
+                  ? `「${searchInput}」に一致するアイテムが見つかりませんでした`
+                  : 'まだアイテムが登録されていません'}
+              </p>
+            ) : !isHydrated || viewMode === 'grid' ? (
+              <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
+                {latestCards.map((card) => (
+                  <Link
+                    key={card.id}
+                    href={`/items/${card.id}`}
+                    className="relative w-full mb-0.5 rounded-sm overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110 block"
+                    onMouseEnter={() => setHoveredCardId(card.id)}
+                    onMouseLeave={() => setHoveredCardId(null)}
+                  >
+                    <div className="relative w-full">
+                      {card.imageUrl ? (
+                        <img
+                          src={card.imageUrl}
+                          alt={card.name}
+                          className="w-full h-auto object-cover"
+                        />
+                      ) : (
+                        <div className="aspect-[3/4] flex items-center justify-center bg-zinc-800">
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        </div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 p-2">
-                        <p className="font-medium text-white text-xs truncate drop-shadow-lg">
-                          {card.name}
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+
+                    {/* ホバー時の欲しいものオーバーレイ */}
+                    {hoveredCardId === card.id &&
+                      card.creator?.wantCards &&
+                      card.creator.wantCards.length > 0 && (
+                        <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center p-2 pointer-events-none">
+                          <div className="flex items-center gap-1 text-white text-xs mb-2">
+                            <Gift className="h-3.5 w-3.5" />
+                            <span>欲しいもの</span>
+                          </div>
+                          <div className="flex flex-wrap justify-center gap-1">
+                            {card.creator.wantCards.slice(0, 3).map((wantCard) => (
+                              <div
+                                key={wantCard.cardId}
+                                className="w-10 h-10 rounded overflow-hidden bg-zinc-700"
+                              >
+                                {wantCard.cardImageUrl ? (
+                                  <img
+                                    src={wantCard.cardImageUrl}
+                                    alt={wantCard.cardName}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <ImageIcon className="h-4 w-4 text-zinc-500" />
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          {card.creator.wantCards.length > 0 && (
+                            <p className="text-white text-[10px] mt-1.5 text-center truncate max-w-full px-1">
+                              {card.creator.wantCards[0].cardName}
+                              {card.creator.wantCards.length > 1 &&
+                                ` 他${card.creator.wantCards.length - 1}件`}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                    {/* 作成者の信頼性スコア（左上） */}
+                    {card.creator && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="absolute top-1 left-1 flex items-center gap-1 bg-black/60 rounded-full pl-0.5 pr-1.5 py-0.5 backdrop-blur-sm">
+                              <div className="h-4 w-4 rounded-full overflow-hidden bg-zinc-700 flex items-center justify-center">
+                                {card.creator.image ? (
+                                  <img
+                                    src={card.creator.image}
+                                    alt={card.creator.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <User className="h-2.5 w-2.5 text-zinc-400" />
+                                )}
+                              </div>
+                              <TrustBadge grade={card.creator.trustGrade as TrustGrade} size="sm" />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-[200px]">
+                            <p className="font-medium">
+                              {card.creator.twitterUsername
+                                ? `@${card.creator.twitterUsername}`
+                                : card.creator.name}
+                            </p>
+                            {card.creator.bio && (
+                              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">
+                                {card.creator.bio.length > 100
+                                  ? `${card.creator.bio.slice(0, 100)}...`
+                                  : card.creator.bio}
+                              </p>
+                            )}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <p className="font-medium text-white text-xs truncate drop-shadow-lg">
+                        {card.name}
+                      </p>
+                      {card.category && (
+                        <span className="text-[10px] text-zinc-300 bg-black/40 px-1.5 py-0.5 rounded">
+                          {card.category}
+                        </span>
+                      )}
+                      {card.description && (
+                        <p className="text-[10px] text-zinc-300 mt-1 line-clamp-2">
+                          {card.description.length > 80
+                            ? `${card.description.slice(0, 80)}...`
+                            : card.description}
                         </p>
-                        {card.category && (
-                          <span className="text-[10px] text-zinc-300 bg-black/40 px-1.5 py-0.5 rounded">
-                            {card.category}
-                          </span>
-                        )}
-                        {card.description && (
-                          <p className="text-[10px] text-zinc-300 mt-1 line-clamp-2">
-                            {card.description.length > 80
-                              ? `${card.description.slice(0, 80)}...`
-                              : card.description}
-                          </p>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {latestCards.map((card) => (
-                    <Card
-                      key={card.id}
-                      className="cursor-pointer transition-colors hover:bg-accent"
-                      onClick={() => setSelectedCardForOwners(card.id)}
-                    >
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {latestCards.map((card) => (
+                  <Link key={card.id} href={`/items/${card.id}`}>
+                    <Card className="cursor-pointer transition-colors hover:bg-accent">
                       <CardContent className="p-3">
                         <div className="flex items-center gap-3">
                           <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
@@ -315,39 +359,39 @@ export function HomePageClient() {
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
-                </div>
-              )}
+                  </Link>
+                ))}
+              </div>
+            )}
 
-              {/* ページネーション */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setPage(page - 1)}
-                    disabled={page <= 1}
-                    className="h-8 w-8"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground min-w-[80px] text-center">
-                    {page} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setPage(page + 1)}
-                    disabled={page >= totalPages}
-                    className="h-8 w-8"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </>
-        )}
+            {/* ページネーション */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page <= 1}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page >= totalPages}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </>
       </div>
 
       {/* フッター（ゲストユーザーにのみ広告表示） */}

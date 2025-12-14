@@ -26,7 +26,7 @@ export function useCardOwners(cardId: string | null): UseCardOwnersReturn {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/cards/${cardId}/owners`);
+      const res = await fetch(`/api/items/${cardId}/owners`);
       if (!res.ok) {
         if (res.status === 404) {
           throw new Error('Card not found');

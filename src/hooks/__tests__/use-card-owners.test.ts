@@ -49,7 +49,7 @@ describe('useCardOwners', () => {
       expect(result.current.card).toEqual(mockCard);
       expect(result.current.owners).toEqual(mockOwners);
       expect(result.current.error).toBeNull();
-      expect(global.fetch).toHaveBeenCalledWith('/api/cards/card-1/owners');
+      expect(global.fetch).toHaveBeenCalledWith('/api/items/card-1/owners');
     });
 
     it('空の所有者一覧でも正常に処理', async () => {
