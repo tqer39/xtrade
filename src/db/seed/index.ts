@@ -59,6 +59,7 @@ async function main() {
         totalTradeScore: userData.totalTradeScore,
         recentTradeScore: userData.recentTradeScore,
         image: userData.image,
+        wantText: userData.wantText,
       });
     }
     console.log(`  ✓ ${seedUsers.length} 件のユーザーを作成しました`);

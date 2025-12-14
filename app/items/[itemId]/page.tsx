@@ -224,41 +224,48 @@ export default function ItemDetailPage({ params }: Props) {
                     )}
                   </div>
                   {/* 所有者の欲しいもの */}
-                  {owner.wantCards && owner.wantCards.length > 0 && (
+                  {(owner.wantText || (owner.wantCards && owner.wantCards.length > 0)) && (
                     <div className="mt-3 pt-3 border-t">
                       <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-2">
                         <Gift className="h-3.5 w-3.5" />
                         <span>欲しいもの</span>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {owner.wantCards.slice(0, 5).map((wantCard) => (
-                          <Link
-                            key={wantCard.cardId}
-                            href={`/items/${wantCard.cardId}`}
-                            className="flex items-center gap-1.5 bg-muted rounded-full px-2 py-1 hover:bg-muted/80 transition-colors"
-                          >
-                            {wantCard.cardImageUrl ? (
-                              <img
-                                src={wantCard.cardImageUrl}
-                                alt={wantCard.cardName}
-                                className="w-5 h-5 rounded object-cover"
-                              />
-                            ) : (
-                              <div className="w-5 h-5 rounded bg-zinc-700 flex items-center justify-center">
-                                <ImageIcon className="h-3 w-3 text-zinc-500" />
-                              </div>
-                            )}
-                            <span className="text-xs truncate max-w-[100px]">
-                              {wantCard.cardName}
+                      {/* テキスト説明 */}
+                      {owner.wantText && (
+                        <p className="text-sm text-muted-foreground mb-2">{owner.wantText}</p>
+                      )}
+                      {/* カード一覧 */}
+                      {owner.wantCards && owner.wantCards.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {owner.wantCards.slice(0, 5).map((wantCard) => (
+                            <Link
+                              key={wantCard.cardId}
+                              href={`/items/${wantCard.cardId}`}
+                              className="flex items-center gap-1.5 bg-muted rounded-full px-2 py-1 hover:bg-muted/80 transition-colors"
+                            >
+                              {wantCard.cardImageUrl ? (
+                                <img
+                                  src={wantCard.cardImageUrl}
+                                  alt={wantCard.cardName}
+                                  className="w-5 h-5 rounded object-cover"
+                                />
+                              ) : (
+                                <div className="w-5 h-5 rounded bg-zinc-700 flex items-center justify-center">
+                                  <ImageIcon className="h-3 w-3 text-zinc-500" />
+                                </div>
+                              )}
+                              <span className="text-xs truncate max-w-[100px]">
+                                {wantCard.cardName}
+                              </span>
+                            </Link>
+                          ))}
+                          {owner.wantCards.length > 5 && (
+                            <span className="text-xs text-muted-foreground self-center">
+                              他{owner.wantCards.length - 5}件
                             </span>
-                          </Link>
-                        ))}
-                        {owner.wantCards.length > 5 && (
-                          <span className="text-xs text-muted-foreground self-center">
-                            他{owner.wantCards.length - 5}件
-                          </span>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>

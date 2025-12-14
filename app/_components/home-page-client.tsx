@@ -303,7 +303,7 @@ export function HomePageClient() {
                   <Link key={card.id} href={`/items/${card.id}`}>
                     <Card className="cursor-pointer transition-colors hover:bg-accent rounded-none border-x-0 first:border-t-0">
                       <CardContent className="p-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-start gap-2">
                           <div className="h-12 w-12 flex-shrink-0 overflow-hidden bg-muted">
                             {card.imageUrl ? (
                               <img
@@ -318,12 +318,29 @@ export function HomePageClient() {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium truncate text-sm">{card.name}</p>
-                            {card.category && (
-                              <Badge variant="secondary" className="text-xs mt-0.5">
-                                {card.category}
-                              </Badge>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium truncate text-sm">{card.name}</p>
+                              {card.category && (
+                                <Badge variant="secondary" className="text-xs shrink-0">
+                                  {card.category}
+                                </Badge>
+                              )}
+                            </div>
+                            {/* 出品者の欲しいもの */}
+                            {card.creator &&
+                              (card.creator.wantText ||
+                                (card.creator.wantCards && card.creator.wantCards.length > 0)) && (
+                                <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <Gift className="h-3 w-3 shrink-0" />
+                                  <span className="truncate">
+                                    {card.creator.wantText ||
+                                      card.creator.wantCards
+                                        ?.slice(0, 2)
+                                        .map((wc) => wc.cardName)
+                                        .join('、')}
+                                  </span>
+                                </div>
+                              )}
                           </div>
                           {/* 作成者の信頼性スコア */}
                           {card.creator && (

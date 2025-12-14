@@ -179,6 +179,7 @@ export interface CardOwner {
   trustScore: number | null;
   trustGrade: string | null;
   quantity: number;
+  wantText?: string | null;
   wantCards?: CardOwnerWantCard[];
 }
 
@@ -193,6 +194,7 @@ export interface CardCreator {
   trustScore: number | null;
   trustGrade: string | null;
   bio?: string | null;
+  wantText?: string | null;
   wantCards?: CardOwnerWantCard[];
 }
 
