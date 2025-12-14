@@ -97,7 +97,7 @@ function CardSearchContent() {
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cardId, quantity: 1 }),
+      body: JSON.stringify({ cardId }),
     });
     if (!res.ok) {
       const data = await res.json();

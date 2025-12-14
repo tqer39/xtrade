@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { LoginButton } from '@/components/auth/login-button';
 import { Footer } from '@/components/layout';
@@ -82,6 +82,26 @@ export function UserProfileClient({ userId }: Props) {
   const [isEditingWantText, setIsEditingWantText] = useState(false);
   const [isSavingWantText, setIsSavingWantText] = useState(false);
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
+  const wantTextRef = useRef<HTMLTextAreaElement>(null);
+
+  // テキストエリアの高さを内容に応じて自動調整（最大50行分 = 約750px）
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = wantTextRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const maxHeight = 750; // 約50行分
+      const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, []);
+
+  // 編集モードに入った時に高さを調整
+  useEffect(() => {
+    if (isEditingWantText) {
+      // 次のフレームで高さを調整（DOMの更新後）
+      requestAnimationFrame(adjustTextareaHeight);
+    }
+  }, [isEditingWantText, adjustTextareaHeight]);
 
   useEffect(() => {
     async function fetchData() {
@@ -331,10 +351,15 @@ export function UserProfileClient({ userId }: Props) {
         {isEditingWantText ? (
           <div className="space-y-2">
             <Textarea
+              ref={wantTextRef}
               value={wantText}
-              onChange={(e) => setWantText(e.target.value)}
+              onChange={(e) => {
+                setWantText(e.target.value);
+                adjustTextareaHeight();
+              }}
+              onFocus={adjustTextareaHeight}
               placeholder="欲しいものを記入..."
-              className="min-h-[60px]"
+              className="min-h-[60px] max-h-[750px] overflow-y-auto resize-none"
               maxLength={300}
             />
             <div className="flex items-center justify-between">
@@ -376,7 +401,7 @@ export function UserProfileClient({ userId }: Props) {
         <TabsList className="mb-4 flex-wrap h-auto gap-1">
           <TabsTrigger value="listings">出品中 ({listings.length})</TabsTrigger>
           <TabsTrigger value="wantCards">欲しいもの ({wantCards.length})</TabsTrigger>
-          <TabsTrigger value="activeTrades">取引中 ({activeTrades.length})</TabsTrigger>
+          <TabsTrigger value="activeTrades">トレード中 ({activeTrades.length})</TabsTrigger>
           <TabsTrigger value="completedTrades">成約済 ({completedTrades.length})</TabsTrigger>
           {isOwnProfile && (
             <TabsTrigger value="reviews">レビュー ({userData.stats.reviewCount})</TabsTrigger>
@@ -548,7 +573,9 @@ export function UserProfileClient({ userId }: Props) {
           {activeTrades.length === 0 ? (
             <Card>
               <CardContent className="py-8">
-                <p className="text-muted-foreground text-center">取引中のアイテムはありません</p>
+                <p className="text-muted-foreground text-center">
+                  トレード中のアイテムはありません
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -599,7 +626,7 @@ export function UserProfileClient({ userId }: Props) {
           {completedTrades.length === 0 ? (
             <Card>
               <CardContent className="py-8">
-                <p className="text-muted-foreground text-center">成約済の取引はありません</p>
+                <p className="text-muted-foreground text-center">成約済のトレードはありません</p>
               </CardContent>
             </Card>
           ) : (

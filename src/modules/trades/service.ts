@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, or } from 'drizzle-orm';
-import { nanoid } from 'nanoid';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
 import type { TrustGrade } from '@/modules/trust';
@@ -9,10 +8,10 @@ import type { CreateTradeInput, Trade, TradeDetail, TradeStatus, UpdateOfferInpu
 import { TradeTransitionError } from './types';
 
 /**
- * roomSlug を生成（nanoid を使用）
+ * roomSlug を生成（UUIDを使用）
  */
 function generateRoomSlug(): string {
-  return nanoid(10);
+  return randomUUID();
 }
 
 /**
@@ -54,7 +53,6 @@ export async function createTrade(
       tradeId: newTrade.id,
       offeredByUserId: input.responderUserId,
       cardId: input.initialCardId,
-      quantity: 1,
       createdAt: new Date(),
     });
   }
@@ -126,7 +124,6 @@ export async function getTradeDetail(roomSlug: string): Promise<TradeDetail | nu
     .select({
       cardId: schema.tradeItem.cardId,
       cardName: schema.card.name,
-      quantity: schema.tradeItem.quantity,
       offeredByUserId: schema.tradeItem.offeredByUserId,
     })
     .from(schema.tradeItem)
@@ -191,7 +188,6 @@ export async function updateOffer(
       tradeId: trade.id,
       offeredByUserId: userId,
       cardId: item.cardId,
-      quantity: item.quantity,
       createdAt: new Date(),
     }));
 

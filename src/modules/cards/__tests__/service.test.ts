@@ -53,7 +53,6 @@ vi.mock('@/db/schema', () => ({
     id: 'userHaveCard.id',
     userId: 'userHaveCard.userId',
     cardId: 'userHaveCard.cardId',
-    quantity: 'userHaveCard.quantity',
     createdAt: 'userHaveCard.createdAt',
     updatedAt: 'userHaveCard.updatedAt',
   },
@@ -229,7 +228,6 @@ describe('cards/service', () => {
           id: 'have-1',
           userId: 'user-1',
           cardId: 'card-1',
-          quantity: 2,
           card: { id: 'card-1', name: 'Card A', category: 'common' },
         },
       ];
@@ -267,22 +265,9 @@ describe('cards/service', () => {
       // getCardById が null を返すようにモック
       mockLimit.mockResolvedValue([]);
 
-      await expect(
-        upsertHaveCard('user-1', { cardId: 'non-existent', quantity: 1 })
-      ).rejects.toThrow('Card not found');
-    });
-
-    it('quantity が 0 の場合は削除', async () => {
-      // getCardById がカードを返すようにモック
-      mockLimit.mockResolvedValueOnce([{ id: 'card-1', name: 'Test' }]);
-
-      const result = await upsertHaveCard('user-1', {
-        cardId: 'card-1',
-        quantity: 0,
-      });
-
-      expect(result).toBeNull();
-      expect(mockDelete).toHaveBeenCalled();
+      await expect(upsertHaveCard('user-1', { cardId: 'non-existent' })).rejects.toThrow(
+        'Card not found'
+      );
     });
 
     it('新規レコードを作成', async () => {
@@ -293,30 +278,24 @@ describe('cards/service', () => {
 
       const result = await upsertHaveCard('user-1', {
         cardId: 'card-1',
-        quantity: 2,
       });
 
       expect(result).not.toBeNull();
-      expect(result?.quantity).toBe(2);
       expect(mockValues).toHaveBeenCalled();
     });
 
-    it('既存レコードを更新', async () => {
+    it('既存レコードがある場合はそのまま返す', async () => {
       // getCardById がカードを返す
       mockLimit.mockResolvedValueOnce([{ id: 'card-1', name: 'Test' }]);
       // 既存レコードあり
-      mockLimit.mockResolvedValueOnce([
-        { id: 'have-1', userId: 'user-1', cardId: 'card-1', quantity: 1 },
-      ]);
+      mockLimit.mockResolvedValueOnce([{ id: 'have-1', userId: 'user-1', cardId: 'card-1' }]);
 
       const result = await upsertHaveCard('user-1', {
         cardId: 'card-1',
-        quantity: 5,
       });
 
       expect(result).not.toBeNull();
-      expect(result?.quantity).toBe(5);
-      expect(mockSet).toHaveBeenCalled();
+      expect(result?.id).toBe('have-1');
     });
   });
 
@@ -418,9 +397,7 @@ describe('cards/service', () => {
 
   describe('getCardOwners', () => {
     it('カード所有者一覧を取得', async () => {
-      const mockOwners = [
-        { userId: 'user-1', name: 'User 1', quantity: 2, trustGrade: 'A', trustScore: 80 },
-      ];
+      const mockOwners = [{ userId: 'user-1', name: 'User 1', trustGrade: 'A', trustScore: 80 }];
       mockWhere.mockReturnValue({
         orderBy: vi.fn().mockResolvedValueOnce(mockOwners),
       });

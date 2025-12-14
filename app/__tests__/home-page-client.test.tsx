@@ -153,7 +153,6 @@ describe('HomePageClient', () => {
           {
             id: 'have-1',
             cardId: 'card-1',
-            quantity: 2,
             card: { id: 'card-1', name: 'Test Card', category: 'pokemon', rarity: 'SR' },
           },
         ],

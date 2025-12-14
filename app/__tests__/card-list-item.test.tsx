@@ -19,7 +19,6 @@ describe('CardListItem', () => {
     id: 'have-1',
     userId: 'user-1',
     cardId: 'card-1',
-    quantity: 2,
     createdAt: new Date(),
     updatedAt: new Date(),
     card: mockCard,
@@ -102,11 +101,10 @@ describe('CardListItem', () => {
   });
 
   describe('持っているカード表示', () => {
-    it('数量が表示されること', () => {
+    it('カード情報が表示されること', () => {
       render(<CardListItem item={mockHaveCard} type="have" />);
 
-      expect(screen.getByText('数量:')).toBeInTheDocument();
-      expect(screen.getByText('2')).toBeInTheDocument();
+      expect(screen.getByText('テストカード')).toBeInTheDocument();
     });
   });
 

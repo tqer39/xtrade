@@ -49,12 +49,7 @@ export function CardListItem({ item, type, viewMode = 'list', onClick }: CardLis
         </div>
         {/* グラデーションオーバーレイ */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-        {/* 数量/優先度バッジ */}
-        {isHave && haveItem && haveItem.quantity > 1 && (
-          <div className="absolute top-2 right-2 bg-white/90 text-zinc-900 text-xs font-bold px-1.5 py-0.5 rounded">
-            ×{haveItem.quantity}
-          </div>
-        )}
+        {/* 優先度バッジ */}
         {!isHave && wantItem && wantItem.priority !== null && (
           <div className="absolute top-2 right-2 bg-violet-500/90 text-white text-xs font-bold px-1.5 py-0.5 rounded">
             P{wantItem.priority}
@@ -107,18 +102,13 @@ export function CardListItem({ item, type, viewMode = 'list', onClick }: CardLis
               <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{card.description}</p>
             )}
           </div>
-          <div className="text-right">
-            {isHave && haveItem && (
-              <div className="text-sm text-muted-foreground">
-                数量: <span className="font-semibold">{haveItem.quantity}</span>
-              </div>
-            )}
-            {!isHave && wantItem && wantItem.priority !== null && (
+          {!isHave && wantItem && wantItem.priority !== null && (
+            <div className="text-right">
               <div className="text-sm text-muted-foreground">
                 優先度: <span className="font-semibold">{wantItem.priority}</span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

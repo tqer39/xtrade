@@ -23,7 +23,6 @@ export interface UserHaveCard {
   id: string;
   userId: string;
   cardId: string;
-  quantity: number;
   createdAt: Date;
   updatedAt: Date;
   card?: Card;
@@ -60,7 +59,6 @@ export type CreateItemInput = CreateCardInput;
  */
 export interface AddHaveCardInput {
   cardId: string;
-  quantity: number;
 }
 
 /**
@@ -109,7 +107,6 @@ export interface CardSetItem {
   id: string;
   setId: string;
   cardId: string;
-  quantity: number;
   createdAt: Date;
   card?: CardSummary;
 }
@@ -152,7 +149,6 @@ export interface UpdateCardSetInput {
  */
 export interface AddCardToSetInput {
   cardId: string;
-  quantity?: number;
 }
 
 // =====================================
@@ -178,7 +174,6 @@ export interface CardOwner {
   twitterUsername: string | null;
   trustScore: number | null;
   trustGrade: string | null;
-  quantity: number;
   wantText?: string | null;
   wantCards?: CardOwnerWantCard[];
 }

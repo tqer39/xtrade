@@ -22,7 +22,7 @@ interface CardDetailModalProps {
   onOpenChange: (open: boolean) => void;
   item: UserHaveCard | UserWantCard | null;
   type: 'have' | 'want';
-  onUpdate?: (itemId: string, quantity?: number, priority?: number) => Promise<void>;
+  onUpdate?: (itemId: string, priority?: number) => Promise<void>;
   onDelete?: (itemId: string) => Promise<void>;
 }
 
@@ -36,22 +36,15 @@ export function CardDetailModal({
 }: CardDetailModalProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [quantity, setQuantity] = useState(1);
   const [priority, setPriority] = useState(1);
 
   // Note: useMemo/useEffect to sync with item prop values should be used if needed
   const card = item?.card;
   const isHave = type === 'have';
-  const haveItem = isHave && item ? (item as UserHaveCard) : null;
   const wantItem = !isHave && item ? (item as UserWantCard) : null;
 
-  // Initialize quantity and priority from props when item changes
-  const itemQuantity = haveItem?.quantity ?? 1;
+  // Initialize priority from props when item changes
   const itemPriority = wantItem?.priority ?? 1;
-
-  useEffect(() => {
-    setQuantity(itemQuantity);
-  }, [itemQuantity]);
 
   useEffect(() => {
     setPriority(itemPriority);
@@ -65,10 +58,8 @@ export function CardDetailModal({
     if (!onUpdate) return;
     setIsUpdating(true);
     try {
-      if (isHave) {
-        await onUpdate(item.id, quantity);
-      } else {
-        await onUpdate(item.id, undefined, priority);
+      if (!isHave) {
+        await onUpdate(item.id, priority);
       }
       onOpenChange(false);
     } finally {
@@ -129,36 +120,7 @@ export function CardDetailModal({
               )}
             </div>
 
-            {/* 数量・優先度編集 */}
-            {isHave && haveItem && (
-              <div className="space-y-2">
-                <Label htmlFor="quantity">数量</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) =>
-                      setQuantity(Math.max(1, Number.parseInt(e.target.value, 10) || 1))
-                    }
-                    className="text-center"
-                  />
-                  <Button variant="outline" size="icon" onClick={() => setQuantity(quantity + 1)}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-
+            {/* 優先度編集 */}
             {!isHave && wantItem && (
               <div className="space-y-2">
                 <Label htmlFor="priority">優先度 (1-10)</Label>
@@ -204,9 +166,11 @@ export function CardDetailModal({
             >
               キャンセル
             </Button>
-            <Button onClick={handleUpdate} disabled={isUpdating || isDeleting} className="flex-1">
-              {isUpdating ? '更新中...' : '更新'}
-            </Button>
+            {!isHave && (
+              <Button onClick={handleUpdate} disabled={isUpdating || isDeleting} className="flex-1">
+                {isUpdating ? '更新中...' : '更新'}
+              </Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>

@@ -1,7 +1,7 @@
 'use client';
 
 import { Heart } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +33,18 @@ export function FavoriteButton({
   className,
 }: FavoriteButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [prevFavorited, setPrevFavorited] = useState(isFavorited);
+
+  // お気に入りに追加された時にアニメーション発火
+  useEffect(() => {
+    if (isFavorited && !prevFavorited) {
+      setIsAnimating(true);
+      const timer = setTimeout(() => setIsAnimating(false), 300);
+      return () => clearTimeout(timer);
+    }
+    setPrevFavorited(isFavorited);
+  }, [isFavorited, prevFavorited]);
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -64,7 +76,13 @@ export function FavoriteButton({
       disabled={isLoading || disabled}
       aria-label={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
     >
-      <Heart className={cn(iconSizes[size], isFavorited && 'fill-current')} />
+      <Heart
+        className={cn(
+          iconSizes[size],
+          isFavorited && 'fill-current',
+          isAnimating && 'animate-heart-pop'
+        )}
+      />
     </Button>
   );
 }

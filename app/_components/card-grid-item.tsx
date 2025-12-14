@@ -76,20 +76,12 @@ export function CardGridItem({
       {/* グラデーションオーバーレイ */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
 
-      {/* 数量・優先度バッジ（右上） */}
-      {((isHave && haveItem && haveItem.quantity > 1) ||
-        (!isHave && wantItem && wantItem.priority !== null)) && (
+      {/* 優先度バッジ（右上） */}
+      {!isHave && wantItem && wantItem.priority !== null && (
         <div className="absolute top-2 right-2 z-10">
-          {isHave && haveItem && haveItem.quantity > 1 && (
-            <Badge className="bg-white/90 text-zinc-900 text-xs font-semibold backdrop-blur-sm border-0">
-              ×{haveItem.quantity}
-            </Badge>
-          )}
-          {!isHave && wantItem && wantItem.priority !== null && (
-            <Badge className="bg-violet-500/90 text-white text-xs font-semibold backdrop-blur-sm border-0">
-              P{wantItem.priority}
-            </Badge>
-          )}
+          <Badge className="bg-violet-500/90 text-white text-xs font-semibold backdrop-blur-sm border-0">
+            P{wantItem.priority}
+          </Badge>
         </div>
       )}
 

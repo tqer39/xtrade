@@ -43,13 +43,13 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn, currentUserId }: Car
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '取引の作成に失敗しました');
+        throw new Error(data.error || 'トレードの作成に失敗しました');
       }
 
       const data = await res.json();
       router.push(`/trades/${data.trade.roomSlug}`);
     } catch (err) {
-      setTradeError(err instanceof Error ? err.message : '取引の作成に失敗しました');
+      setTradeError(err instanceof Error ? err.message : 'トレードの作成に失敗しました');
       setIsCreatingTrade(false);
     }
   };
@@ -216,13 +216,15 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn, currentUserId }: Car
                 ) : (
                   <Mail className="h-4 w-4" />
                 )}
-                {isCreatingTrade ? '作成中...' : '取引を申し込む'}
+                {isCreatingTrade ? '作成中...' : 'トレードを申し込む'}
               </Button>
               {tradeError && <p className="text-sm text-destructive text-center">{tradeError}</p>}
             </div>
           ) : (
             <div className="space-y-3 text-center">
-              <p className="text-sm text-muted-foreground">取引を申し込むにはログインが必要です</p>
+              <p className="text-sm text-muted-foreground">
+                トレードを申し込むにはログインが必要です
+              </p>
               <LoginButton />
             </div>
           )}

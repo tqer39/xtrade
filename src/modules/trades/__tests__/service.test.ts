@@ -46,7 +46,6 @@ vi.mock('@/db/schema', () => ({
     tradeId: 'tradeItem.tradeId',
     offeredByUserId: 'tradeItem.offeredByUserId',
     cardId: 'tradeItem.cardId',
-    quantity: 'tradeItem.quantity',
     createdAt: 'tradeItem.createdAt',
   },
   tradeHistory: {
@@ -302,10 +301,7 @@ describe('trades/service', () => {
       };
 
       await updateOffer(trade, 'user-1', {
-        items: [
-          { cardId: 'card-1', quantity: 2 },
-          { cardId: 'card-2', quantity: 1 },
-        ],
+        items: [{ cardId: 'card-1' }, { cardId: 'card-2' }],
       });
 
       expect(mockValues).toHaveBeenCalled();

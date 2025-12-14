@@ -22,6 +22,17 @@ import { use, useCallback, useEffect, useState } from 'react';
 
 import { LoginButton } from '@/components/auth/login-button';
 import { TrustBadge } from '@/components/trust';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,19 +73,19 @@ const statusConfig: Record<
     label: '合意済み',
     color: 'bg-amber-500',
     icon: <CheckCircle2 className="h-4 w-4" />,
-    description: '取引を完了してください',
+    description: 'トレードを完了してください',
   },
   completed: {
     label: '完了',
     color: 'bg-green-500',
     icon: <CheckCircle2 className="h-4 w-4" />,
-    description: '取引が完了しました',
+    description: 'トレードが完了しました',
   },
   canceled: {
     label: 'キャンセル',
     color: 'bg-gray-500',
     icon: <XCircle className="h-4 w-4" />,
-    description: '取引がキャンセルされました',
+    description: 'トレードがキャンセルされました',
   },
   disputed: {
     label: '問題発生',
@@ -86,7 +97,7 @@ const statusConfig: Record<
     label: '期限切れ',
     color: 'bg-gray-500',
     icon: <Clock className="h-4 w-4" />,
-    description: '取引の期限が切れました',
+    description: 'トレードの期限が切れました',
   },
 };
 
@@ -111,9 +122,9 @@ export default function TradeRoomPage({ params }: Props) {
       const res = await fetch(`/api/trades/${roomSlug}`);
       if (!res.ok) {
         if (res.status === 404) {
-          setError('取引が見つかりません');
+          setError('トレードが見つかりません');
         } else if (res.status === 401) {
-          setError('この取引にアクセスする権限がありません');
+          setError('このトレードにアクセスする権限がありません');
         } else {
           throw new Error('データの取得に失敗しました');
         }
@@ -160,7 +171,6 @@ export default function TradeRoomPage({ params }: Props) {
     try {
       const items = Array.from(selectedCardIds).map((cardId) => ({
         cardId,
-        quantity: 1,
       }));
 
       const res = await fetch(`/api/trades/${roomSlug}/offer`, {
@@ -192,7 +202,7 @@ export default function TradeRoomPage({ params }: Props) {
       const myItems = isInitiator ? trade.initiatorItems : trade.responderItems;
       const newItems = myItems
         .filter((item) => item.cardId !== cardId)
-        .map((item) => ({ cardId: item.cardId, quantity: item.quantity }));
+        .map((item) => ({ cardId: item.cardId }));
 
       const res = await fetch(`/api/trades/${roomSlug}/offer`, {
         method: 'POST',
@@ -255,7 +265,9 @@ export default function TradeRoomPage({ params }: Props) {
       <div className="container mx-auto py-8 px-4">
         <div className="text-center py-12">
           <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground mb-4">取引ルームを表示するにはログインが必要です</p>
+          <p className="text-muted-foreground mb-4">
+            トレードルームを表示するにはログインが必要です
+          </p>
           <LoginButton />
         </div>
       </div>
@@ -328,7 +340,7 @@ export default function TradeRoomPage({ params }: Props) {
           </Button>
         </div>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">取引ルーム</h1>
+          <h1 className="text-2xl font-bold">トレードルーム</h1>
           <Badge className={`${statusInfo.color} text-white gap-1`}>
             {statusInfo.icon}
             {statusInfo.label}
@@ -376,9 +388,6 @@ export default function TradeRoomPage({ params }: Props) {
                   >
                     <ImageIcon className="h-4 w-4 text-muted-foreground" />
                     <span className="flex-1 text-sm truncate">{item.cardName}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      ×{item.quantity}
-                    </Badge>
                   </div>
                 ))}
               </div>
@@ -425,9 +434,6 @@ export default function TradeRoomPage({ params }: Props) {
                   >
                     <ImageIcon className="h-4 w-4 text-muted-foreground" />
                     <span className="flex-1 text-sm truncate">{item.cardName}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      ×{item.quantity}
-                    </Badge>
                     {canEditOffer && (
                       <Button
                         variant="ghost"
@@ -493,13 +499,13 @@ export default function TradeRoomPage({ params }: Props) {
             {canPropose && (
               <Button onClick={() => handleAction('propose')} disabled={isActionLoading}>
                 <Send className="h-4 w-4 mr-2" />
-                取引を提案
+                トレードを提案
               </Button>
             )}
             {showProposeHint && (
               <Button disabled>
                 <Send className="h-4 w-4 mr-2" />
-                取引を提案
+                トレードを提案
               </Button>
             )}
             {canAgree && (
@@ -519,7 +525,7 @@ export default function TradeRoomPage({ params }: Props) {
                 className="bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                取引完了
+                トレード完了
               </Button>
             )}
             {canDispute && (
@@ -533,14 +539,31 @@ export default function TradeRoomPage({ params }: Props) {
               </Button>
             )}
             {canCancel && (
-              <Button
-                variant="outline"
-                onClick={() => handleAction('cancel')}
-                disabled={isActionLoading}
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                キャンセル
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={isActionLoading}>
+                    <XCircle className="h-4 w-4 mr-2" />
+                    キャンセル（ルーム削除）
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>トレードをキャンセルしますか？</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      このトレードルームは完全に削除されます。この操作は取り消しが可能ですが、相手の信頼に影響する可能性があります。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>戻る</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleAction('cancel')}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      キャンセルする
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
             {canUncancel && (
               <Button
@@ -555,16 +578,16 @@ export default function TradeRoomPage({ params }: Props) {
           </div>
           {showProposeHint && (
             <p className="text-sm text-muted-foreground">
-              取引を提案するには、先にオファーするアイテムを追加してください
+              トレードを提案するには、先にオファーするアイテムを追加してください
             </p>
           )}
         </div>
       )}
 
-      {/* 取引情報 */}
+      {/* トレード情報 */}
       <Card className="mt-6">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-muted-foreground">取引情報</CardTitle>
+          <CardTitle className="text-sm text-muted-foreground">トレード情報</CardTitle>
         </CardHeader>
         <CardContent className="text-sm space-y-1">
           <p>
@@ -582,7 +605,7 @@ export default function TradeRoomPage({ params }: Props) {
           )}
           {trade.agreedExpiredAt && (
             <p>
-              <span className="text-muted-foreground">取引期限:</span>{' '}
+              <span className="text-muted-foreground">トレード期限:</span>{' '}
               {new Date(trade.agreedExpiredAt).toLocaleDateString('ja-JP')}
             </p>
           )}
@@ -594,7 +617,7 @@ export default function TradeRoomPage({ params }: Props) {
         <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>オファーするアイテムを選択</DialogTitle>
-            <DialogDescription>取引でオファーするアイテムを選んでください</DialogDescription>
+            <DialogDescription>トレードでオファーするアイテムを選んでください</DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto py-4">
             {isCardsLoading ? (

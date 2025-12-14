@@ -74,7 +74,6 @@ export async function getUserHaveCards(userId: string) {
       id: schema.userHaveCard.id,
       userId: schema.userHaveCard.userId,
       cardId: schema.userHaveCard.cardId,
-      quantity: schema.userHaveCard.quantity,
       createdAt: schema.userHaveCard.createdAt,
       updatedAt: schema.userHaveCard.updatedAt,
       card: {
@@ -122,24 +121,15 @@ export async function getUserWantCards(userId: string) {
 }
 
 /**
- * 持っているカードを追加/更新
- * quantity が 0 の場合は削除
+ * 持っているカードを追加（既に存在する場合はそのまま返す）
  */
 export async function upsertHaveCard(userId: string, input: AddHaveCardInput) {
-  const { cardId, quantity } = input;
+  const { cardId } = input;
 
   // カードが存在するか確認
   const card = await getCardById(cardId);
   if (!card) {
     throw new Error('Card not found');
-  }
-
-  // quantity が 0 の場合は削除
-  if (quantity <= 0) {
-    await db
-      .delete(schema.userHaveCard)
-      .where(and(eq(schema.userHaveCard.userId, userId), eq(schema.userHaveCard.cardId, cardId)));
-    return null;
   }
 
   // 既存のレコードを確認
@@ -150,28 +140,22 @@ export async function upsertHaveCard(userId: string, input: AddHaveCardInput) {
     .limit(1);
 
   if (existing[0]) {
-    // 更新
-    await db
-      .update(schema.userHaveCard)
-      .set({ quantity, updatedAt: new Date() })
-      .where(eq(schema.userHaveCard.id, existing[0].id));
-
-    return { ...existing[0], quantity };
-  } else {
-    // 新規作成
-    const newRecord = {
-      id: randomUUID(),
-      userId,
-      cardId,
-      quantity,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    await db.insert(schema.userHaveCard).values(newRecord);
-
-    return newRecord;
+    // 既に存在するのでそのまま返す
+    return existing[0];
   }
+
+  // 新規作成
+  const newRecord = {
+    id: randomUUID(),
+    userId,
+    cardId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  await db.insert(schema.userHaveCard).values(newRecord);
+
+  return newRecord;
 }
 
 /**
@@ -313,15 +297,20 @@ export async function searchLatestCardsWithCreator(
   const offset = (page - 1) * limit;
   const safeLimit = Math.min(limit, 100);
 
-  // 全文検索: カード名、カテゴリ、説明文のいずれかにマッチ
-  let whereClause: ReturnType<typeof or> | undefined;
+  // 全文検索: スペース区切りでAND条件
+  // 各検索語が名前/カテゴリ/説明文のいずれかにマッチする条件をAND結合
+  let whereClause: ReturnType<typeof and> | undefined;
   if (query?.trim()) {
-    const searchTerm = `%${query.trim()}%`;
-    whereClause = or(
-      like(schema.card.name, searchTerm),
-      like(schema.card.category, searchTerm),
-      like(schema.card.description, searchTerm)
-    );
+    const terms = query.trim().split(/\s+/);
+    const conditions = terms.map((term) => {
+      const searchTerm = `%${term}%`;
+      return or(
+        like(schema.card.name, searchTerm),
+        like(schema.card.category, searchTerm),
+        like(schema.card.description, searchTerm)
+      );
+    });
+    whereClause = and(...conditions);
   }
 
   // 総件数を取得
@@ -438,7 +427,6 @@ export async function getCardOwners(cardId: string): Promise<CardOwner[]> {
       trustScore: schema.user.trustScore,
       trustGrade: schema.user.trustGrade,
       wantText: schema.user.wantText,
-      quantity: schema.userHaveCard.quantity,
     })
     .from(schema.userHaveCard)
     .innerJoin(schema.user, eq(schema.userHaveCard.userId, schema.user.id))

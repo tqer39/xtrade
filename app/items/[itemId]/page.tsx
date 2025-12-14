@@ -99,10 +99,15 @@ export default function ItemDetailPage({ params }: Props) {
     setIsFavorited(newState); // Optimistic update
 
     try {
-      const res = await fetch('/api/me/favorites/cards', {
+      const url = newState
+        ? '/api/me/favorites/cards'
+        : `/api/me/favorites/cards?cardId=${encodeURIComponent(cardId)}`;
+      const res = await fetch(url, {
         method: newState ? 'POST' : 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cardId }),
+        ...(newState && {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cardId }),
+        }),
       });
 
       if (!res.ok) {
@@ -129,13 +134,13 @@ export default function ItemDetailPage({ params }: Props) {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || '取引の作成に失敗しました');
+        throw new Error(data.error || 'トレードの作成に失敗しました');
       }
 
       const data = await res.json();
       router.push(`/trades/${data.trade.roomSlug}`);
     } catch (err) {
-      setTradeError(err instanceof Error ? err.message : '取引の作成に失敗しました');
+      setTradeError(err instanceof Error ? err.message : 'トレードの作成に失敗しました');
       setIsCreatingTrade(false);
     }
   };
@@ -270,7 +275,7 @@ export default function ItemDetailPage({ params }: Props) {
                         ) : (
                           <Mail className="h-4 w-4" />
                         )}
-                        取引を申し込む
+                        トレードを申し込む
                       </Button>
                     )}
                   </div>
@@ -327,7 +332,9 @@ export default function ItemDetailPage({ params }: Props) {
         )}
         {!isLoggedIn && owners.length > 0 && (
           <div className="mt-4 text-center space-y-2">
-            <p className="text-sm text-muted-foreground">取引を申し込むにはログインが必要です</p>
+            <p className="text-sm text-muted-foreground">
+              トレードを申し込むにはログインが必要です
+            </p>
             <LoginButton />
           </div>
         )}

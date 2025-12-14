@@ -181,7 +181,6 @@ async function main() {
         tradeId: itemData.tradeId,
         offeredByUserId: itemData.offeredByUserId,
         cardId: itemData.cardId,
-        quantity: itemData.quantity,
       });
     }
     console.log(`  ✓ ${seedTradeItems.length} 件のトレードアイテムを作成しました`);

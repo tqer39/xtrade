@@ -134,6 +134,13 @@
       "when": 1765930000000,
       "tag": "0018_remove_bio",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1766020000000,
+      "tag": "0019_remove_quantity",
+      "breakpoints": true
     }
   ]
 }

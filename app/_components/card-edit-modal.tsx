@@ -1,6 +1,6 @@
 'use client';
 
-import { ImageIcon, Loader2, Minus, Plus, Trash2 } from 'lucide-react';
+import { ImageIcon, Loader2, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -36,15 +36,12 @@ export function CardEditModal({
 }: CardEditModalProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
-  const [quantity, setQuantity] = useState(1);
   const [priority, setPriority] = useState<number | null>(null);
 
   // モーダルが開いたときに初期値をセット
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen && item) {
-      if (type === 'have') {
-        setQuantity((item as UserHaveCard).quantity);
-      } else {
+      if (type === 'want') {
         setPriority((item as UserWantCard).priority);
       }
     }
@@ -62,7 +59,7 @@ export function CardEditModal({
     if (!card) return;
     setIsUpdating(true);
     try {
-      const value = isHave ? quantity : (priority ?? 0);
+      const value = priority ?? 0;
       await onUpdate(card.id, value);
       onOpenChange(false);
     } finally {
@@ -81,15 +78,14 @@ export function CardEditModal({
     }
   };
 
-  const incrementQuantity = () => setQuantity((q) => Math.min(99, q + 1));
-  const decrementQuantity = () => setQuantity((q) => Math.max(1, q - 1));
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isHave ? '持っているアイテムを編集' : '欲しいアイテムを編集'}</DialogTitle>
-          <DialogDescription>数量や優先度を変更できます</DialogDescription>
+          <DialogDescription>
+            {isHave ? 'アイテムの削除ができます' : '優先度を変更できます'}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -127,43 +123,8 @@ export function CardEditModal({
             </div>
           </div>
 
-          {/* 数量または優先度の編集 */}
-          {isHave ? (
-            <div className="space-y-2">
-              <Label>数量</Label>
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={decrementQuantity}
-                  disabled={quantity <= 1 || isUpdating}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <Input
-                  type="number"
-                  min={1}
-                  max={99}
-                  value={quantity}
-                  onChange={(e) =>
-                    setQuantity(Math.max(1, Math.min(99, parseInt(e.target.value) || 1)))
-                  }
-                  className="w-20 text-center"
-                  disabled={isUpdating}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={incrementQuantity}
-                  disabled={quantity >= 99 || isUpdating}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ) : (
+          {/* 優先度の編集（want のみ） */}
+          {!isHave && (
             <div className="space-y-2">
               <Label>優先度 (任意)</Label>
               <Input
@@ -206,10 +167,12 @@ export function CardEditModal({
           >
             キャンセル
           </Button>
-          <Button onClick={handleUpdate} disabled={isUpdating || isRemoving}>
-            {isUpdating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            保存
-          </Button>
+          {!isHave && (
+            <Button onClick={handleUpdate} disabled={isUpdating || isRemoving}>
+              {isUpdating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              保存
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

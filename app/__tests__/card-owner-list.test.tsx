@@ -143,7 +143,6 @@ describe('CardOwnerList', () => {
           twitterUsername: 'user1',
           trustGrade: 'A',
           trustScore: 80,
-          quantity: 2,
         },
         {
           userId: 'user-2',
@@ -152,7 +151,6 @@ describe('CardOwnerList', () => {
           twitterUsername: null,
           trustGrade: 'B',
           trustScore: 60,
-          quantity: 1,
         },
       ];
 

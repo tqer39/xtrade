@@ -45,7 +45,6 @@ export interface TradeParticipant {
 export interface TradeItem {
   cardId: string;
   cardName: string;
-  quantity: number;
   offeredByUserId: string;
 }
 
@@ -81,7 +80,6 @@ export interface CreateTradeInput {
 export interface UpdateOfferInput {
   items: Array<{
     cardId: string;
-    quantity: number;
   }>;
 }
 

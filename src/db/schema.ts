@@ -428,7 +428,6 @@ export const userHaveCard = pgTable(
     cardId: text('card_id') // TODO: itemId に変更予定
       .notNull()
       .references(() => item.id, { onDelete: 'cascade' }),
-    quantity: integer('quantity').default(1).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
       .defaultNow()
@@ -540,7 +539,6 @@ export const cardSetItem = pgTable(
     cardId: text('card_id')
       .notNull()
       .references(() => card.id, { onDelete: 'cascade' }),
-    quantity: integer('quantity').default(1).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
@@ -630,7 +628,6 @@ export const tradeItem = pgTable(
     cardId: text('card_id')
       .notNull()
       .references(() => card.id, { onDelete: 'cascade' }),
-    quantity: integer('quantity').default(1).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [

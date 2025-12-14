@@ -20,7 +20,6 @@ describe('CardGrid', () => {
       id: 'have-1',
       userId: 'user-1',
       cardId: 'card-1',
-      quantity: 2,
       createdAt: new Date(),
       updatedAt: new Date(),
       card: mockCard,
@@ -29,7 +28,6 @@ describe('CardGrid', () => {
       id: 'have-2',
       userId: 'user-1',
       cardId: 'card-2',
-      quantity: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
       card: {

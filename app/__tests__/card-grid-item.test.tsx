@@ -19,7 +19,6 @@ describe('CardGridItem', () => {
     id: 'have-1',
     userId: 'user-1',
     cardId: 'card-1',
-    quantity: 2,
     createdAt: new Date(),
     updatedAt: new Date(),
     card: mockCard,
@@ -80,10 +79,10 @@ describe('CardGridItem', () => {
   });
 
   describe('持っているカード表示', () => {
-    it('数量バッジを表示すること', () => {
+    it('カード画像を表示すること', () => {
       render(<CardGridItem item={mockHaveCard} type="have" />);
 
-      expect(screen.getByText('×2')).toBeInTheDocument();
+      expect(screen.getByAltText('テストカード')).toBeInTheDocument();
     });
   });
 
