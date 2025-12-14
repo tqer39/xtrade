@@ -6,9 +6,9 @@ import { CardGridItem } from '../_components/card-grid-item';
 describe('CardGridItem', () => {
   const mockCard = {
     id: 'card-1',
-    name: 'テストカード',
+    name: 'テストアイテム',
     category: 'INI',
-    description: 'テスト用のカードです',
+    description: 'テスト用のアイテムです',
     imageUrl: 'https://example.com/image.jpg',
     createdByUserId: 'user-1',
     createdAt: new Date(),
@@ -35,10 +35,10 @@ describe('CardGridItem', () => {
   };
 
   describe('基本レンダリング', () => {
-    it('カード画像を表示すること', () => {
+    it('アイテム画像を表示すること', () => {
       render(<CardGridItem item={mockHaveCard} type="have" />);
 
-      const img = screen.getByAltText('テストカード');
+      const img = screen.getByAltText('テストアイテム');
       expect(img).toBeInTheDocument();
     });
 
@@ -78,15 +78,15 @@ describe('CardGridItem', () => {
     });
   });
 
-  describe('持っているカード表示', () => {
-    it('カード画像を表示すること', () => {
+  describe('持っているアイテム表示', () => {
+    it('アイテム画像を表示すること', () => {
       render(<CardGridItem item={mockHaveCard} type="have" />);
 
-      expect(screen.getByAltText('テストカード')).toBeInTheDocument();
+      expect(screen.getByAltText('テストアイテム')).toBeInTheDocument();
     });
   });
 
-  describe('欲しいカード表示', () => {
+  describe('欲しいアイテム表示', () => {
     it('優先度バッジを表示すること', () => {
       render(<CardGridItem item={mockWantCard} type="want" />);
 
@@ -163,8 +163,8 @@ describe('CardGridItem', () => {
       const button = screen.getByRole('button');
       fireEvent.mouseEnter(button);
 
-      // カード名は複数箇所に表示されるのでgetAllByTextを使用
-      expect(screen.getAllByText('テストカード').length).toBeGreaterThan(0);
+      // アイテム名は複数箇所に表示されるのでgetAllByTextを使用
+      expect(screen.getAllByText('テストアイテム').length).toBeGreaterThan(0);
       expect(screen.getAllByText('INI').length).toBeGreaterThan(0);
     });
   });

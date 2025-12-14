@@ -66,7 +66,7 @@ describe('CardOwnerList', () => {
     });
   });
 
-  describe('カードが見つからない場合', () => {
+  describe('アイテムが見つからない場合', () => {
     it('メッセージと戻るボタンを表示', () => {
       mockUseCardOwners.mockReturnValue({
         card: null,
@@ -77,7 +77,7 @@ describe('CardOwnerList', () => {
 
       render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
-      expect(screen.getByText('カードが見つかりません')).toBeInTheDocument();
+      expect(screen.getByText('アイテムが見つかりません')).toBeInTheDocument();
 
       const backButton = screen.getByRole('button', { name: '戻る' });
       fireEvent.click(backButton);
@@ -93,7 +93,7 @@ describe('CardOwnerList', () => {
       imageUrl: 'https://example.com/card.png',
     };
 
-    it('カード情報を表示', () => {
+    it('アイテム情報を表示', () => {
       mockUseCardOwners.mockReturnValue({
         card: mockCard,
         owners: [],
@@ -131,7 +131,7 @@ describe('CardOwnerList', () => {
 
       render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
-      expect(screen.getByText('このカードを持っているユーザーがいません')).toBeInTheDocument();
+      expect(screen.getByText('このアイテムを持っているユーザーがいません')).toBeInTheDocument();
     });
 
     it('所有者一覧を表示', () => {
@@ -163,7 +163,7 @@ describe('CardOwnerList', () => {
 
       render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
-      expect(screen.getByText('このカードを持っているユーザー (2人)')).toBeInTheDocument();
+      expect(screen.getByText('このアイテムを持っているユーザー (2人)')).toBeInTheDocument();
       expect(screen.getByText('User 1')).toBeInTheDocument();
       expect(screen.getByText('@user1')).toBeInTheDocument();
       expect(screen.getByText('2枚')).toBeInTheDocument();

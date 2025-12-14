@@ -89,7 +89,7 @@ export function CardEditModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* カード情報 */}
+          {/* アイテム情報 */}
           <div className="flex items-center gap-4">
             <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
               {card.imageUrl ? (

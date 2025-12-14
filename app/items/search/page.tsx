@@ -196,7 +196,7 @@ function CardSearchContent() {
       {/* 検索結果 */}
       {!isLoading && searchQuery && (
         <div className="space-y-6">
-          {/* フォトカードマスターの候補 */}
+          {/* マスターデータの候補 */}
           {photocardResults.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
@@ -231,7 +231,7 @@ function CardSearchContent() {
             </section>
           )}
 
-          {/* 既存のカード */}
+          {/* 既存のアイテム */}
           {searchResults.length > 0 && (
             <section>
               <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
@@ -328,7 +328,7 @@ function CardSearchContent() {
                 value={newCardCategory}
                 onChange={setNewCardCategory}
                 suggestions={myCategories}
-                placeholder="例: ポケモンカード、遊戯王、アイドルグッズ"
+                placeholder="例: ポケカ、遊戯王、アイドルグッズ"
                 disabled={isAdding}
               />
             </div>
@@ -365,7 +365,7 @@ function CardSearchContent() {
   );
 }
 
-// フォトカードグリッドアイテム
+// マスターデータグリッドアイテム
 function PhotocardGridItem({
   photocard,
   isLoggedIn,
@@ -421,7 +421,7 @@ function PhotocardGridItem({
   );
 }
 
-// フォトカードリストアイテム
+// マスターデータリストアイテム
 function PhotocardListItem({
   photocard,
   isLoggedIn,
@@ -490,7 +490,7 @@ function PhotocardListItem({
   );
 }
 
-// カードグリッドアイテム
+// アイテムグリッド表示
 function CardGridItem({
   card,
   isLoggedIn,
@@ -556,7 +556,7 @@ function CardGridItem({
   );
 }
 
-// カードリストアイテム
+// アイテムリスト表示
 function CardListItem({
   card,
   isLoggedIn,

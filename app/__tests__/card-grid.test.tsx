@@ -6,9 +6,9 @@ import { CardGrid } from '../_components/card-grid';
 describe('CardGrid', () => {
   const mockCard = {
     id: 'card-1',
-    name: 'テストカード',
+    name: 'テストアイテム',
     category: 'INI',
-    description: 'テスト用のカードです',
+    description: 'テスト用のアイテムです',
     imageUrl: 'https://example.com/image.jpg',
     createdByUserId: 'user-1',
     createdAt: new Date(),
@@ -33,7 +33,7 @@ describe('CardGrid', () => {
       card: {
         ...mockCard,
         id: 'card-2',
-        name: 'テストカード2',
+        name: 'テストアイテム2',
       },
     },
   ];
@@ -51,18 +51,18 @@ describe('CardGrid', () => {
     it('アイテムがない場合はデフォルトメッセージを表示すること', () => {
       render(<CardGrid items={[]} type="have" />);
 
-      expect(screen.getByText('カードがありません')).toBeInTheDocument();
+      expect(screen.getByText('アイテムがありません')).toBeInTheDocument();
     });
 
     it('カスタム空メッセージを表示できること', () => {
-      render(<CardGrid items={[]} type="have" emptyMessage="登録されたカードはありません" />);
+      render(<CardGrid items={[]} type="have" emptyMessage="登録されたアイテムはありません" />);
 
-      expect(screen.getByText('登録されたカードはありません')).toBeInTheDocument();
+      expect(screen.getByText('登録されたアイテムはありません')).toBeInTheDocument();
     });
   });
 
   describe('グリッド表示', () => {
-    it('カードアイテムをグリッドで表示すること', () => {
+    it('アイテムをグリッドで表示すること', () => {
       const { container } = render(<CardGrid items={mockHaveCards} type="have" />);
 
       const grid = container.querySelector('.grid');
@@ -70,11 +70,11 @@ describe('CardGrid', () => {
       expect(grid).toHaveClass('grid-cols-2');
     });
 
-    it('各カードアイテムを表示すること', () => {
+    it('各アイテムを表示すること', () => {
       render(<CardGrid items={mockHaveCards} type="have" />);
 
-      expect(screen.getByAltText('テストカード')).toBeInTheDocument();
-      expect(screen.getByAltText('テストカード2')).toBeInTheDocument();
+      expect(screen.getByAltText('テストアイテム')).toBeInTheDocument();
+      expect(screen.getByAltText('テストアイテム2')).toBeInTheDocument();
     });
   });
 

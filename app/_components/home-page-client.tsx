@@ -171,7 +171,7 @@ export function HomePageClient() {
           </div>
         </div>
 
-        {/* 最近登録されたカード一覧 */}
+        {/* 最近登録されたアイテム一覧 */}
         <>
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">

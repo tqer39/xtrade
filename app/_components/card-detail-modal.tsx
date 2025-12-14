@@ -89,7 +89,7 @@ export function CardDetailModal({
         </DialogHeader>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {/* カード画像 */}
+          {/* アイテム画像 */}
           <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
             {card.imageUrl ? (
               <Image
@@ -106,7 +106,7 @@ export function CardDetailModal({
             )}
           </div>
 
-          {/* カード情報 */}
+          {/* アイテム情報 */}
           <div className="space-y-4">
             <div>
               <h3 className="text-xl font-bold">{card.name}</h3>

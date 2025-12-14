@@ -21,7 +21,7 @@ export function CardGrid({
   onCardClick,
   onFavoriteToggle,
   favoriteCardIds = new Set(),
-  emptyMessage = 'カードがありません',
+  emptyMessage = 'アイテムがありません',
 }: CardGridProps) {
   if (isLoading) {
     return <CardGridSkeleton />;

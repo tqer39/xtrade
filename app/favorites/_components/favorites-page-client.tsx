@@ -147,7 +147,7 @@ export function FavoritesPageClient() {
         <TabsList className="mb-4">
           <TabsTrigger value="cards" className="gap-2">
             <span>🃏</span>
-            カード ({favoriteCards.length})
+            アイテム ({favoriteCards.length})
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2">
             <User className="w-4 h-4" />
@@ -165,9 +165,9 @@ export function FavoritesPageClient() {
           ) : favoriteCards.length === 0 ? (
             <div className="text-center py-12">
               <Heart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">お気に入りのカードはまだありません</p>
+              <p className="text-muted-foreground">お気に入りのアイテムはまだありません</p>
               <p className="text-sm text-muted-foreground mt-2">
-                検索結果やマッチング画面からカードをお気に入りに追加できます
+                検索結果やマッチング画面からアイテムをお気に入りに追加できます
               </p>
             </div>
           ) : (

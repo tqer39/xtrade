@@ -37,7 +37,7 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn, currentUserId }: Car
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           responderUserId: owners[0].userId,
-          initialCardId: cardId, // カード詳細画面から開始時、相手のオファーに追加
+          initialCardId: cardId, // アイテム詳細画面から開始時、相手のオファーに追加
         }),
       });
 
@@ -96,10 +96,10 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn, currentUserId }: Car
         戻る
       </Button>
 
-      {/* カード詳細 */}
+      {/* アイテム詳細 */}
       <Card className="py-0 overflow-hidden">
         <CardContent className="p-0">
-          {/* カード画像 */}
+          {/* アイテム画像 */}
           <div className="w-full aspect-[3/4] bg-muted rounded-t-lg overflow-hidden">
             {card.imageUrl ? (
               <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
@@ -110,7 +110,7 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn, currentUserId }: Car
             )}
           </div>
 
-          {/* カード情報 */}
+          {/* アイテム情報 */}
           <div className="p-4 space-y-3">
             <div>
               <h2 className="text-xl font-bold">{card.name}</h2>

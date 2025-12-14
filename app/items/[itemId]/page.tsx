@@ -47,7 +47,7 @@ export default function ItemDetailPage({ params }: Props) {
   useEffect(() => {
     async function fetchData() {
       try {
-        // カード詳細と所有者一覧を並列取得
+        // アイテム詳細と所有者一覧を並列取得
         const [cardRes, ownersRes] = await Promise.all([
           fetch(`/api/items/${cardId}`),
           fetch(`/api/items/${cardId}/owners`),
@@ -55,7 +55,7 @@ export default function ItemDetailPage({ params }: Props) {
 
         if (!cardRes.ok) {
           if (cardRes.status === 404) {
-            setError('カードが見つかりません');
+            setError('アイテムが見つかりません');
           } else {
             throw new Error('データの取得に失敗しました');
           }
@@ -201,7 +201,7 @@ export default function ItemDetailPage({ params }: Props) {
         </Button>
       </div>
 
-      {/* カード画像 */}
+      {/* アイテム画像 */}
       <div className="mb-6">
         <div className="relative max-w-md mx-auto">
           {card.imageUrl ? (
@@ -220,7 +220,7 @@ export default function ItemDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* カード情報 */}
+      {/* アイテム情報 */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-1">{card.name}</h1>
         {card.category && <p className="text-muted-foreground mb-2">{card.category}</p>}
@@ -300,7 +300,7 @@ export default function ItemDetailPage({ params }: Props) {
                       {owner.wantText && (
                         <p className="text-sm text-muted-foreground mb-2">{owner.wantText}</p>
                       )}
-                      {/* カード一覧 */}
+                      {/* アイテム一覧 */}
                       {owner.wantCards && owner.wantCards.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {owner.wantCards.slice(0, 5).map((wantCard) => (

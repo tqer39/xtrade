@@ -6,9 +6,9 @@ import { CardListItem } from '../_components/card-list-item';
 describe('CardListItem', () => {
   const mockCard = {
     id: 'card-1',
-    name: 'テストカード',
+    name: 'テストアイテム',
     category: 'INI',
-    description: 'テスト用のカードです',
+    description: 'テスト用のアイテムです',
     imageUrl: null,
     createdByUserId: 'user-1',
     createdAt: new Date(),
@@ -57,7 +57,7 @@ describe('CardListItem', () => {
 
       render(<CardListItem item={cardWithImage} type="have" />);
 
-      const img = screen.getByAltText('テストカード');
+      const img = screen.getByAltText('テストアイテム');
       expect(img).toBeInTheDocument();
       // Next.js Imageコンポーネントは/_next/image?url=... 形式にURLを変換する
       expect(img.getAttribute('src')).toContain(
@@ -66,11 +66,11 @@ describe('CardListItem', () => {
     });
   });
 
-  describe('カード情報表示', () => {
-    it('カード名が表示されること', () => {
+  describe('アイテム情報表示', () => {
+    it('アイテム名が表示されること', () => {
       render(<CardListItem item={mockHaveCard} type="have" />);
 
-      expect(screen.getByText('テストカード')).toBeInTheDocument();
+      expect(screen.getByText('テストアイテム')).toBeInTheDocument();
     });
 
     it('カテゴリがバッジとして表示されること', () => {
@@ -82,7 +82,7 @@ describe('CardListItem', () => {
     it('説明が表示されること', () => {
       render(<CardListItem item={mockHaveCard} type="have" />);
 
-      expect(screen.getByText('テスト用のカードです')).toBeInTheDocument();
+      expect(screen.getByText('テスト用のアイテムです')).toBeInTheDocument();
     });
 
     it('説明がない場合は表示しないこと', () => {
@@ -96,19 +96,19 @@ describe('CardListItem', () => {
 
       render(<CardListItem item={cardWithoutDescription} type="have" />);
 
-      expect(screen.queryByText('テスト用のカードです')).not.toBeInTheDocument();
+      expect(screen.queryByText('テスト用のアイテムです')).not.toBeInTheDocument();
     });
   });
 
-  describe('持っているカード表示', () => {
-    it('カード情報が表示されること', () => {
+  describe('持っているアイテム表示', () => {
+    it('アイテム情報が表示されること', () => {
       render(<CardListItem item={mockHaveCard} type="have" />);
 
-      expect(screen.getByText('テストカード')).toBeInTheDocument();
+      expect(screen.getByText('テストアイテム')).toBeInTheDocument();
     });
   });
 
-  describe('欲しいカード表示', () => {
+  describe('欲しいアイテム表示', () => {
     it('優先度が表示されること', () => {
       render(<CardListItem item={mockWantCard} type="want" />);
 

@@ -55,7 +55,7 @@ export function CardGridItem({
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
     >
-      {/* カード画像 */}
+      {/* アイテム画像 */}
       <div className="relative w-full">
         {card.imageUrl ? (
           <Image
