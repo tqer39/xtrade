@@ -297,13 +297,17 @@ export default function TradeRoomPage({ params }: Props) {
   const statusInfo = statusConfig[trade.status];
 
   // アクションボタンの表示条件
-  const canPropose = trade.status === 'draft' && isInitiator;
+  const canPropose = trade.status === 'draft' && isInitiator && myItems.length > 0;
   const canAgree = trade.status === 'proposed' && isResponder;
   const canComplete = trade.status === 'agreed' && isParticipant;
   const canCancel = ['draft', 'proposed', 'agreed'].includes(trade.status) && isParticipant;
   const canDispute = trade.status === 'agreed' && isParticipant;
   const canUncancel = trade.status === 'canceled' && isParticipant;
   const isTerminal = ['completed', 'canceled', 'disputed', 'expired'].includes(trade.status);
+  // オファー編集は draft 状態のみ可能
+  const canEditOffer = trade.status === 'draft';
+  // 提案ボタンを表示するが無効化する場合のヒント
+  const showProposeHint = trade.status === 'draft' && isInitiator && myItems.length === 0;
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-3xl">
@@ -424,7 +428,7 @@ export default function TradeRoomPage({ params }: Props) {
                     <Badge variant="secondary" className="text-xs">
                       ×{item.quantity}
                     </Badge>
-                    {!isTerminal && (
+                    {canEditOffer && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -444,7 +448,7 @@ export default function TradeRoomPage({ params }: Props) {
               </p>
             )}
 
-            {!isTerminal && (
+            {canEditOffer && (
               <Button
                 variant="outline"
                 size="sm"
@@ -467,7 +471,9 @@ export default function TradeRoomPage({ params }: Props) {
               <MessageSquare className="h-4 w-4" />
               コメント
             </CardTitle>
-            <CardDescription>取引に関するメッセージを送信できます</CardDescription>
+            <CardDescription>
+              アクション実行時にメッセージを添付できます（提案、承認、キャンセル等）
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Textarea
@@ -482,62 +488,75 @@ export default function TradeRoomPage({ params }: Props) {
 
       {/* アクションボタン */}
       {!isTerminal && (
-        <div className="flex flex-wrap gap-2">
-          {canPropose && (
-            <Button onClick={() => handleAction('propose')} disabled={isActionLoading}>
-              <Send className="h-4 w-4 mr-2" />
-              取引を提案
-            </Button>
-          )}
-          {canAgree && (
-            <Button
-              onClick={() => handleAction('agree')}
-              disabled={isActionLoading}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              承認する
-            </Button>
-          )}
-          {canComplete && (
-            <Button
-              onClick={() => handleAction('complete')}
-              disabled={isActionLoading}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              取引完了
-            </Button>
-          )}
-          {canDispute && (
-            <Button
-              variant="destructive"
-              onClick={() => handleAction('dispute')}
-              disabled={isActionLoading}
-            >
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              問題を報告
-            </Button>
-          )}
-          {canCancel && (
-            <Button
-              variant="outline"
-              onClick={() => handleAction('cancel')}
-              disabled={isActionLoading}
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              キャンセル
-            </Button>
-          )}
-          {canUncancel && (
-            <Button
-              variant="outline"
-              onClick={() => handleAction('uncancel')}
-              disabled={isActionLoading}
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              キャンセルを取り消す
-            </Button>
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {canPropose && (
+              <Button onClick={() => handleAction('propose')} disabled={isActionLoading}>
+                <Send className="h-4 w-4 mr-2" />
+                取引を提案
+              </Button>
+            )}
+            {showProposeHint && (
+              <Button disabled>
+                <Send className="h-4 w-4 mr-2" />
+                取引を提案
+              </Button>
+            )}
+            {canAgree && (
+              <Button
+                onClick={() => handleAction('agree')}
+                disabled={isActionLoading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                承認する
+              </Button>
+            )}
+            {canComplete && (
+              <Button
+                onClick={() => handleAction('complete')}
+                disabled={isActionLoading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                取引完了
+              </Button>
+            )}
+            {canDispute && (
+              <Button
+                variant="destructive"
+                onClick={() => handleAction('dispute')}
+                disabled={isActionLoading}
+              >
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                問題を報告
+              </Button>
+            )}
+            {canCancel && (
+              <Button
+                variant="outline"
+                onClick={() => handleAction('cancel')}
+                disabled={isActionLoading}
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                キャンセル
+              </Button>
+            )}
+            {canUncancel && (
+              <Button
+                variant="outline"
+                onClick={() => handleAction('uncancel')}
+                disabled={isActionLoading}
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                キャンセルを取り消す
+              </Button>
+            )}
+          </div>
+          {showProposeHint && (
+            <p className="text-sm text-muted-foreground">
+              取引を提案するには、先にオファーするアイテムを追加してください
+            </p>
           )}
         </div>
       )}

@@ -72,6 +72,7 @@ export interface TradeDetail {
 export interface CreateTradeInput {
   responderUserId?: string;
   proposedExpiredAt?: Date;
+  initialCardId?: string; // カード詳細画面から開始時、相手のオファーに追加するカードID
 }
 
 /**

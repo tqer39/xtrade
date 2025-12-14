@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
   let body: {
     responderUserId?: string;
     proposedExpiredAt?: string;
+    initialCardId?: string;
   };
   try {
     body = await request.json();
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { responderUserId, proposedExpiredAt } = body;
+  const { responderUserId, proposedExpiredAt, initialCardId } = body;
 
   // 自分自身を相手に指定できない
   if (responderUserId === session.user.id) {
@@ -37,6 +38,7 @@ export async function POST(request: NextRequest) {
   const trade = await createTrade(session.user.id, {
     responderUserId,
     proposedExpiredAt: proposedExpiredAt ? new Date(proposedExpiredAt) : undefined,
+    initialCardId,
   });
 
   return NextResponse.json(

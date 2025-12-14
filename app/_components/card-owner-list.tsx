@@ -35,7 +35,10 @@ export function CardOwnerList({ cardId, onBack, isLoggedIn, currentUserId }: Car
       const res = await fetch('/api/trades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ responderUserId: owners[0].userId }),
+        body: JSON.stringify({
+          responderUserId: owners[0].userId,
+          initialCardId: cardId, // カード詳細画面から開始時、相手のオファーに追加
+        }),
       });
 
       if (!res.ok) {

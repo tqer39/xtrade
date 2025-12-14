@@ -11,6 +11,7 @@ function createTrade(overrides: Partial<Trade> = {}): Trade {
     initiatorUserId: 'user-initiator',
     responderUserId: 'user-responder',
     status: 'draft',
+    statusBeforeCancel: null,
     proposedExpiredAt: null,
     agreedExpiredAt: null,
     createdAt: new Date(),

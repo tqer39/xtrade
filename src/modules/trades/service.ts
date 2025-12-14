@@ -47,6 +47,18 @@ export async function createTrade(
     createdAt: new Date(),
   });
 
+  // 初期カードが指定されている場合、responderのオファーとして追加
+  if (input.initialCardId && input.responderUserId) {
+    await db.insert(schema.tradeItem).values({
+      id: randomUUID(),
+      tradeId: newTrade.id,
+      offeredByUserId: input.responderUserId,
+      cardId: input.initialCardId,
+      quantity: 1,
+      createdAt: new Date(),
+    });
+  }
+
   return newTrade;
 }
 
