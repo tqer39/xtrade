@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { CardWithCreator } from '@/modules/cards/types';
 
-interface UseLatestCardsOptions {
+interface UseLatestItemsOptions {
   limit?: number;
   initialPage?: number;
   query?: string;
 }
 
-interface UseLatestCardsReturn {
-  latestCards: CardWithCreator[];
+interface UseLatestItemsReturn {
+  latestItems: CardWithCreator[];
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -21,9 +21,9 @@ interface UseLatestCardsReturn {
   setQuery: (query: string) => void;
 }
 
-export function useLatestCards(options: UseLatestCardsOptions = {}): UseLatestCardsReturn {
+export function useLatestItems(options: UseLatestItemsOptions = {}): UseLatestItemsReturn {
   const { limit = 12, initialPage = 1 } = options;
-  const [latestCards, setLatestCards] = useState<CardWithCreator[]>([]);
+  const [latestItems, setLatestItems] = useState<CardWithCreator[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [total, setTotal] = useState(0);
@@ -31,7 +31,7 @@ export function useLatestCards(options: UseLatestCardsOptions = {}): UseLatestCa
   const [totalPages, setTotalPages] = useState(0);
   const [query, setQuery] = useState(options.query ?? '');
 
-  const fetchLatestCards = useCallback(async () => {
+  const fetchLatestItems = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -43,16 +43,16 @@ export function useLatestCards(options: UseLatestCardsOptions = {}): UseLatestCa
 
       const res = await fetch(`/api/items/latest?${params.toString()}`);
       if (!res.ok) {
-        throw new Error('Failed to fetch latest cards');
+        throw new Error('Failed to fetch latest items');
       }
       const data = await res.json();
-      setLatestCards(data.cards || []);
+      setLatestItems(data.cards || []);
       setTotal(data.total ?? 0);
       setTotalPages(data.totalPages ?? 0);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error'));
-      setLatestCards([]);
+      setLatestItems([]);
       setTotal(0);
       setTotalPages(0);
     } finally {
@@ -61,12 +61,12 @@ export function useLatestCards(options: UseLatestCardsOptions = {}): UseLatestCa
   }, [limit, page, query]);
 
   useEffect(() => {
-    fetchLatestCards();
-  }, [fetchLatestCards]);
+    fetchLatestItems();
+  }, [fetchLatestItems]);
 
   const refetch = useCallback(() => {
-    fetchLatestCards();
-  }, [fetchLatestCards]);
+    fetchLatestItems();
+  }, [fetchLatestItems]);
 
   const handleSetQuery = useCallback((newQuery: string) => {
     setQuery(newQuery);
@@ -74,7 +74,7 @@ export function useLatestCards(options: UseLatestCardsOptions = {}): UseLatestCa
   }, []);
 
   return {
-    latestCards,
+    latestItems,
     isLoading,
     error,
     refetch,

@@ -6,14 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
 
-interface CardListItemProps {
+interface ItemListItemProps {
   item: UserHaveCard | UserWantCard;
   type: 'have' | 'want';
   viewMode?: 'list' | 'grid';
   onClick?: () => void;
 }
 
-export function CardListItem({ item, type, viewMode = 'list', onClick }: CardListItemProps) {
+export function ItemListItem({ item, type, viewMode = 'list', onClick }: ItemListItemProps) {
   const card = item.card;
 
   if (!card) {

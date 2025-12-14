@@ -4,8 +4,8 @@ import { HomePageClient } from '../_components/home-page-client';
 
 // モック設定
 const mockUseSession = vi.fn();
-const mockUseMyCards = vi.fn();
-const mockUseLatestCards = vi.fn();
+const mockUseMyItems = vi.fn();
+const mockUseLatestItems = vi.fn();
 const mockPush = vi.fn();
 
 vi.mock('next/navigation', () => ({
@@ -16,12 +16,12 @@ vi.mock('@/lib/auth-client', () => ({
   useSession: () => mockUseSession(),
 }));
 
-vi.mock('@/hooks/use-my-cards', () => ({
-  useMyCards: () => mockUseMyCards(),
+vi.mock('@/hooks/use-my-items', () => ({
+  useMyItems: () => mockUseMyItems(),
 }));
 
-vi.mock('@/hooks/use-latest-cards', () => ({
-  useLatestCards: () => mockUseLatestCards(),
+vi.mock('@/hooks/use-latest-items', () => ({
+  useLatestItems: () => mockUseLatestItems(),
 }));
 
 vi.mock('@/components/auth', () => ({
@@ -33,8 +33,8 @@ vi.mock('@/components/layout', () => ({
   Footer: () => <footer data-testid="footer">Footer</footer>,
 }));
 
-const defaultLatestCardsReturn = {
-  latestCards: [],
+const defaultLatestItemsReturn = {
+  latestItems: [],
   isLoading: false,
   error: null,
   refetch: vi.fn(),
@@ -43,13 +43,13 @@ const defaultLatestCardsReturn = {
 describe('HomePageClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseLatestCards.mockReturnValue(defaultLatestCardsReturn);
+    mockUseLatestItems.mockReturnValue(defaultLatestItemsReturn);
   });
 
   describe('ローディング状態', () => {
     it('セッション読み込み中はローディング表示', () => {
       mockUseSession.mockReturnValue({ data: null, isPending: true });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -69,7 +69,7 @@ describe('HomePageClient', () => {
   describe('未ログイン状態', () => {
     it('ログインボタンを表示', () => {
       mockUseSession.mockReturnValue({ data: null, isPending: false });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -86,7 +86,7 @@ describe('HomePageClient', () => {
 
     it('最近登録されたアイテムセクションを表示', () => {
       mockUseSession.mockReturnValue({ data: null, isPending: false });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -103,7 +103,7 @@ describe('HomePageClient', () => {
 
     it('フッターを表示', () => {
       mockUseSession.mockReturnValue({ data: null, isPending: false });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -125,7 +125,7 @@ describe('HomePageClient', () => {
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
       });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -148,7 +148,7 @@ describe('HomePageClient', () => {
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
       });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [
           {
             id: 'have-1',
@@ -177,7 +177,7 @@ describe('HomePageClient', () => {
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
       });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -197,7 +197,7 @@ describe('HomePageClient', () => {
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
       });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Card, CardOwner } from '@/modules/cards/types';
 
-interface UseCardOwnersReturn {
+interface UseItemOwnersReturn {
   card: Card | null;
   owners: CardOwner[];
   isLoading: boolean;
@@ -11,7 +11,7 @@ interface UseCardOwnersReturn {
   refetch: () => void;
 }
 
-export function useCardOwners(cardId: string | null): UseCardOwnersReturn {
+export function useItemOwners(cardId: string | null): UseItemOwnersReturn {
   const [card, setCard] = useState<Card | null>(null);
   const [owners, setOwners] = useState<CardOwner[]>([]);
   const [isLoading, setIsLoading] = useState(false);

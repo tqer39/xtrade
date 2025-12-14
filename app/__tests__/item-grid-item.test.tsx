@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
-import { CardGridItem } from '../_components/card-grid-item';
+import { ItemGridItem } from '../_components/item-grid-item';
 
-describe('CardGridItem', () => {
+describe('ItemGridItem', () => {
   const mockCard = {
     id: 'card-1',
     name: 'テストアイテム',
@@ -36,7 +36,7 @@ describe('CardGridItem', () => {
 
   describe('基本レンダリング', () => {
     it('アイテム画像を表示すること', () => {
-      render(<CardGridItem item={mockHaveCard} type="have" />);
+      render(<ItemGridItem item={mockHaveCard} type="have" />);
 
       const img = screen.getByAltText('テストアイテム');
       expect(img).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe('CardGridItem', () => {
         },
       };
 
-      const { container } = render(<CardGridItem item={cardWithoutImage} type="have" />);
+      const { container } = render(<ItemGridItem item={cardWithoutImage} type="have" />);
 
       const svgIcon = container.querySelector('svg.lucide-image');
       expect(svgIcon).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('CardGridItem', () => {
         card: null as unknown as undefined,
       };
 
-      const { container } = render(<CardGridItem item={itemWithNullCard} type="have" />);
+      const { container } = render(<ItemGridItem item={itemWithNullCard} type="have" />);
       expect(container.firstChild).toBeNull();
     });
 
@@ -73,14 +73,14 @@ describe('CardGridItem', () => {
         card: undefined,
       };
 
-      const { container } = render(<CardGridItem item={itemWithoutCard} type="have" />);
+      const { container } = render(<ItemGridItem item={itemWithoutCard} type="have" />);
       expect(container.firstChild).toBeNull();
     });
   });
 
   describe('持っているアイテム表示', () => {
     it('アイテム画像を表示すること', () => {
-      render(<CardGridItem item={mockHaveCard} type="have" />);
+      render(<ItemGridItem item={mockHaveCard} type="have" />);
 
       expect(screen.getByAltText('テストアイテム')).toBeInTheDocument();
     });
@@ -88,7 +88,7 @@ describe('CardGridItem', () => {
 
   describe('欲しいアイテム表示', () => {
     it('優先度バッジを表示すること', () => {
-      render(<CardGridItem item={mockWantCard} type="want" />);
+      render(<ItemGridItem item={mockWantCard} type="want" />);
 
       expect(screen.getByText('P5')).toBeInTheDocument();
     });
@@ -99,7 +99,7 @@ describe('CardGridItem', () => {
         priority: null,
       };
 
-      render(<CardGridItem item={wantCardWithoutPriority} type="want" />);
+      render(<ItemGridItem item={wantCardWithoutPriority} type="want" />);
       expect(screen.queryByText(/^P\d+$/)).not.toBeInTheDocument();
     });
   });
@@ -108,7 +108,7 @@ describe('CardGridItem', () => {
     it('クリック時にonCardClickが呼ばれること', () => {
       const handleClick = vi.fn();
 
-      render(<CardGridItem item={mockHaveCard} type="have" onCardClick={handleClick} />);
+      render(<ItemGridItem item={mockHaveCard} type="have" onCardClick={handleClick} />);
 
       const button = screen.getByRole('button');
       fireEvent.click(button);
@@ -120,7 +120,7 @@ describe('CardGridItem', () => {
       const handleFavoriteToggle = vi.fn();
 
       render(
-        <CardGridItem
+        <ItemGridItem
           item={mockHaveCard}
           type="have"
           onFavoriteToggle={handleFavoriteToggle}
@@ -140,7 +140,7 @@ describe('CardGridItem', () => {
       const handleFavoriteToggle = vi.fn();
 
       render(
-        <CardGridItem
+        <ItemGridItem
           item={mockHaveCard}
           type="have"
           onFavoriteToggle={handleFavoriteToggle}
@@ -158,7 +158,7 @@ describe('CardGridItem', () => {
 
   describe('ホバー状態', () => {
     it('ホバー時にオーバーレイ情報を表示すること', () => {
-      render(<CardGridItem item={mockHaveCard} type="have" />);
+      render(<ItemGridItem item={mockHaveCard} type="have" />);
 
       const button = screen.getByRole('button');
       fireEvent.mouseEnter(button);

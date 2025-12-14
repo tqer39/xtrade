@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface CardGridFiltersProps {
+interface ItemGridFiltersProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   selectedCategory: string;
@@ -25,7 +25,7 @@ interface CardGridFiltersProps {
   filteredCount: number;
 }
 
-export function CardGridFilters({
+export function ItemGridFilters({
   searchQuery,
   onSearchChange,
   selectedCategory,
@@ -35,7 +35,7 @@ export function CardGridFilters({
   onViewModeChange,
   totalCount,
   filteredCount,
-}: CardGridFiltersProps) {
+}: ItemGridFiltersProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const hasActiveFilters = searchQuery || selectedCategory !== 'all';

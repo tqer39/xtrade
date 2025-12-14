@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
 
-interface CardDetailModalProps {
+interface ItemDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item: UserHaveCard | UserWantCard | null;
@@ -26,14 +26,14 @@ interface CardDetailModalProps {
   onDelete?: (itemId: string) => Promise<void>;
 }
 
-export function CardDetailModal({
+export function ItemDetailModal({
   open,
   onOpenChange,
   item,
   type,
   onUpdate,
   onDelete,
-}: CardDetailModalProps) {
+}: ItemDetailModalProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [priority, setPriority] = useState(1);

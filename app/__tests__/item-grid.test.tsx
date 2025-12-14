@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { UserHaveCard } from '@/modules/cards/types';
-import { CardGrid } from '../_components/card-grid';
+import { ItemGrid } from '../_components/item-grid';
 
-describe('CardGrid', () => {
+describe('ItemGrid', () => {
   const mockCard = {
     id: 'card-1',
     name: 'テストアイテム',
@@ -40,38 +40,38 @@ describe('CardGrid', () => {
 
   describe('ローディング状態', () => {
     it('isLoadingがtrueの場合はスケルトンを表示すること', () => {
-      const { container } = render(<CardGrid items={[]} type="have" isLoading={true} />);
+      const { container } = render(<ItemGrid items={[]} type="have" isLoading={true} />);
 
-      const skeletons = container.querySelectorAll('.aspect-square');
+      // columnsレイアウトでスケルトンが表示される
+      const skeletons = container.querySelectorAll('[class*="aspect-"]');
       expect(skeletons.length).toBeGreaterThan(0);
     });
   });
 
   describe('空の状態', () => {
     it('アイテムがない場合はデフォルトメッセージを表示すること', () => {
-      render(<CardGrid items={[]} type="have" />);
+      render(<ItemGrid items={[]} type="have" />);
 
       expect(screen.getByText('アイテムがありません')).toBeInTheDocument();
     });
 
     it('カスタム空メッセージを表示できること', () => {
-      render(<CardGrid items={[]} type="have" emptyMessage="登録されたアイテムはありません" />);
+      render(<ItemGrid items={[]} type="have" emptyMessage="登録されたアイテムはありません" />);
 
       expect(screen.getByText('登録されたアイテムはありません')).toBeInTheDocument();
     });
   });
 
   describe('グリッド表示', () => {
-    it('アイテムをグリッドで表示すること', () => {
-      const { container } = render(<CardGrid items={mockHaveCards} type="have" />);
+    it('アイテムをcolumnsレイアウトで表示すること', () => {
+      const { container } = render(<ItemGrid items={mockHaveCards} type="have" />);
 
-      const grid = container.querySelector('.grid');
-      expect(grid).toBeInTheDocument();
-      expect(grid).toHaveClass('grid-cols-2');
+      const columnsContainer = container.querySelector('.columns-2');
+      expect(columnsContainer).toBeInTheDocument();
     });
 
     it('各アイテムを表示すること', () => {
-      render(<CardGrid items={mockHaveCards} type="have" />);
+      render(<ItemGrid items={mockHaveCards} type="have" />);
 
       expect(screen.getByAltText('テストアイテム')).toBeInTheDocument();
       expect(screen.getByAltText('テストアイテム2')).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe('CardGrid', () => {
     it('onCardClickを各アイテムに渡すこと', () => {
       const handleClick = vi.fn();
 
-      render(<CardGrid items={mockHaveCards} type="have" onCardClick={handleClick} />);
+      render(<ItemGrid items={mockHaveCards} type="have" onCardClick={handleClick} />);
 
       // ボタンが存在することを確認
       const buttons = screen.getAllByRole('button');
@@ -93,7 +93,7 @@ describe('CardGrid', () => {
       const handleFavoriteToggle = vi.fn();
 
       render(
-        <CardGrid items={mockHaveCards} type="have" onFavoriteToggle={handleFavoriteToggle} />
+        <ItemGrid items={mockHaveCards} type="have" onFavoriteToggle={handleFavoriteToggle} />
       );
 
       // お気に入りボタンが存在することを確認
@@ -105,7 +105,7 @@ describe('CardGrid', () => {
       const favoriteCardIds = new Set(['card-1']);
 
       render(
-        <CardGrid
+        <ItemGrid
           items={mockHaveCards}
           type="have"
           onFavoriteToggle={vi.fn()}

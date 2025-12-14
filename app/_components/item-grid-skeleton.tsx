@@ -18,7 +18,7 @@ const heightPatterns = [
   'aspect-[5/6]',
 ];
 
-export function CardGridSkeleton() {
+export function ItemGridSkeleton() {
   return (
     <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-0.5">
       {heightPatterns.map((height, i) => (

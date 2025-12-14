@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ViewToggle } from '@/components/view-toggle';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useLatestCards } from '@/hooks/use-latest-cards';
+import { useLatestItems } from '@/hooks/use-latest-items';
 import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
 import type { TrustGrade } from '@/modules/trust/types';
@@ -34,7 +34,7 @@ export function HomePageClient() {
   const debouncedSearch = useDebounce(searchInput, 500);
 
   const {
-    latestCards,
+    latestItems,
     isLoading: isLatestLoading,
     error,
     page,
@@ -42,7 +42,7 @@ export function HomePageClient() {
     setPage,
     setQuery,
     refetch,
-  } = useLatestCards({ limit: 12, initialPage });
+  } = useLatestItems({ limit: 12, initialPage });
 
   // デバウンスされた検索値を反映
   useEffect(() => {
@@ -68,9 +68,9 @@ export function HomePageClient() {
 
   // お気に入り状態を一括取得
   useEffect(() => {
-    if (!session?.user || latestCards.length === 0) return;
+    if (!session?.user || latestItems.length === 0) return;
 
-    const cardIds = latestCards.map((card) => card.id);
+    const cardIds = latestItems.map((card) => card.id);
     fetch('/api/me/favorites/check', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -83,7 +83,7 @@ export function HomePageClient() {
         }
       })
       .catch(console.error);
-  }, [session?.user, latestCards]);
+  }, [session?.user, latestItems]);
 
   // お気に入りトグル
   const toggleFavorite = useCallback(
@@ -218,7 +218,7 @@ export function HomePageClient() {
                   />
                 ))}
               </div>
-            ) : latestCards.length === 0 ? (
+            ) : latestItems.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
                 {searchInput
                   ? `「${searchInput}」に一致するアイテムが見つかりませんでした`
@@ -226,7 +226,7 @@ export function HomePageClient() {
               </p>
             ) : !isHydrated || viewMode === 'grid' ? (
               <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
-                {latestCards.map((card) => (
+                {latestItems.map((card) => (
                   <Link
                     key={card.id}
                     href={`/items/${card.id}`}
@@ -351,7 +351,7 @@ export function HomePageClient() {
               </div>
             ) : (
               <div className="space-y-1">
-                {latestCards.map((card) => (
+                {latestItems.map((card) => (
                   <Link key={card.id} href={`/items/${card.id}`}>
                     <Card className="cursor-pointer transition-colors hover:bg-accent rounded-none border-x-0 first:border-t-0">
                       <CardContent className="p-2">

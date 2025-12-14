@@ -15,8 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ViewToggle } from '@/components/view-toggle';
-import { useCardSearch } from '@/hooks/use-card-search';
 import { useFavorites } from '@/hooks/use-favorites';
+import { useItemSearch } from '@/hooks/use-item-search';
 import { useMyCategories } from '@/hooks/use-my-categories';
 import { usePhotocardSearch } from '@/hooks/use-photocard-search';
 import { useViewPreference } from '@/hooks/use-view-preference';
@@ -33,7 +33,7 @@ function CardSearchContent() {
   const isLoggedIn = !!session?.user;
 
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
-  const { searchResults, isSearching, searchError, search, createCard } = useCardSearch();
+  const { searchResults, isSearching, searchError, search, createCard } = useItemSearch();
   const {
     searchResults: photocardResults,
     isSearching: isPhotocardSearching,

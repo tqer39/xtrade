@@ -9,19 +9,19 @@ import { TrustBadge } from '@/components/trust/trust-badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCardOwners } from '@/hooks/use-card-owners';
+import { useItemOwners } from '@/hooks/use-item-owners';
 import type { TrustGrade } from '@/modules/trust/types';
 
-interface CardOwnerListProps {
+interface ItemOwnerListProps {
   cardId: string;
   onBack: () => void;
   isLoggedIn: boolean;
   currentUserId?: string;
 }
 
-export function CardOwnerList({ cardId, onBack, isLoggedIn, currentUserId }: CardOwnerListProps) {
+export function ItemOwnerList({ cardId, onBack, isLoggedIn, currentUserId }: ItemOwnerListProps) {
   const router = useRouter();
-  const { card, owners, isLoading, error } = useCardOwners(cardId);
+  const { card, owners, isLoading, error } = useItemOwners(cardId);
   const [isCreatingTrade, setIsCreatingTrade] = useState(false);
   const [tradeError, setTradeError] = useState<string | null>(null);
 

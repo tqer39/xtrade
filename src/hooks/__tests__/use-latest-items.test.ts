@@ -1,11 +1,11 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useLatestCards } from '../use-latest-cards';
+import { useLatestItems } from '../use-latest-items';
 
 // fetch モック
 global.fetch = vi.fn();
 
-describe('useLatestCards', () => {
+describe('useLatestItems', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -22,7 +22,7 @@ describe('useLatestCards', () => {
         json: () => Promise.resolve({ cards: mockCards }),
       });
 
-      const { result } = renderHook(() => useLatestCards());
+      const { result } = renderHook(() => useLatestItems());
 
       expect(result.current.isLoading).toBe(true);
 
@@ -30,7 +30,7 @@ describe('useLatestCards', () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.latestCards).toEqual(mockCards);
+      expect(result.current.latestItems).toEqual(mockCards);
       expect(result.current.error).toBeNull();
       expect(global.fetch).toHaveBeenCalledWith('/api/items/latest?limit=12&page=1');
     });
@@ -41,7 +41,7 @@ describe('useLatestCards', () => {
         json: () => Promise.resolve({ cards: [] }),
       });
 
-      renderHook(() => useLatestCards({ limit: 50 }));
+      renderHook(() => useLatestItems({ limit: 50 }));
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith('/api/items/latest?limit=50&page=1');
@@ -54,13 +54,13 @@ describe('useLatestCards', () => {
         json: () => Promise.resolve({ cards: [] }),
       });
 
-      const { result } = renderHook(() => useLatestCards());
+      const { result } = renderHook(() => useLatestItems());
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.latestCards).toEqual([]);
+      expect(result.current.latestItems).toEqual([]);
       expect(result.current.error).toBeNull();
     });
 
@@ -70,13 +70,13 @@ describe('useLatestCards', () => {
         json: () => Promise.resolve({}),
       });
 
-      const { result } = renderHook(() => useLatestCards());
+      const { result } = renderHook(() => useLatestItems());
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.latestCards).toEqual([]);
+      expect(result.current.latestItems).toEqual([]);
     });
   });
 
@@ -88,21 +88,21 @@ describe('useLatestCards', () => {
         json: () => Promise.resolve({ error: 'Server error' }),
       });
 
-      const { result } = renderHook(() => useLatestCards());
+      const { result } = renderHook(() => useLatestItems());
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
       expect(result.current.error).toBeInstanceOf(Error);
-      expect(result.current.error?.message).toBe('Failed to fetch latest cards');
-      expect(result.current.latestCards).toEqual([]);
+      expect(result.current.error?.message).toBe('Failed to fetch latest items');
+      expect(result.current.latestItems).toEqual([]);
     });
 
     it('ネットワークエラー時にエラーステートを設定', async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
 
-      const { result } = renderHook(() => useLatestCards());
+      const { result } = renderHook(() => useLatestItems());
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -110,7 +110,7 @@ describe('useLatestCards', () => {
 
       expect(result.current.error).toBeInstanceOf(Error);
       expect(result.current.error?.message).toBe('Network error');
-      expect(result.current.latestCards).toEqual([]);
+      expect(result.current.latestItems).toEqual([]);
     });
   });
 
@@ -129,23 +129,23 @@ describe('useLatestCards', () => {
             }),
         });
 
-      const { result } = renderHook(() => useLatestCards());
+      const { result } = renderHook(() => useLatestItems());
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.latestCards).toEqual([]);
+      expect(result.current.latestItems).toEqual([]);
 
       await act(async () => {
         result.current.refetch();
       });
 
       await waitFor(() => {
-        expect(result.current.latestCards).toHaveLength(1);
+        expect(result.current.latestItems).toHaveLength(1);
       });
 
-      expect(result.current.latestCards[0].name).toBe('New Card');
+      expect(result.current.latestItems[0].name).toBe('New Card');
     });
   });
 });

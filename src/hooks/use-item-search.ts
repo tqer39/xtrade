@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Card, CreateCardInput } from '@/modules/cards/types';
 
-interface UseCardSearchReturn {
+interface UseItemSearchReturn {
   searchResults: Card[];
   isSearching: boolean;
   searchError: Error | null;
@@ -12,7 +12,7 @@ interface UseCardSearchReturn {
   clearResults: () => void;
 }
 
-export function useCardSearch(): UseCardSearchReturn {
+export function useItemSearch(): UseItemSearchReturn {
   const [searchResults, setSearchResults] = useState<Card[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<Error | null>(null);

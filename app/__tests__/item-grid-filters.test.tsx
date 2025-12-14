@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { CardGridFilters } from '../_components/card-grid-filters';
+import { ItemGridFilters } from '../_components/item-grid-filters';
 
-describe('CardGridFilters', () => {
+describe('ItemGridFilters', () => {
   const defaultProps = {
     searchQuery: '',
     onSearchChange: vi.fn(),
@@ -17,14 +17,14 @@ describe('CardGridFilters', () => {
 
   describe('検索バー', () => {
     it('検索入力を表示すること', () => {
-      render(<CardGridFilters {...defaultProps} />);
+      render(<ItemGridFilters {...defaultProps} />);
 
       expect(screen.getByPlaceholderText('アイテム名で検索...')).toBeInTheDocument();
     });
 
     it('検索クエリを入力できること', () => {
       const handleSearchChange = vi.fn();
-      render(<CardGridFilters {...defaultProps} onSearchChange={handleSearchChange} />);
+      render(<ItemGridFilters {...defaultProps} onSearchChange={handleSearchChange} />);
 
       const input = screen.getByPlaceholderText('アイテム名で検索...');
       fireEvent.change(input, { target: { value: 'テスト' } });
@@ -33,7 +33,7 @@ describe('CardGridFilters', () => {
     });
 
     it('検索クエリがある場合はクリアボタンを表示すること', () => {
-      render(<CardGridFilters {...defaultProps} searchQuery="テスト" />);
+      render(<ItemGridFilters {...defaultProps} searchQuery="テスト" />);
 
       const clearButtons = screen.getAllByRole('button');
       expect(clearButtons.length).toBeGreaterThan(1);
@@ -42,7 +42,7 @@ describe('CardGridFilters', () => {
     it('クリアボタンをクリックすると検索クエリがクリアされること', () => {
       const handleSearchChange = vi.fn();
       render(
-        <CardGridFilters
+        <ItemGridFilters
           {...defaultProps}
           searchQuery="テスト"
           onSearchChange={handleSearchChange}
@@ -64,7 +64,7 @@ describe('CardGridFilters', () => {
 
   describe('フィルターパネル', () => {
     it('フィルターボタンをクリックするとパネルが開くこと', () => {
-      render(<CardGridFilters {...defaultProps} />);
+      render(<ItemGridFilters {...defaultProps} />);
 
       // フィルターボタンは検索入力の隣にあるボタン（検索クリアボタンを除く）
       const buttons = screen.getAllByRole('button');
@@ -79,7 +79,7 @@ describe('CardGridFilters', () => {
     });
 
     it('フィルターがアクティブな場合はボーダーがハイライトされること', () => {
-      const { container } = render(<CardGridFilters {...defaultProps} selectedCategory="INI" />);
+      const { container } = render(<ItemGridFilters {...defaultProps} selectedCategory="INI" />);
 
       // border-primaryクラスを持つボタンが存在することを確認
       const highlightedButton = container.querySelector('button.border-primary');
@@ -89,7 +89,7 @@ describe('CardGridFilters', () => {
 
   describe('表示モード切替', () => {
     it('グリッドモードボタンがアクティブであること', () => {
-      const { container } = render(<CardGridFilters {...defaultProps} viewMode="grid" />);
+      const { container } = render(<ItemGridFilters {...defaultProps} viewMode="grid" />);
 
       // bg-secondaryクラスを持つボタンが存在することを確認
       const activeButton = container.querySelector('button.bg-secondary');
@@ -99,7 +99,7 @@ describe('CardGridFilters', () => {
     it('リストモードに切り替えられること', () => {
       const handleViewModeChange = vi.fn();
       const { container } = render(
-        <CardGridFilters {...defaultProps} onViewModeChange={handleViewModeChange} />
+        <ItemGridFilters {...defaultProps} onViewModeChange={handleViewModeChange} />
       );
 
       // グリッド/リスト切替ボタングループを探す
@@ -114,21 +114,21 @@ describe('CardGridFilters', () => {
 
   describe('結果カウント', () => {
     it('フィルター結果の件数を表示すること', () => {
-      render(<CardGridFilters {...defaultProps} filteredCount={50} totalCount={100} />);
+      render(<ItemGridFilters {...defaultProps} filteredCount={50} totalCount={100} />);
 
       expect(screen.getByText(/50件表示/)).toBeInTheDocument();
       expect(screen.getByText(/100件中/)).toBeInTheDocument();
     });
 
     it('全件表示の場合は合計を表示しないこと', () => {
-      render(<CardGridFilters {...defaultProps} filteredCount={100} totalCount={100} />);
+      render(<ItemGridFilters {...defaultProps} filteredCount={100} totalCount={100} />);
 
       expect(screen.getByText('100件表示')).toBeInTheDocument();
       expect(screen.queryByText(/件中/)).not.toBeInTheDocument();
     });
 
     it('アクティブフィルターをバッジとして表示すること', () => {
-      render(<CardGridFilters {...defaultProps} searchQuery="テスト" selectedCategory="INI" />);
+      render(<ItemGridFilters {...defaultProps} searchQuery="テスト" selectedCategory="INI" />);
 
       expect(screen.getByText('検索: テスト')).toBeInTheDocument();
       expect(screen.getByText('INI')).toBeInTheDocument();
@@ -141,7 +141,7 @@ describe('CardGridFilters', () => {
       const handleCategoryChange = vi.fn();
 
       render(
-        <CardGridFilters
+        <ItemGridFilters
           {...defaultProps}
           searchQuery="テスト"
           selectedCategory="INI"

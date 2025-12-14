@@ -46,7 +46,7 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { useMyCards } from '@/hooks/use-my-cards';
+import { useMyItems } from '@/hooks/use-my-items';
 import { useSession } from '@/lib/auth-client';
 import type { TradeDetail, TradeStatus } from '@/modules/trades/types';
 
@@ -120,7 +120,7 @@ export default function TradeRoomPage({ params }: Props) {
   const router = useRouter();
   const handleBack = useHandleBack();
   const { data: session, isPending: isSessionPending } = useSession();
-  const { haveCards, isLoading: isCardsLoading } = useMyCards();
+  const { haveCards, isLoading: isCardsLoading } = useMyItems();
   const [trade, setTrade] = useState<TradeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

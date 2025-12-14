@@ -1,18 +1,18 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useCardSearch } from '../use-card-search';
+import { useItemSearch } from '../use-item-search';
 
 // fetch モック
 global.fetch = vi.fn();
 
-describe('useCardSearch', () => {
+describe('useItemSearch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe('search', () => {
     it('空のクエリで検索結果をクリア', async () => {
-      const { result } = renderHook(() => useCardSearch());
+      const { result } = renderHook(() => useItemSearch());
 
       act(() => {
         result.current.search('');
@@ -24,7 +24,7 @@ describe('useCardSearch', () => {
     });
 
     it('検索を実行してスペース付きクエリをトリム', async () => {
-      const { result } = renderHook(() => useCardSearch());
+      const { result } = renderHook(() => useItemSearch());
 
       act(() => {
         result.current.search('   ');
@@ -46,7 +46,7 @@ describe('useCardSearch', () => {
         json: () => Promise.resolve({ card: newCard }),
       });
 
-      const { result } = renderHook(() => useCardSearch());
+      const { result } = renderHook(() => useItemSearch());
 
       let createdCard: typeof newCard | undefined;
       await act(async () => {
@@ -72,7 +72,7 @@ describe('useCardSearch', () => {
         json: () => Promise.resolve({ error: 'Validation error' }),
       });
 
-      const { result } = renderHook(() => useCardSearch());
+      const { result } = renderHook(() => useItemSearch());
 
       await expect(
         act(async () => {
@@ -87,7 +87,7 @@ describe('useCardSearch', () => {
 
   describe('clearResults', () => {
     it('検索結果とエラーをクリア', async () => {
-      const { result } = renderHook(() => useCardSearch());
+      const { result } = renderHook(() => useItemSearch());
 
       // 初期状態を確認
       expect(result.current.searchResults).toEqual([]);

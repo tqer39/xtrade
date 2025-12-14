@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSession } from '@/lib/auth-client';
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
 
-interface UseMyCardsReturn {
+interface UseMyItemsReturn {
   haveCards: UserHaveCard[];
   wantCards: UserWantCard[];
   isLoading: boolean;
@@ -18,7 +18,7 @@ interface UseMyCardsReturn {
   refetch: () => Promise<void>;
 }
 
-export function useMyCards(): UseMyCardsReturn {
+export function useMyItems(): UseMyItemsReturn {
   const { data: session, isPending: isSessionPending } = useSession();
   const isLoggedIn = !!session?.user;
 

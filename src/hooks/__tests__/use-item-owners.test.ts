@@ -1,18 +1,18 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useCardOwners } from '../use-card-owners';
+import { useItemOwners } from '../use-item-owners';
 
 // fetch モック
 global.fetch = vi.fn();
 
-describe('useCardOwners', () => {
+describe('useItemOwners', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe('cardId が null の場合', () => {
     it('カードと所有者は空で isLoading は false', async () => {
-      const { result } = renderHook(() => useCardOwners(null));
+      const { result } = renderHook(() => useItemOwners(null));
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -38,7 +38,7 @@ describe('useCardOwners', () => {
         json: () => Promise.resolve({ card: mockCard, owners: mockOwners }),
       });
 
-      const { result } = renderHook(() => useCardOwners('card-1'));
+      const { result } = renderHook(() => useItemOwners('card-1'));
 
       expect(result.current.isLoading).toBe(true);
 
@@ -60,7 +60,7 @@ describe('useCardOwners', () => {
         json: () => Promise.resolve({ card: mockCard, owners: [] }),
       });
 
-      const { result } = renderHook(() => useCardOwners('card-1'));
+      const { result } = renderHook(() => useItemOwners('card-1'));
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -79,7 +79,7 @@ describe('useCardOwners', () => {
         json: () => Promise.resolve({ error: 'Not found' }),
       });
 
-      const { result } = renderHook(() => useCardOwners('invalid-card'));
+      const { result } = renderHook(() => useItemOwners('invalid-card'));
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -98,7 +98,7 @@ describe('useCardOwners', () => {
         json: () => Promise.resolve({ error: 'Server error' }),
       });
 
-      const { result } = renderHook(() => useCardOwners('card-1'));
+      const { result } = renderHook(() => useItemOwners('card-1'));
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -111,7 +111,7 @@ describe('useCardOwners', () => {
     it('ネットワークエラー時にエラーステートを設定', async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
 
-      const { result } = renderHook(() => useCardOwners('card-1'));
+      const { result } = renderHook(() => useItemOwners('card-1'));
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -140,7 +140,7 @@ describe('useCardOwners', () => {
             }),
         });
 
-      const { result } = renderHook(() => useCardOwners('card-1'));
+      const { result } = renderHook(() => useItemOwners('card-1'));
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);

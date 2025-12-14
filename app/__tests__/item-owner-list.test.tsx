@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CardOwnerList } from '../_components/card-owner-list';
+import { ItemOwnerList } from '../_components/item-owner-list';
 
 // モック設定
-const mockUseCardOwners = vi.fn();
+const mockUseItemOwners = vi.fn();
 
-vi.mock('@/hooks/use-card-owners', () => ({
-  useCardOwners: () => mockUseCardOwners(),
+vi.mock('@/hooks/use-item-owners', () => ({
+  useItemOwners: () => mockUseItemOwners(),
 }));
 
 vi.mock('@/components/auth', () => ({
@@ -22,7 +22,7 @@ vi.mock('@/components/trust/trust-badge', () => ({
   ),
 }));
 
-describe('CardOwnerList', () => {
+describe('ItemOwnerList', () => {
   const mockOnBack = vi.fn();
 
   beforeEach(() => {
@@ -31,14 +31,14 @@ describe('CardOwnerList', () => {
 
   describe('ローディング状態', () => {
     it('ローディング中はスケルトンを表示', () => {
-      mockUseCardOwners.mockReturnValue({
+      mockUseItemOwners.mockReturnValue({
         card: null,
         owners: [],
         isLoading: true,
         error: null,
       });
 
-      render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
+      render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
       // スケルトンが表示されていることを確認（class で確認）
       const skeletons = document.querySelectorAll('.animate-pulse');
@@ -48,14 +48,14 @@ describe('CardOwnerList', () => {
 
   describe('エラー状態', () => {
     it('エラーメッセージと戻るボタンを表示', () => {
-      mockUseCardOwners.mockReturnValue({
+      mockUseItemOwners.mockReturnValue({
         card: null,
         owners: [],
         isLoading: false,
         error: new Error('Failed to fetch'),
       });
 
-      render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
+      render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
       expect(screen.getByText(/エラーが発生しました/)).toBeInTheDocument();
       expect(screen.getByText(/Failed to fetch/)).toBeInTheDocument();
@@ -68,14 +68,14 @@ describe('CardOwnerList', () => {
 
   describe('アイテムが見つからない場合', () => {
     it('メッセージと戻るボタンを表示', () => {
-      mockUseCardOwners.mockReturnValue({
+      mockUseItemOwners.mockReturnValue({
         card: null,
         owners: [],
         isLoading: false,
         error: null,
       });
 
-      render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
+      render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
       expect(screen.getByText('アイテムが見つかりません')).toBeInTheDocument();
 
@@ -94,14 +94,14 @@ describe('CardOwnerList', () => {
     };
 
     it('アイテム情報を表示', () => {
-      mockUseCardOwners.mockReturnValue({
+      mockUseItemOwners.mockReturnValue({
         card: mockCard,
         owners: [],
         isLoading: false,
         error: null,
       });
 
-      render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
+      render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
       expect(screen.getByText('Test Card')).toBeInTheDocument();
       expect(screen.getByText('pokemon')).toBeInTheDocument();
@@ -109,27 +109,27 @@ describe('CardOwnerList', () => {
     });
 
     it('画像がない場合はプレースホルダーを表示', () => {
-      mockUseCardOwners.mockReturnValue({
+      mockUseItemOwners.mockReturnValue({
         card: { ...mockCard, imageUrl: null },
         owners: [],
         isLoading: false,
         error: null,
       });
 
-      render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
+      render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
       expect(screen.queryByAltText('Test Card')).not.toBeInTheDocument();
     });
 
     it('所有者がいない場合はメッセージを表示', () => {
-      mockUseCardOwners.mockReturnValue({
+      mockUseItemOwners.mockReturnValue({
         card: mockCard,
         owners: [],
         isLoading: false,
         error: null,
       });
 
-      render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
+      render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
       expect(screen.getByText('このアイテムを持っているユーザーがいません')).toBeInTheDocument();
     });
@@ -154,14 +154,14 @@ describe('CardOwnerList', () => {
         },
       ];
 
-      mockUseCardOwners.mockReturnValue({
+      mockUseItemOwners.mockReturnValue({
         card: mockCard,
         owners: mockOwners,
         isLoading: false,
         error: null,
       });
 
-      render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
+      render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
       expect(screen.getByText('このアイテムを持っているユーザー (2人)')).toBeInTheDocument();
       expect(screen.getByText('User 1')).toBeInTheDocument();
@@ -172,14 +172,14 @@ describe('CardOwnerList', () => {
     });
 
     it('戻るボタンが機能する', () => {
-      mockUseCardOwners.mockReturnValue({
+      mockUseItemOwners.mockReturnValue({
         card: mockCard,
         owners: [],
         isLoading: false,
         error: null,
       });
 
-      render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
+      render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
       const backButtons = screen.getAllByRole('button');
       const arrowBackButton = backButtons.find((btn) => btn.querySelector('svg'));
@@ -199,27 +199,27 @@ describe('CardOwnerList', () => {
     };
 
     it('ログイン済みの場合は取引ボタンを表示', () => {
-      mockUseCardOwners.mockReturnValue({
+      mockUseItemOwners.mockReturnValue({
         card: mockCard,
         owners: [],
         isLoading: false,
         error: null,
       });
 
-      render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={true} />);
+      render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={true} />);
 
       expect(screen.getByText(/取引を申し込む/)).toBeInTheDocument();
     });
 
     it('未ログインの場合はログインボタンを表示', () => {
-      mockUseCardOwners.mockReturnValue({
+      mockUseItemOwners.mockReturnValue({
         card: mockCard,
         owners: [],
         isLoading: false,
         error: null,
       });
 
-      render(<CardOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
+      render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
       expect(screen.getByText('取引を申し込むにはログインが必要です')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'ログイン' })).toBeInTheDocument();

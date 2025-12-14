@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
-import { CardListItem } from '../_components/card-list-item';
+import { ItemListItem } from '../_components/item-list-item';
 
-describe('CardListItem', () => {
+describe('ItemListItem', () => {
   const mockCard = {
     id: 'card-1',
     name: 'テストアイテム',
@@ -36,7 +36,7 @@ describe('CardListItem', () => {
 
   describe('サムネイル表示', () => {
     it('画像がない場合はプレースホルダーアイコンを表示すること', () => {
-      const { container } = render(<CardListItem item={mockHaveCard} type="have" />);
+      const { container } = render(<ItemListItem item={mockHaveCard} type="have" />);
 
       // SVGアイコン（lucide-image）が存在することを確認
       const svgIcon = container.querySelector('svg.lucide-image');
@@ -55,7 +55,7 @@ describe('CardListItem', () => {
         },
       };
 
-      render(<CardListItem item={cardWithImage} type="have" />);
+      render(<ItemListItem item={cardWithImage} type="have" />);
 
       const img = screen.getByAltText('テストアイテム');
       expect(img).toBeInTheDocument();
@@ -68,19 +68,19 @@ describe('CardListItem', () => {
 
   describe('アイテム情報表示', () => {
     it('アイテム名が表示されること', () => {
-      render(<CardListItem item={mockHaveCard} type="have" />);
+      render(<ItemListItem item={mockHaveCard} type="have" />);
 
       expect(screen.getByText('テストアイテム')).toBeInTheDocument();
     });
 
     it('カテゴリがバッジとして表示されること', () => {
-      render(<CardListItem item={mockHaveCard} type="have" />);
+      render(<ItemListItem item={mockHaveCard} type="have" />);
 
       expect(screen.getByText('INI')).toBeInTheDocument();
     });
 
     it('説明が表示されること', () => {
-      render(<CardListItem item={mockHaveCard} type="have" />);
+      render(<ItemListItem item={mockHaveCard} type="have" />);
 
       expect(screen.getByText('テスト用のアイテムです')).toBeInTheDocument();
     });
@@ -94,7 +94,7 @@ describe('CardListItem', () => {
         },
       };
 
-      render(<CardListItem item={cardWithoutDescription} type="have" />);
+      render(<ItemListItem item={cardWithoutDescription} type="have" />);
 
       expect(screen.queryByText('テスト用のアイテムです')).not.toBeInTheDocument();
     });
@@ -102,7 +102,7 @@ describe('CardListItem', () => {
 
   describe('持っているアイテム表示', () => {
     it('アイテム情報が表示されること', () => {
-      render(<CardListItem item={mockHaveCard} type="have" />);
+      render(<ItemListItem item={mockHaveCard} type="have" />);
 
       expect(screen.getByText('テストアイテム')).toBeInTheDocument();
     });
@@ -110,7 +110,7 @@ describe('CardListItem', () => {
 
   describe('欲しいアイテム表示', () => {
     it('優先度が表示されること', () => {
-      render(<CardListItem item={mockWantCard} type="want" />);
+      render(<ItemListItem item={mockWantCard} type="want" />);
 
       expect(screen.getByText('優先度:')).toBeInTheDocument();
       expect(screen.getByText('1')).toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('CardListItem', () => {
         priority: null,
       };
 
-      render(<CardListItem item={wantCardWithoutPriority} type="want" />);
+      render(<ItemListItem item={wantCardWithoutPriority} type="want" />);
 
       expect(screen.queryByText('優先度:')).not.toBeInTheDocument();
     });
@@ -135,7 +135,7 @@ describe('CardListItem', () => {
         card: undefined,
       };
 
-      const { container } = render(<CardListItem item={itemWithoutCard} type="have" />);
+      const { container } = render(<ItemListItem item={itemWithoutCard} type="have" />);
 
       expect(container.firstChild).toBeNull();
     });

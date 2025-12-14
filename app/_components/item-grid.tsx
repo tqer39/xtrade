@@ -1,10 +1,10 @@
 'use client';
 
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
-import { CardGridItem } from './card-grid-item';
-import { CardGridSkeleton } from './card-grid-skeleton';
+import { ItemGridItem } from './item-grid-item';
+import { ItemGridSkeleton } from './item-grid-skeleton';
 
-interface CardGridProps {
+interface ItemGridProps {
   items: (UserHaveCard | UserWantCard)[];
   type: 'have' | 'want';
   isLoading?: boolean;
@@ -14,7 +14,7 @@ interface CardGridProps {
   emptyMessage?: string;
 }
 
-export function CardGrid({
+export function ItemGrid({
   items,
   type,
   isLoading = false,
@@ -22,9 +22,9 @@ export function CardGrid({
   onFavoriteToggle,
   favoriteCardIds = new Set(),
   emptyMessage = 'アイテムがありません',
-}: CardGridProps) {
+}: ItemGridProps) {
   if (isLoading) {
-    return <CardGridSkeleton />;
+    return <ItemGridSkeleton />;
   }
 
   if (items.length === 0) {
@@ -54,7 +54,7 @@ export function CardGrid({
   return (
     <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-0.5">
       {items.map((item) => (
-        <CardGridItem
+        <ItemGridItem
           key={item.id}
           item={item}
           type={type}

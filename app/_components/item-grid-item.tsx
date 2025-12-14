@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
 
-interface CardGridItemProps {
+interface ItemGridItemProps {
   item: UserHaveCard | UserWantCard;
   type: 'have' | 'want';
   onCardClick?: (item: UserHaveCard | UserWantCard) => void;
@@ -15,13 +15,13 @@ interface CardGridItemProps {
   isFavorite?: boolean;
 }
 
-export function CardGridItem({
+export function ItemGridItem({
   item,
   type,
   onCardClick,
   onFavoriteToggle,
   isFavorite = false,
-}: CardGridItemProps) {
+}: ItemGridItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [localFavorite, setLocalFavorite] = useState(isFavorite);
   const card = item.card;
