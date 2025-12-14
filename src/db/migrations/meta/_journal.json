@@ -127,6 +127,13 @@
       "when": 1765840000000,
       "tag": "0017_add_want_text",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1765930000000,
+      "tag": "0018_remove_bio",
+      "breakpoints": true
     }
   ]
 }

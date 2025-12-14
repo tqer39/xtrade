@@ -3,9 +3,10 @@
 import { ArrowLeft, Gift, ImageIcon, Loader2, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { use, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 
 import { LoginButton } from '@/components/auth';
+import { FavoriteButton } from '@/components/favorites/favorite-button';
 import { TrustBadge } from '@/components/trust';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,6 +30,9 @@ export default function ItemDetailPage({ params }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isCreatingTrade, setIsCreatingTrade] = useState(false);
   const [tradeError, setTradeError] = useState<string | null>(null);
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  const isLoggedIn = !!session?.user;
 
   useEffect(() => {
     async function fetchData() {
@@ -64,6 +68,50 @@ export default function ItemDetailPage({ params }: Props) {
 
     fetchData();
   }, [cardId]);
+
+  // お気に入り状態をチェック
+  useEffect(() => {
+    if (!isLoggedIn || !cardId) return;
+
+    async function checkFavorite() {
+      try {
+        const res = await fetch('/api/me/favorites/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cardIds: [cardId] }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setIsFavorited(data.favorites?.[cardId] ?? false);
+        }
+      } catch {
+        // エラー時は何もしない
+      }
+    }
+
+    checkFavorite();
+  }, [isLoggedIn, cardId]);
+
+  const toggleFavorite = useCallback(async () => {
+    if (!isLoggedIn) return;
+
+    const newState = !isFavorited;
+    setIsFavorited(newState); // Optimistic update
+
+    try {
+      const res = await fetch('/api/me/favorites/cards', {
+        method: newState ? 'POST' : 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardId }),
+      });
+
+      if (!res.ok) {
+        setIsFavorited(!newState); // Revert on error
+      }
+    } catch {
+      setIsFavorited(!newState); // Revert on error
+    }
+  }, [isLoggedIn, isFavorited, cardId]);
 
   const handleCreateTrade = async (ownerUserId: string) => {
     setIsCreatingTrade(true);
@@ -118,7 +166,6 @@ export default function ItemDetailPage({ params }: Props) {
     );
   }
 
-  const isLoggedIn = !!session?.user;
   const currentUserId = session?.user?.id;
 
   return (
@@ -141,17 +188,21 @@ export default function ItemDetailPage({ params }: Props) {
 
       {/* カード画像 */}
       <div className="mb-6">
-        {card.imageUrl ? (
-          <img
-            src={card.imageUrl}
-            alt={card.name}
-            className="w-full max-w-md mx-auto rounded-lg object-cover"
-          />
-        ) : (
-          <div className="aspect-[3/4] max-w-md mx-auto bg-muted rounded-lg flex items-center justify-center">
-            <ImageIcon className="h-16 w-16 text-muted-foreground" />
-          </div>
-        )}
+        <div className="relative max-w-md mx-auto">
+          {card.imageUrl ? (
+            <img src={card.imageUrl} alt={card.name} className="w-full rounded-lg object-cover" />
+          ) : (
+            <div className="aspect-[3/4] bg-muted rounded-lg flex items-center justify-center">
+              <ImageIcon className="h-16 w-16 text-muted-foreground" />
+            </div>
+          )}
+          {/* お気に入りボタン */}
+          {isLoggedIn && (
+            <div className="absolute top-2 right-2">
+              <FavoriteButton isFavorited={isFavorited} onToggle={toggleFavorite} size="lg" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* カード情報 */}

@@ -21,7 +21,6 @@ export async function GET(_request: Request, { params }: RouteParams) {
       name: schema.user.name,
       image: schema.user.image,
       twitterUsername: schema.user.twitterUsername,
-      bio: schema.user.bio,
       wantText: schema.user.wantText,
       trustScore: schema.user.trustScore,
       trustGrade: schema.user.trustGrade,
@@ -58,13 +57,13 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 
   const body = await request.json();
-  const { bio } = body;
+  const { wantText } = body;
 
-  // bioの更新
+  // wantTextの更新
   await db
     .update(schema.user)
     .set({
-      bio: bio ?? null,
+      wantText: wantText ?? null,
       updatedAt: new Date(),
     })
     .where(eq(schema.user.id, userId));

@@ -193,7 +193,6 @@ export interface CardCreator {
   twitterUsername: string | null;
   trustScore: number | null;
   trustGrade: string | null;
-  bio?: string | null;
   wantText?: string | null;
   wantCards?: CardOwnerWantCard[];
 }

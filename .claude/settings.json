@@ -26,6 +26,10 @@
           {
             "type": "command",
             "command": "./scripts/play-sound.sh"
+          },
+          {
+            "type": "prompt",
+            "prompt": "この変更に関連するドキュメント（CLAUDE.md, docs/）の更新が必要か確認してください。必要な場合はファイルを更新してください。"
           }
         ]
       }

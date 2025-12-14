@@ -12,7 +12,6 @@ export const user = pgTable('user', {
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
   twitterUsername: text('twitter_username'), // X ユーザー名（@なし）
-  bio: text('bio'), // 自己紹介文（フリーテキスト）
   wantText: text('want_text'), // 欲しいもの自由記述（フリーテキスト）
   role: text('role').default('user').notNull(), // 'admin' | 'user'
   banned: boolean('banned').default(false),

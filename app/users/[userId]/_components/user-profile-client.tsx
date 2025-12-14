@@ -38,7 +38,6 @@ interface UserTrustData {
     name: string | null;
     twitterUsername: string | null;
     image: string | null;
-    bio?: string | null;
   };
   trustScore: number | null;
   trustGrade: TrustGrade | null;
@@ -79,10 +78,9 @@ export function UserProfileClient({ userId }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [bio, setBio] = useState<string>('');
   const [wantText, setWantText] = useState<string>('');
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [isSavingBio, setIsSavingBio] = useState(false);
+  const [isEditingWantText, setIsEditingWantText] = useState(false);
+  const [isSavingWantText, setIsSavingWantText] = useState(false);
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
 
   useEffect(() => {
@@ -151,7 +149,6 @@ export function UserProfileClient({ userId }: Props) {
 
         if (userRes.ok) {
           const userData = await userRes.json();
-          setBio(userData.user?.bio ?? '');
           setWantText(userData.user?.wantText ?? '');
         }
       } catch (err) {
@@ -179,23 +176,23 @@ export function UserProfileClient({ userId }: Props) {
     }
   }, [searchQuery, listings]);
 
-  // bio保存
-  const handleSaveBio = async () => {
-    setIsSavingBio(true);
+  // wantText保存
+  const handleSaveWantText = async () => {
+    setIsSavingWantText(true);
     try {
       const res = await fetch(`/api/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bio }),
+        body: JSON.stringify({ wantText }),
       });
       if (!res.ok) {
         throw new Error('保存に失敗しました');
       }
-      setIsEditingBio(false);
+      setIsEditingWantText(false);
     } catch {
       // エラー時は何もしない（UIにはエラーを表示しない）
     } finally {
-      setIsSavingBio(false);
+      setIsSavingWantText(false);
     }
   };
 
@@ -309,9 +306,9 @@ export function UserProfileClient({ userId }: Props) {
               href={`https://x.com/${userData.user.twitterUsername}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
             >
-              <Twitter className="w-4 h-4" />@{userData.user.twitterUsername}
+              <Twitter className="w-4 h-4" />@{userData.user.twitterUsername} のプロフィールを見る
             </a>
           )}
           {/* 信頼性詳細ページへのリンク */}
@@ -325,42 +322,48 @@ export function UserProfileClient({ userId }: Props) {
         </div>
       </div>
 
-      {/* 自己紹介 (bio) */}
-      <div className="mb-6">
-        {isEditingBio ? (
+      {/* 欲しいもの（wantText）- 編集可能 */}
+      <div className="mb-6 p-3 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-1">
+          <Gift className="h-4 w-4" />
+          <span className="font-medium">欲しいもの</span>
+        </div>
+        {isEditingWantText ? (
           <div className="space-y-2">
             <Textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="自己紹介を入力..."
-              className="min-h-[80px]"
-              maxLength={500}
+              value={wantText}
+              onChange={(e) => setWantText(e.target.value)}
+              placeholder="欲しいものを記入..."
+              className="min-h-[60px]"
+              maxLength={300}
             />
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">{bio.length}/500</span>
+              <span className="text-xs text-muted-foreground">{wantText.length}/300</span>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setIsEditingBio(false)}>
+                <Button variant="ghost" size="sm" onClick={() => setIsEditingWantText(false)}>
                   キャンセル
                 </Button>
-                <Button size="sm" onClick={handleSaveBio} disabled={isSavingBio}>
-                  {isSavingBio ? '保存中...' : '保存'}
+                <Button size="sm" onClick={handleSaveWantText} disabled={isSavingWantText}>
+                  {isSavingWantText ? '保存中...' : '保存'}
                 </Button>
               </div>
             </div>
           </div>
         ) : (
           <div className="group relative">
-            {bio ? (
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{bio}</p>
+            {wantText ? (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{wantText}</p>
             ) : isOwnProfile ? (
-              <p className="text-sm text-muted-foreground italic">自己紹介を追加...</p>
-            ) : null}
+              <p className="text-sm text-muted-foreground italic">欲しいものを追加...</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">登録なし</p>
+            )}
             {isOwnProfile && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => setIsEditingBio(true)}
+                onClick={() => setIsEditingWantText(true)}
               >
                 <Edit2 className="h-4 w-4" />
               </Button>
@@ -368,17 +371,6 @@ export function UserProfileClient({ userId }: Props) {
           </div>
         )}
       </div>
-
-      {/* 欲しいもの（wantText） */}
-      {wantText && (
-        <div className="mb-6 p-3 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-1.5 text-muted-foreground text-sm mb-1">
-            <Gift className="h-4 w-4" />
-            <span className="font-medium">欲しいもの</span>
-          </div>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{wantText}</p>
-        </div>
-      )}
 
       <Tabs defaultValue="listings">
         <TabsList className="mb-4 flex-wrap h-auto gap-1">

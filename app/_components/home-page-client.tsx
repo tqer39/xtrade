@@ -3,8 +3,9 @@
 import { ChevronLeft, ChevronRight, Gift, ImageIcon, Search, Shield, User, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { UserMenu } from '@/components/auth';
+import { FavoriteButton } from '@/components/favorites/favorite-button';
 import { Footer } from '@/components/layout';
 import { TrustBadge } from '@/components/trust/trust-badge';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +64,53 @@ export function HomePageClient() {
 
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  const [favoriteStates, setFavoriteStates] = useState<Record<string, boolean>>({});
+
+  // お気に入り状態を一括取得
+  useEffect(() => {
+    if (!session?.user || latestCards.length === 0) return;
+
+    const cardIds = latestCards.map((card) => card.id);
+    fetch('/api/me/favorites/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cardIds, userIds: [] }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.cards) {
+          setFavoriteStates(data.cards);
+        }
+      })
+      .catch(console.error);
+  }, [session?.user, latestCards]);
+
+  // お気に入りトグル
+  const toggleFavorite = useCallback(
+    async (cardId: string) => {
+      if (!session?.user) return;
+
+      const isFavorited = favoriteStates[cardId];
+      // 楽観的更新
+      setFavoriteStates((prev) => ({ ...prev, [cardId]: !isFavorited }));
+
+      try {
+        if (isFavorited) {
+          await fetch(`/api/me/favorites/cards?cardId=${cardId}`, { method: 'DELETE' });
+        } else {
+          await fetch('/api/me/favorites/cards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cardId }),
+          });
+        }
+      } catch {
+        // エラー時は元に戻す
+        setFavoriteStates((prev) => ({ ...prev, [cardId]: isFavorited }));
+      }
+    },
+    [session?.user, favoriteStates]
+  );
 
   // 広告スロット ID（環境変数から取得）
   const adSlot = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FOOTER;
@@ -207,7 +255,7 @@ export function HomePageClient() {
                       card.creator.wantCards.length > 0 && (
                         <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center p-2 pointer-events-none">
                           <div className="flex items-center gap-1 text-white text-xs mb-2">
-                            <Gift className="h-3.5 w-3.5" />
+                            <Gift className="h-3.5 w-3.5 text-pink-400" />
                             <span>欲しいもの</span>
                           </div>
                           <div className="flex flex-wrap justify-center gap-1">
@@ -266,16 +314,20 @@ export function HomePageClient() {
                                 ? `@${card.creator.twitterUsername}`
                                 : card.creator.name}
                             </p>
-                            {card.creator.bio && (
-                              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">
-                                {card.creator.bio.length > 100
-                                  ? `${card.creator.bio.slice(0, 100)}...`
-                                  : card.creator.bio}
-                              </p>
-                            )}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+                    )}
+                    {/* お気に入りボタン（右上） */}
+                    {session?.user && (
+                      <div className="absolute top-1 right-1">
+                        <FavoriteButton
+                          isFavorited={favoriteStates[card.id] ?? false}
+                          onToggle={() => toggleFavorite(card.id)}
+                          size="sm"
+                          className="bg-black/40 hover:bg-black/60 backdrop-blur-sm"
+                        />
+                      </div>
                     )}
                     <div className="absolute bottom-0 left-0 right-0 p-2">
                       <p className="font-medium text-white text-xs truncate drop-shadow-lg">
@@ -330,8 +382,8 @@ export function HomePageClient() {
                             {card.creator &&
                               (card.creator.wantText ||
                                 (card.creator.wantCards && card.creator.wantCards.length > 0)) && (
-                                <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <Gift className="h-3 w-3 shrink-0" />
+                                <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Gift className="h-3 w-3 shrink-0 text-pink-500" />
                                   <span className="truncate">
                                     {card.creator.wantText ||
                                       card.creator.wantCards
@@ -363,6 +415,14 @@ export function HomePageClient() {
                                 score={card.creator.trustScore}
                               />
                             </div>
+                          )}
+                          {/* お気に入りボタン */}
+                          {session?.user && (
+                            <FavoriteButton
+                              isFavorited={favoriteStates[card.id] ?? false}
+                              onToggle={() => toggleFavorite(card.id)}
+                              size="sm"
+                            />
                           )}
                         </div>
                       </CardContent>

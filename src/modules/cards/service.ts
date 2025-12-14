@@ -349,7 +349,6 @@ export async function searchLatestCardsWithCreator(
         twitterUsername: schema.user.twitterUsername,
         trustScore: schema.user.trustScore,
         trustGrade: schema.user.trustGrade,
-        bio: schema.user.bio,
         wantText: schema.user.wantText,
       },
     })
@@ -415,7 +414,6 @@ export async function searchLatestCardsWithCreator(
             twitterUsername: card.creator.twitterUsername,
             trustScore: card.creator.trustScore,
             trustGrade: card.creator.trustGrade,
-            bio: card.creator.bio,
             wantText: card.creator.wantText,
             wantCards: wantCardsByUser.get(card.creator.id) ?? [],
           }
