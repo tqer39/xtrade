@@ -10,6 +10,19 @@ const mockPush = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue(null),
+    toString: vi.fn().mockReturnValue(''),
+  }),
+  usePathname: () => '/',
+}));
+
+vi.mock('@/hooks/use-view-preference', () => ({
+  useViewPreference: () => ({
+    viewMode: 'grid',
+    setViewMode: vi.fn(),
+    isHydrated: true,
+  }),
 }));
 
 vi.mock('@/lib/auth-client', () => ({
@@ -22,6 +35,10 @@ vi.mock('@/hooks/use-my-items', () => ({
 
 vi.mock('@/hooks/use-latest-items', () => ({
   useLatestItems: () => mockUseLatestItems(),
+}));
+
+vi.mock('@/hooks/use-debounce', () => ({
+  useDebounce: (value: string) => value,
 }));
 
 vi.mock('@/components/auth', () => ({
@@ -38,6 +55,10 @@ const defaultLatestItemsReturn = {
   isLoading: false,
   error: null,
   refetch: vi.fn(),
+  page: 1,
+  totalPages: 1,
+  setPage: vi.fn(),
+  setQuery: vi.fn(),
 };
 
 describe('HomePageClient', () => {
@@ -67,7 +88,7 @@ describe('HomePageClient', () => {
   });
 
   describe('未ログイン状態', () => {
-    it('ログインボタンを表示', () => {
+    it('xtradeタイトルを表示', () => {
       mockUseSession.mockReturnValue({ data: null, isPending: false });
       mockUseMyItems.mockReturnValue({
         haveCards: [],
@@ -81,7 +102,7 @@ describe('HomePageClient', () => {
 
       render(<HomePageClient />);
 
-      expect(screen.getByText('ログイン')).toBeInTheDocument();
+      expect(screen.getByText('xtrade')).toBeInTheDocument();
     });
 
     it('最近登録されたアイテムセクションを表示', () => {
@@ -129,10 +150,14 @@ describe('HomePageClient', () => {
         haveCards: [],
         wantCards: [],
         isLoading: false,
-        error: new Error('Failed to fetch'),
+        error: null,
         addHaveCard: vi.fn(),
         addWantCard: vi.fn(),
         refetch: vi.fn(),
+      });
+      mockUseLatestItems.mockReturnValue({
+        ...defaultLatestItemsReturn,
+        error: new Error('Failed to fetch'),
       });
 
       render(<HomePageClient />);
@@ -143,19 +168,13 @@ describe('HomePageClient', () => {
   });
 
   describe('ログイン状態', () => {
-    it('タブとカード一覧を表示', async () => {
+    it('最近登録されたアイテム一覧を表示', async () => {
       mockUseSession.mockReturnValue({
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
       });
       mockUseMyItems.mockReturnValue({
-        haveCards: [
-          {
-            id: 'have-1',
-            cardId: 'card-1',
-            card: { id: 'card-1', name: 'Test Card', category: 'pokemon', rarity: 'SR' },
-          },
-        ],
+        haveCards: [],
         wantCards: [],
         isLoading: false,
         error: null,
@@ -167,9 +186,7 @@ describe('HomePageClient', () => {
       render(<HomePageClient />);
 
       expect(screen.getByText('xtrade')).toBeInTheDocument();
-      expect(screen.getByText('持っている (1)')).toBeInTheDocument();
-      expect(screen.getByText('欲しい (0)')).toBeInTheDocument();
-      expect(screen.getByText('Test Card')).toBeInTheDocument();
+      expect(screen.getByText('最近登録されたアイテム')).toBeInTheDocument();
     });
 
     it('アイテムがない場合は空の状態を表示', () => {
@@ -189,7 +206,7 @@ describe('HomePageClient', () => {
 
       render(<HomePageClient />);
 
-      expect(screen.getByText('まだアイテムを登録していません')).toBeInTheDocument();
+      expect(screen.getByText('まだアイテムが登録されていません')).toBeInTheDocument();
     });
 
     it('UserMenuを表示', () => {

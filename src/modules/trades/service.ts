@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, desc, eq, or } from 'drizzle-orm';
+import { and, desc, eq, inArray, or } from 'drizzle-orm';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
 import type { TrustGrade } from '@/modules/trust';
@@ -359,52 +359,80 @@ export async function getUserTrades(
     .where(whereCondition)
     .orderBy(desc(schema.trade.updatedAt));
 
-  // 取引相手の情報とアイテム情報を取得
-  const results: UserTradeListItem[] = [];
-
+  // 取引相手のIDを収集
+  const partnerIds = new Set<string>();
   for (const trade of trades) {
-    // 取引相手のIDを特定
     const partnerId =
       trade.initiatorUserId === userId ? trade.responderUserId : trade.initiatorUserId;
-
-    let partner = null;
     if (partnerId) {
-      const partners = await db
-        .select({
-          id: schema.user.id,
-          name: schema.user.name,
-          twitterUsername: schema.user.twitterUsername,
-          image: schema.user.image,
-        })
-        .from(schema.user)
-        .where(eq(schema.user.id, partnerId))
-        .limit(1);
-      partner = partners[0] ?? null;
+      partnerIds.add(partnerId);
     }
+  }
 
-    // トレードアイテムを取得
-    const tradeItems = await db
-      .select({
-        cardId: schema.tradeItem.cardId,
-        cardName: schema.card.name,
-        cardCategory: schema.card.category,
-        cardImageUrl: schema.card.imageUrl,
-        offeredByUserId: schema.tradeItem.offeredByUserId,
-      })
-      .from(schema.tradeItem)
-      .innerJoin(schema.card, eq(schema.tradeItem.cardId, schema.card.id))
-      .where(eq(schema.tradeItem.tradeId, trade.id));
+  // 取引相手の情報を一括取得
+  const partners =
+    partnerIds.size > 0
+      ? await db
+          .select({
+            id: schema.user.id,
+            name: schema.user.name,
+            twitterUsername: schema.user.twitterUsername,
+            image: schema.user.image,
+          })
+          .from(schema.user)
+          .where(inArray(schema.user.id, Array.from(partnerIds)))
+      : [];
+  const partnerMap = new Map(partners.map((p) => [p.id, p]));
 
-    results.push({
+  // トレードアイテムを一括取得
+  const tradeIds = trades.map((t) => t.id);
+  const allTradeItems =
+    tradeIds.length > 0
+      ? await db
+          .select({
+            tradeId: schema.tradeItem.tradeId,
+            cardId: schema.tradeItem.cardId,
+            cardName: schema.card.name,
+            cardCategory: schema.card.category,
+            cardImageUrl: schema.card.imageUrl,
+            offeredByUserId: schema.tradeItem.offeredByUserId,
+          })
+          .from(schema.tradeItem)
+          .innerJoin(schema.card, eq(schema.tradeItem.cardId, schema.card.id))
+          .where(inArray(schema.tradeItem.tradeId, tradeIds))
+      : [];
+
+  // トレードIDごとにアイテムをグルーピング
+  const tradeItemsMap = new Map<string, typeof allTradeItems>();
+  for (const item of allTradeItems) {
+    const items = tradeItemsMap.get(item.tradeId) ?? [];
+    items.push(item);
+    tradeItemsMap.set(item.tradeId, items);
+  }
+
+  // 結果を組み立て
+  const results: UserTradeListItem[] = trades.map((trade) => {
+    const partnerId =
+      trade.initiatorUserId === userId ? trade.responderUserId : trade.initiatorUserId;
+    const partner = partnerId ? (partnerMap.get(partnerId) ?? null) : null;
+    const items = tradeItemsMap.get(trade.id) ?? [];
+
+    return {
       id: trade.id,
       roomSlug: trade.roomSlug,
       status: trade.status as TradeStatus,
       partner,
-      items: tradeItems,
+      items: items.map((item) => ({
+        cardId: item.cardId,
+        cardName: item.cardName,
+        cardCategory: item.cardCategory,
+        cardImageUrl: item.cardImageUrl,
+        offeredByUserId: item.offeredByUserId,
+      })),
       createdAt: trade.createdAt.toISOString(),
       updatedAt: trade.updatedAt.toISOString(),
-    });
-  }
+    };
+  });
 
   return results;
 }

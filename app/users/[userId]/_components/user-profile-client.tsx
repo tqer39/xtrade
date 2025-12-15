@@ -94,6 +94,8 @@ export function UserProfileClient({ userId }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [wantSearchQuery, setWantSearchQuery] = useState('');
+  const [filteredWantCards, setFilteredWantCards] = useState<WantCard[]>([]);
   const [wantText, setWantText] = useState<string>('');
   const [isEditingWantText, setIsEditingWantText] = useState(false);
   const [isSavingWantText, setIsSavingWantText] = useState(false);
@@ -210,7 +212,7 @@ export function UserProfileClient({ userId }: Props) {
     fetchData();
   }, [userId, session?.user]);
 
-  // 検索フィルター
+  // 検索フィルター（出品中）
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredListings(listings);
@@ -224,6 +226,22 @@ export function UserProfileClient({ userId }: Props) {
       );
     }
   }, [searchQuery, listings]);
+
+  // 検索フィルター（欲しいもの）
+  useEffect(() => {
+    if (!wantSearchQuery.trim()) {
+      setFilteredWantCards(wantCards);
+    } else {
+      const query = wantSearchQuery.toLowerCase();
+      setFilteredWantCards(
+        wantCards.filter(
+          (wc) =>
+            wc.card.name.toLowerCase().includes(query) ||
+            wc.card.category?.toLowerCase().includes(query)
+        )
+      );
+    }
+  }, [wantSearchQuery, wantCards]);
 
   // wantText保存
   const handleSaveWantText = async () => {
@@ -594,36 +612,101 @@ export function UserProfileClient({ userId }: Props) {
               </CardContent>
             </Card>
           ) : (
-            <div className="columns-2 sm:columns-3 gap-1">
-              {wantCards.map((wantCard) => (
-                <Link
-                  key={wantCard.id}
-                  href={`/items/${wantCard.card.id}`}
-                  className="mb-1 break-inside-avoid block"
-                >
-                  <div className="relative overflow-hidden rounded-lg bg-muted cursor-pointer hover:opacity-90 transition-opacity">
-                    {wantCard.card.imageUrl ? (
-                      <img
-                        src={wantCard.card.imageUrl}
-                        alt={wantCard.card.name}
-                        className="w-full object-cover"
-                      />
-                    ) : (
-                      <div className="aspect-[3/4] flex items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+            <>
+              {/* 検索・ビュー切替 */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="アイテムを検索..."
+                    value={wantSearchQuery}
+                    onChange={(e) => setWantSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                {isHydrated && <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
+              </div>
+
+              {filteredWantCards.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8">
+                    <p className="text-muted-foreground text-center">
+                      「{wantSearchQuery}」に一致するアイテムがありません
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : !isHydrated || viewMode === 'grid' ? (
+                <div className="columns-2 sm:columns-3 gap-1">
+                  {filteredWantCards.map((wantCard) => (
+                    <Link
+                      key={wantCard.id}
+                      href={`/items/${wantCard.card.id}`}
+                      className="mb-1 break-inside-avoid block"
+                    >
+                      <div className="relative overflow-hidden rounded-lg bg-muted cursor-pointer hover:opacity-90 transition-opacity">
+                        {wantCard.card.imageUrl ? (
+                          <img
+                            src={wantCard.card.imageUrl}
+                            alt={wantCard.card.name}
+                            className="w-full object-cover"
+                          />
+                        ) : (
+                          <div className="aspect-[3/4] flex items-center justify-center">
+                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
+                          <p className="text-sm font-medium truncate">{wantCard.card.name}</p>
+                          {wantCard.card.category && (
+                            <p className="text-xs opacity-80 truncate">{wantCard.card.category}</p>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
-                      <p className="text-sm font-medium truncate">{wantCard.card.name}</p>
-                      {wantCard.card.category && (
-                        <p className="text-xs opacity-80 truncate">{wantCard.card.category}</p>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredWantCards.map((wantCard) => (
+                    <Link key={wantCard.id} href={`/items/${wantCard.card.id}`} className="block">
+                      <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                        <CardContent className="p-3">
+                          <div className="flex items-start gap-3">
+                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded bg-muted">
+                              {wantCard.card.imageUrl ? (
+                                <img
+                                  src={wantCard.card.imageUrl}
+                                  alt={wantCard.card.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center">
+                                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium truncate">{wantCard.card.name}</p>
+                              {wantCard.card.category && (
+                                <p className="text-sm text-muted-foreground truncate">
+                                  {wantCard.card.category}
+                                </p>
+                              )}
+                              {wantCard.card.description && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {wantCard.card.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 

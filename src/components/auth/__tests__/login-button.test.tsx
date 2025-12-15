@@ -7,6 +7,13 @@ const _mockSignIn = {
   social: vi.fn(),
 };
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
+  useSearchParams: () => ({
+    toString: () => '',
+  }),
+}));
+
 vi.mock('@/lib/auth-client', () => ({
   signIn: {
     social: vi.fn(),

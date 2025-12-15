@@ -5,8 +5,8 @@ import { seedUsers } from '../data/users';
 
 describe('Seed Data', () => {
   describe('seedUsers', () => {
-    it('3名のテストユーザーが定義されている', () => {
-      expect(seedUsers).toHaveLength(3);
+    it('31名のテストユーザーが定義されている', () => {
+      expect(seedUsers).toHaveLength(31);
     });
 
     it('各ユーザーに必須フィールドが存在する', () => {
@@ -36,8 +36,8 @@ describe('Seed Data', () => {
   });
 
   describe('seedCards', () => {
-    it('26件のサンプルアイテムが定義されている', () => {
-      expect(seedCards).toHaveLength(26);
+    it('127件のサンプルアイテムが定義されている', () => {
+      expect(seedCards).toHaveLength(127);
     });
 
     it('各アイテムに必須フィールドが存在する', () => {

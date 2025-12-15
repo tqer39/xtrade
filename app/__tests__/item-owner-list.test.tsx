@@ -4,6 +4,19 @@ import { ItemOwnerList } from '../_components/item-owner-list';
 
 // モック設定
 const mockUseItemOwners = vi.fn();
+const mockPush = vi.fn();
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: vi.fn(),
+    back: vi.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => ({
+    toString: () => '',
+  }),
+}));
 
 vi.mock('@/hooks/use-item-owners', () => ({
   useItemOwners: () => mockUseItemOwners(),
@@ -121,7 +134,7 @@ describe('ItemOwnerList', () => {
       expect(screen.queryByAltText('Test Card')).not.toBeInTheDocument();
     });
 
-    it('所有者がいない場合はメッセージを表示', () => {
+    it('出品者がいない場合はメッセージを表示', () => {
       mockUseItemOwners.mockReturnValue({
         card: mockCard,
         owners: [],
@@ -131,10 +144,10 @@ describe('ItemOwnerList', () => {
 
       render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
-      expect(screen.getByText('このアイテムを持っているユーザーがいません')).toBeInTheDocument();
+      expect(screen.getByText('出品者情報がありません')).toBeInTheDocument();
     });
 
-    it('所有者一覧を表示', () => {
+    it('出品者情報を表示', () => {
       const mockOwners = [
         {
           userId: 'user-1',
@@ -143,14 +156,6 @@ describe('ItemOwnerList', () => {
           twitterUsername: 'user1',
           trustGrade: 'A',
           trustScore: 80,
-        },
-        {
-          userId: 'user-2',
-          name: 'User 2',
-          image: null,
-          twitterUsername: null,
-          trustGrade: 'B',
-          trustScore: 60,
         },
       ];
 
@@ -163,12 +168,8 @@ describe('ItemOwnerList', () => {
 
       render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
-      expect(screen.getByText('このアイテムを持っているユーザー (2人)')).toBeInTheDocument();
-      expect(screen.getByText('User 1')).toBeInTheDocument();
+      expect(screen.getByText('出品者')).toBeInTheDocument();
       expect(screen.getByText('@user1')).toBeInTheDocument();
-      expect(screen.getByText('2枚')).toBeInTheDocument();
-      expect(screen.getByText('User 2')).toBeInTheDocument();
-      expect(screen.getByText('1枚')).toBeInTheDocument();
     });
 
     it('戻るボタンが機能する', () => {
@@ -198,30 +199,41 @@ describe('ItemOwnerList', () => {
       imageUrl: null,
     };
 
-    it('ログイン済みの場合は取引ボタンを表示', () => {
+    const mockOwners = [
+      {
+        userId: 'user-2',
+        name: 'Owner',
+        image: null,
+        twitterUsername: 'owner',
+        trustGrade: 'A',
+        trustScore: 80,
+      },
+    ];
+
+    it('ログイン済みの場合はトレードボタンを表示', () => {
       mockUseItemOwners.mockReturnValue({
         card: mockCard,
-        owners: [],
+        owners: mockOwners,
         isLoading: false,
         error: null,
       });
 
       render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={true} />);
 
-      expect(screen.getByText(/取引を申し込む/)).toBeInTheDocument();
+      expect(screen.getByText(/トレードを申し込む/)).toBeInTheDocument();
     });
 
     it('未ログインの場合はログインボタンを表示', () => {
       mockUseItemOwners.mockReturnValue({
         card: mockCard,
-        owners: [],
+        owners: mockOwners,
         isLoading: false,
         error: null,
       });
 
       render(<ItemOwnerList cardId="card-1" onBack={mockOnBack} isLoggedIn={false} />);
 
-      expect(screen.getByText('取引を申し込むにはログインが必要です')).toBeInTheDocument();
+      expect(screen.getByText('トレードを申し込むにはログインが必要です')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'ログイン' })).toBeInTheDocument();
     });
   });

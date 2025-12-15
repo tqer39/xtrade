@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, desc, eq, like, or, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
 import type {
@@ -446,27 +446,44 @@ export async function getCardOwnersWithWantCards(
   // 所有者を取得
   const owners = await getCardOwners(cardId);
 
-  // 各所有者の欲しいカードを取得
-  const ownersWithWantCards = await Promise.all(
-    owners.map(async (owner) => {
-      const wantCards = await db
-        .select({
-          cardId: schema.userWantCard.cardId,
-          cardName: schema.card.name,
-          cardImageUrl: schema.card.imageUrl,
-        })
-        .from(schema.userWantCard)
-        .innerJoin(schema.card, eq(schema.userWantCard.cardId, schema.card.id))
-        .where(eq(schema.userWantCard.userId, owner.userId))
-        .orderBy(sql`${schema.userWantCard.priority} DESC NULLS LAST`)
-        .limit(wantCardsLimit);
+  if (owners.length === 0) {
+    return [];
+  }
 
-      return {
-        ...owner,
-        wantCards: wantCards as CardOwnerWantCard[],
-      };
+  // 全所有者の欲しいカードを一括取得（priority順）
+  const ownerIds = owners.map((o) => o.userId);
+  const allWantCards = await db
+    .select({
+      userId: schema.userWantCard.userId,
+      cardId: schema.userWantCard.cardId,
+      cardName: schema.card.name,
+      cardImageUrl: schema.card.imageUrl,
+      priority: schema.userWantCard.priority,
     })
-  );
+    .from(schema.userWantCard)
+    .innerJoin(schema.card, eq(schema.userWantCard.cardId, schema.card.id))
+    .where(inArray(schema.userWantCard.userId, ownerIds))
+    .orderBy(sql`${schema.userWantCard.priority} DESC NULLS LAST`);
+
+  // ユーザーIDごとにグルーピングし、上位N件のみ保持
+  const wantCardsMap = new Map<string, CardOwnerWantCard[]>();
+  for (const wc of allWantCards) {
+    const existing = wantCardsMap.get(wc.userId) ?? [];
+    if (existing.length < wantCardsLimit) {
+      existing.push({
+        cardId: wc.cardId,
+        cardName: wc.cardName,
+        cardImageUrl: wc.cardImageUrl,
+      });
+      wantCardsMap.set(wc.userId, existing);
+    }
+  }
+
+  // 結果を組み立て
+  const ownersWithWantCards: CardOwner[] = owners.map((owner) => ({
+    ...owner,
+    wantCards: wantCardsMap.get(owner.userId) ?? [],
+  }));
 
   return ownersWithWantCards;
 }
