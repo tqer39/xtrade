@@ -5,6 +5,7 @@ import {
   ChevronRight,
   Edit2,
   Gift,
+  Heart,
   ImageIcon,
   Loader2,
   Plus,
@@ -82,6 +83,18 @@ interface WantCard {
   };
 }
 
+interface FavoriteUser {
+  id: string;
+  favoriteUser: {
+    id: string;
+    name: string | null;
+    twitterUsername: string | null;
+    image: string | null;
+    trustScore: number | null;
+    trustGrade: TrustGrade | null;
+  };
+}
+
 export function UserProfileClient({ userId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,6 +105,7 @@ export function UserProfileClient({ userId }: Props) {
   const [listings, setListings] = useState<CardType[]>([]);
   const [filteredListings, setFilteredListings] = useState<CardType[]>([]);
   const [wantCards, setWantCards] = useState<WantCard[]>([]);
+  const [favoriteUsers, setFavoriteUsers] = useState<FavoriteUser[]>([]);
   const [activeTrades, setActiveTrades] = useState<UserTradeListItem[]>([]);
   const [completedTrades, setCompletedTrades] = useState<UserTradeListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -115,6 +129,18 @@ export function UserProfileClient({ userId }: Props) {
     isSearching: isInlineSearching,
     search: searchItems,
     clearResults: clearInlineResults,
+  } = useItemSearch();
+
+  // インライン欲しいもの検索
+  const [showWantInlineSearch, setShowWantInlineSearch] = useState(false);
+  const [wantInlineSearchQuery, setWantInlineSearchQuery] = useState('');
+  const [isAddingWantItem, setIsAddingWantItem] = useState(false);
+  const [addWantItemError, setAddWantItemError] = useState<string | null>(null);
+  const {
+    searchResults: wantInlineSearchResults,
+    isSearching: isWantInlineSearching,
+    search: searchWantItems,
+    clearResults: clearWantInlineResults,
   } = useItemSearch();
 
   // URLクエリパラメータからタブを取得（デフォルトは'listings'）
@@ -227,6 +253,39 @@ export function UserProfileClient({ userId }: Props) {
     fetchData();
   }, [userId, session?.user]);
 
+  // お気に入りユーザーの取得（自分のプロフィールのみ）
+  useEffect(() => {
+    async function fetchFavoriteUsers() {
+      if (!session?.user || session.user.id !== userId) return;
+
+      try {
+        const res = await fetch('/api/me/favorites/users');
+        if (res.ok) {
+          const data = await res.json();
+          setFavoriteUsers(data.favoriteUsers ?? []);
+        }
+      } catch (err) {
+        console.error('お気に入りユーザーの取得に失敗:', err);
+      }
+    }
+
+    fetchFavoriteUsers();
+  }, [userId, session?.user]);
+
+  // お気に入りユーザーの削除
+  const handleRemoveFavoriteUser = async (favoriteUserId: string) => {
+    try {
+      const res = await fetch(`/api/me/favorites/users?userId=${favoriteUserId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setFavoriteUsers((prev) => prev.filter((f) => f.favoriteUser.id !== favoriteUserId));
+      }
+    } catch (err) {
+      console.error('お気に入りユーザーの削除に失敗:', err);
+    }
+  };
+
   // 検索フィルター（出品中）
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -322,6 +381,52 @@ export function UserProfileClient({ userId }: Props) {
     setInlineSearchQuery('');
     setAddItemError(null);
     clearInlineResults();
+  };
+
+  // 欲しいもの - インライン検索のクエリ変更
+  const handleWantInlineSearchChange = (value: string) => {
+    setWantInlineSearchQuery(value);
+    searchWantItems(value);
+  };
+
+  // 欲しいもの - インライン検索でアイテムを追加
+  const handleAddWantItemFromSearch = async (cardId: string) => {
+    setIsAddingWantItem(true);
+    setAddWantItemError(null);
+    try {
+      const res = await fetch('/api/me/cards/want', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '欲しいものの追加に失敗しました');
+      }
+      // 追加成功したら wantCards を更新
+      const wantRes = await fetch(`/api/users/${userId}/want-cards`);
+      if (wantRes.ok) {
+        const wantData = await wantRes.json();
+        setWantCards(wantData.wantCards ?? []);
+        setFilteredWantCards(wantData.wantCards ?? []);
+      }
+      // 検索をリセット
+      setShowWantInlineSearch(false);
+      setWantInlineSearchQuery('');
+      clearWantInlineResults();
+    } catch (err) {
+      setAddWantItemError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsAddingWantItem(false);
+    }
+  };
+
+  // 欲しいもの - インライン検索をキャンセル
+  const handleCancelWantInlineSearch = () => {
+    setShowWantInlineSearch(false);
+    setWantInlineSearchQuery('');
+    setAddWantItemError(null);
+    clearWantInlineResults();
   };
 
   if (isSessionPending) {
@@ -521,6 +626,9 @@ export function UserProfileClient({ userId }: Props) {
           {isOwnProfile && (
             <TabsTrigger value="reviews">レビュー ({userData.stats.reviewCount})</TabsTrigger>
           )}
+          {isOwnProfile && (
+            <TabsTrigger value="favoriteUsers">お気に入り ({favoriteUsers.length})</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="listings">
@@ -648,7 +756,7 @@ export function UserProfileClient({ userId }: Props) {
                   </CardContent>
                 </Card>
               ) : !isHydrated || viewMode === 'grid' ? (
-                <div className="columns-2 sm:columns-3 gap-1">
+                <div className="columns-2 sm:columns-3 gap-0.5">
                   {filteredListings.map((card) => {
                     // 説明文を80文字に制限
                     const description = card.description
@@ -660,7 +768,7 @@ export function UserProfileClient({ userId }: Props) {
                       <Link
                         key={card.id}
                         href={`/items/${card.id}`}
-                        className="mb-1 break-inside-avoid block"
+                        className="mb-0.5 break-inside-avoid block"
                       >
                         <div className="relative overflow-hidden rounded-lg bg-muted cursor-pointer hover:opacity-90 transition-opacity">
                           {card.imageUrl ? (
@@ -693,13 +801,13 @@ export function UserProfileClient({ userId }: Props) {
                   })}
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {filteredListings.map((card) => (
                     <Link key={card.id} href={`/items/${card.id}`} className="block">
-                      <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-                        <CardContent className="p-3">
-                          <div className="flex items-start gap-3">
-                            <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
+                      <Card className="cursor-pointer transition-colors hover:bg-accent rounded-none border-x-0 first:border-t-0">
+                        <CardContent className="p-2">
+                          <div className="flex items-start gap-2">
+                            <div className="h-12 w-12 flex-shrink-0 overflow-hidden bg-muted">
                               {card.imageUrl ? (
                                 <img
                                   src={card.imageUrl}
@@ -708,12 +816,12 @@ export function UserProfileClient({ userId }: Props) {
                                 />
                               ) : (
                                 <div className="flex h-full w-full items-center justify-center">
-                                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
                                 </div>
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="font-medium truncate">{card.name}</p>
+                              <p className="text-sm font-medium truncate">{card.name}</p>
                               {card.category && (
                                 <p className="text-sm text-muted-foreground truncate">
                                   {card.category}
@@ -737,15 +845,101 @@ export function UserProfileClient({ userId }: Props) {
         </TabsContent>
 
         <TabsContent value="wantCards">
-          {/* 欲しいもの追加ボタン（自分のプロフィールのみ） */}
+          {/* 欲しいもの追加（自分のプロフィールのみ） */}
           {isOwnProfile && (
             <div className="mb-4">
-              <Link href={`/items/search?mode=want&returnTo=/users/${userId}?tab=wantCards`}>
-                <Button className="w-full sm:w-auto">
+              {!showWantInlineSearch ? (
+                <Button className="w-full sm:w-auto" onClick={() => setShowWantInlineSearch(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   欲しいものを追加
                 </Button>
-              </Link>
+              ) : (
+                <div className="space-y-3 rounded-lg border p-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">欲しいアイテムを検索して追加</h4>
+                    <Button variant="ghost" size="icon" onClick={handleCancelWantInlineSearch}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="アイテム名で検索..."
+                      value={wantInlineSearchQuery}
+                      onChange={(e) => handleWantInlineSearchChange(e.target.value)}
+                      className="pl-9"
+                      autoFocus
+                    />
+                  </div>
+                  {addWantItemError && (
+                    <p className="text-sm text-destructive">{addWantItemError}</p>
+                  )}
+                  {isWantInlineSearching ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : wantInlineSearchQuery && wantInlineSearchResults.length === 0 ? (
+                    <div className="text-center py-4">
+                      <p className="text-muted-foreground text-sm mb-2">
+                        「{wantInlineSearchQuery}」に一致するアイテムが見つかりません
+                      </p>
+                      <Link
+                        href={`/items/search?mode=want&returnTo=/users/${userId}?tab=wantCards`}
+                      >
+                        <Button variant="outline" size="sm">
+                          新規登録して追加
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : wantInlineSearchResults.length > 0 ? (
+                    <div className="max-h-64 overflow-y-auto space-y-2">
+                      {wantInlineSearchResults.map((card) => (
+                        <button
+                          key={card.id}
+                          type="button"
+                          onClick={() => handleAddWantItemFromSearch(card.id)}
+                          disabled={isAddingWantItem}
+                          className="w-full flex items-center gap-3 p-2 rounded-lg border hover:bg-muted transition-colors text-left disabled:opacity-50"
+                        >
+                          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
+                            {card.imageUrl ? (
+                              <img
+                                src={card.imageUrl}
+                                alt={card.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate text-sm">{card.name}</p>
+                            {card.category && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {card.category}
+                              </p>
+                            )}
+                          </div>
+                          {isAddingWantItem ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Plus className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className="pt-2 border-t">
+                    <Link href={`/items/search?mode=want&returnTo=/users/${userId}?tab=wantCards`}>
+                      <Button variant="link" size="sm" className="p-0 h-auto">
+                        新しいアイテムを登録する →
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {wantCards.length === 0 ? (
@@ -779,12 +973,12 @@ export function UserProfileClient({ userId }: Props) {
                   </CardContent>
                 </Card>
               ) : !isHydrated || viewMode === 'grid' ? (
-                <div className="columns-2 sm:columns-3 gap-1">
+                <div className="columns-2 sm:columns-3 gap-0.5">
                   {filteredWantCards.map((wantCard) => (
                     <Link
                       key={wantCard.id}
                       href={`/items/${wantCard.card.id}`}
-                      className="mb-1 break-inside-avoid block"
+                      className="mb-0.5 break-inside-avoid block"
                     >
                       <div className="relative overflow-hidden rounded-lg bg-muted cursor-pointer hover:opacity-90 transition-opacity">
                         {wantCard.card.imageUrl ? (
@@ -810,13 +1004,13 @@ export function UserProfileClient({ userId }: Props) {
                   ))}
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1">
                   {filteredWantCards.map((wantCard) => (
                     <Link key={wantCard.id} href={`/items/${wantCard.card.id}`} className="block">
-                      <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-                        <CardContent className="p-3">
-                          <div className="flex items-start gap-3">
-                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded bg-muted">
+                      <Card className="cursor-pointer transition-colors hover:bg-accent rounded-none border-x-0 first:border-t-0">
+                        <CardContent className="p-2">
+                          <div className="flex items-start gap-2">
+                            <div className="h-12 w-12 shrink-0 overflow-hidden bg-muted">
                               {wantCard.card.imageUrl ? (
                                 <img
                                   src={wantCard.card.imageUrl}
@@ -825,12 +1019,12 @@ export function UserProfileClient({ userId }: Props) {
                                 />
                               ) : (
                                 <div className="flex h-full w-full items-center justify-center">
-                                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
                                 </div>
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="font-medium truncate">{wantCard.card.name}</p>
+                              <p className="text-sm font-medium truncate">{wantCard.card.name}</p>
                               {wantCard.card.category && (
                                 <p className="text-sm text-muted-foreground truncate">
                                   {wantCard.card.category}
@@ -1243,6 +1437,76 @@ export function UserProfileClient({ userId }: Props) {
               currentUserId={session.user.id}
               emptyMessage="まだレビューがありません"
             />
+          </TabsContent>
+        )}
+
+        {isOwnProfile && (
+          <TabsContent value="favoriteUsers">
+            {favoriteUsers.length === 0 ? (
+              <Card>
+                <CardContent className="py-8">
+                  <p className="text-muted-foreground text-center">お気に入りユーザーはいません</p>
+                  <p className="text-muted-foreground text-center text-sm mt-2">
+                    トップページのユーザー検索からお気に入りを追加できます
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-1">
+                {favoriteUsers.map((favorite) => (
+                  <div
+                    key={favorite.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <Link
+                      href={`/users/${favorite.favoriteUser.id}`}
+                      className="flex items-center gap-3 flex-1 min-w-0"
+                    >
+                      {/* アバター */}
+                      <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-muted">
+                        {favorite.favoriteUser.image ? (
+                          <img
+                            src={favorite.favoriteUser.image}
+                            alt={favorite.favoriteUser.name ?? ''}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <User className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      {/* ユーザー情報 */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate text-sm">
+                            {favorite.favoriteUser.name ?? '名前未設定'}
+                          </p>
+                          {favorite.favoriteUser.trustGrade && (
+                            <TrustBadge grade={favorite.favoriteUser.trustGrade} size="sm" />
+                          )}
+                        </div>
+                        {favorite.favoriteUser.twitterUsername && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            @{favorite.favoriteUser.twitterUsername}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                    {/* 削除ボタン */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveFavoriteUser(favorite.favoriteUser.id)}
+                      className="flex-shrink-0"
+                      title="お気に入りから削除"
+                    >
+                      <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
         )}
       </Tabs>

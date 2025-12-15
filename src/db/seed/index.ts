@@ -5,6 +5,7 @@ import { Pool } from 'pg';
 import * as schema from '../schema';
 import { seedCards } from './data/cards';
 import { seedTradeHistory, seedTradeItems, seedTrades } from './data/trades';
+import { seedTrustHistory } from './data/trust-history';
 import { seedUsers } from './data/users';
 import { assertLocalEnvironment, generateId } from './utils';
 
@@ -33,7 +34,8 @@ async function main() {
         user_have_card,
         item,
         allowed_user,
-        user_trust_job
+        user_trust_job,
+        trust_score_history
       CASCADE
     `);
 
@@ -219,6 +221,22 @@ async function main() {
     }
     console.log(`  ✓ ${seedTradeHistory.length} 件のトレード履歴を作成しました`);
 
+    // 信頼性スコア履歴の作成
+    console.log('📊 信頼性スコア履歴を作成中...');
+    for (const historyData of seedTrustHistory) {
+      await db.insert(schema.trustScoreHistory).values({
+        id: historyData.id,
+        userId: historyData.userId,
+        trustScore: historyData.trustScore,
+        twitterScore: historyData.twitterScore,
+        totalTradeScore: historyData.totalTradeScore,
+        recentTradeScore: historyData.recentTradeScore,
+        reason: historyData.reason,
+        createdAt: historyData.createdAt,
+      });
+    }
+    console.log(`  ✓ ${seedTrustHistory.length} 件の信頼性スコア履歴を作成しました`);
+
     console.log('');
     console.log('✅ シードが完了しました！');
     console.log('');
@@ -231,6 +249,7 @@ async function main() {
     console.log(`  - トレード: ${seedTrades.length} 件`);
     console.log(`  - トレードアイテム: ${seedTradeItems.length} 件`);
     console.log(`  - トレード履歴: ${seedTradeHistory.length} 件`);
+    console.log(`  - 信頼性スコア履歴: ${seedTrustHistory.length} 件`);
   } catch (error) {
     console.error('❌ シードに失敗しました:', error);
     process.exit(1);

@@ -114,7 +114,7 @@ export default function TrustDetailPage({ params }: Props) {
 
   if (isSessionPending) {
     return (
-      <div className="container mx-auto py-8 px-4 max-w-3xl">
+      <div className="container mx-auto px-4 py-4">
         <Skeleton className="h-8 w-32 mb-6" />
         <Skeleton className="h-24 w-full mb-6" />
         <Skeleton className="h-80 w-full mb-6" />
@@ -153,7 +153,7 @@ export default function TrustDetailPage({ params }: Props) {
 
   if (isLoading || !userData) {
     return (
-      <div className="container mx-auto py-8 px-4 max-w-3xl">
+      <div className="container mx-auto px-4 py-4">
         <Skeleton className="h-8 w-32 mb-6" />
         <Skeleton className="h-24 w-full mb-6" />
         <Skeleton className="h-80 w-full mb-6" />
@@ -199,9 +199,12 @@ export default function TrustDetailPage({ params }: Props) {
     : null;
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-3xl">
+    <div className="container mx-auto px-4 py-4">
       {/* ヘッダー */}
       <div className="mb-6 flex items-center justify-between">
+        <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
+          xtrade
+        </Link>
         <Button
           variant="ghost"
           size="sm"
@@ -211,9 +214,6 @@ export default function TrustDetailPage({ params }: Props) {
           <ArrowLeft className="h-4 w-4" />
           戻る
         </Button>
-        <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
-          xtrade
-        </Link>
       </div>
 
       <h1 className="text-2xl font-bold mb-6">信頼性スコア詳細</h1>
