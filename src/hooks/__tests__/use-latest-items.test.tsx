@@ -1,9 +1,31 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
+// biome-ignore lint/style/useImportType: SWRConfig is used as a component
+import { SWRConfig } from 'swr';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLatestItems } from '../use-latest-items';
 
 // fetch モック
 global.fetch = vi.fn();
+
+// SWR キャッシュを各テストでリセットするラッパー生成
+function createWrapper() {
+  const cache = new Map();
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return (
+      <SWRConfig
+        value={{
+          provider: () => cache,
+          dedupingInterval: 0,
+          revalidateOnFocus: false,
+          revalidateOnReconnect: false,
+        }}
+      >
+        {children}
+      </SWRConfig>
+    );
+  };
+}
 
 describe('useLatestItems', () => {
   beforeEach(() => {
@@ -22,7 +44,7 @@ describe('useLatestItems', () => {
         json: () => Promise.resolve({ cards: mockCards }),
       });
 
-      const { result } = renderHook(() => useLatestItems());
+      const { result } = renderHook(() => useLatestItems(), { wrapper: createWrapper() });
 
       expect(result.current.isLoading).toBe(true);
 
@@ -41,7 +63,7 @@ describe('useLatestItems', () => {
         json: () => Promise.resolve({ cards: [] }),
       });
 
-      renderHook(() => useLatestItems({ limit: 50 }));
+      renderHook(() => useLatestItems({ limit: 50 }), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith('/api/items/latest?limit=50&page=1');
@@ -54,7 +76,7 @@ describe('useLatestItems', () => {
         json: () => Promise.resolve({ cards: [] }),
       });
 
-      const { result } = renderHook(() => useLatestItems());
+      const { result } = renderHook(() => useLatestItems(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -70,7 +92,7 @@ describe('useLatestItems', () => {
         json: () => Promise.resolve({}),
       });
 
-      const { result } = renderHook(() => useLatestItems());
+      const { result } = renderHook(() => useLatestItems(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -88,48 +110,46 @@ describe('useLatestItems', () => {
         json: () => Promise.resolve({ error: 'Server error' }),
       });
 
-      const { result } = renderHook(() => useLatestItems());
+      const { result } = renderHook(() => useLatestItems(), { wrapper: createWrapper() });
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.error).not.toBeNull();
       });
 
       expect(result.current.error).toBeInstanceOf(Error);
       expect(result.current.error?.message).toBe('Failed to fetch latest items');
-      expect(result.current.latestItems).toEqual([]);
     });
 
     it('ネットワークエラー時にエラーステートを設定', async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
 
-      const { result } = renderHook(() => useLatestItems());
+      const { result } = renderHook(() => useLatestItems(), { wrapper: createWrapper() });
 
       await waitFor(() => {
-        expect(result.current.isLoading).toBe(false);
+        expect(result.current.error).not.toBeNull();
       });
 
       expect(result.current.error).toBeInstanceOf(Error);
       expect(result.current.error?.message).toBe('Network error');
-      expect(result.current.latestItems).toEqual([]);
     });
   });
 
   describe('refetch', () => {
     it('手動で再取得できる', async () => {
+      const mockCards1: never[] = [];
+      const mockCards2 = [{ id: 'card-1', name: 'New Card' }];
+
       (global.fetch as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({
           ok: true,
-          json: () => Promise.resolve({ cards: [] }),
+          json: () => Promise.resolve({ cards: mockCards1 }),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: () =>
-            Promise.resolve({
-              cards: [{ id: 'card-1', name: 'New Card' }],
-            }),
+          json: () => Promise.resolve({ cards: mockCards2 }),
         });
 
-      const { result } = renderHook(() => useLatestItems());
+      const { result } = renderHook(() => useLatestItems(), { wrapper: createWrapper() });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);

@@ -3,6 +3,7 @@
 import { Heart, Loader2, Search, User, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import useSWR from 'swr';
 
 import { TrustBadge } from '@/components/trust/trust-badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { useDebounce } from '@/hooks/use-debounce';
 import type { TrustGrade } from '@/modules/trust';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface SearchUserResult {
   id: string;
@@ -33,52 +36,46 @@ interface UserSearchModalProps {
 
 export function UserSearchModal({ open, onOpenChange }: UserSearchModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [favoriteUsers, setFavoriteUsers] = useState<Record<string, boolean>>({});
   const debouncedQuery = useDebounce(searchQuery, 300);
 
-  // 検索実行
+  // SWR でユーザー検索
+  const searchKey =
+    open && debouncedQuery.trim()
+      ? `/api/users/search?q=${encodeURIComponent(debouncedQuery)}&limit=20`
+      : null;
+
+  const { data: searchData, isLoading: isSearching } = useSWR<{ users: SearchUserResult[] }>(
+    searchKey,
+    fetcher,
+    { keepPreviousData: true }
+  );
+
+  const searchResults = searchData?.users ?? [];
+
+  // お気に入り状態を取得
   useEffect(() => {
-    if (!open) return;
-    if (!debouncedQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
+    if (searchResults.length === 0) return;
 
-    const searchUsers = async () => {
-      setIsSearching(true);
+    const userIds = searchResults.map((u) => u.id);
+    const checkFavorites = async () => {
       try {
-        const res = await fetch(
-          `/api/users/search?q=${encodeURIComponent(debouncedQuery)}&limit=20`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(data.users ?? []);
-
-          // お気に入り状態を取得
-          const userIds = (data.users ?? []).map((u: SearchUserResult) => u.id);
-          if (userIds.length > 0) {
-            const favoriteRes = await fetch('/api/me/favorites/check', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ cardIds: [], userIds }),
-            });
-            if (favoriteRes.ok) {
-              const favoriteData = await favoriteRes.json();
-              setFavoriteUsers(favoriteData.users ?? {});
-            }
-          }
+        const favoriteRes = await fetch('/api/me/favorites/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cardIds: [], userIds }),
+        });
+        if (favoriteRes.ok) {
+          const favoriteData = await favoriteRes.json();
+          setFavoriteUsers(favoriteData.users ?? {});
         }
       } catch (error) {
-        console.error('ユーザー検索エラー:', error);
-      } finally {
-        setIsSearching(false);
+        console.error('お気に入り状態取得エラー:', error);
       }
     };
 
-    searchUsers();
-  }, [debouncedQuery, open]);
+    checkFavorites();
+  }, [searchResults]);
 
   // お気に入りトグル
   const toggleFavorite = useCallback(
@@ -109,7 +106,6 @@ export function UserSearchModal({ open, onOpenChange }: UserSearchModalProps) {
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       setSearchQuery('');
-      setSearchResults([]);
     }
     onOpenChange(newOpen);
   };

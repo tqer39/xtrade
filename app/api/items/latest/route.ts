@@ -27,5 +27,9 @@ export async function GET(request: NextRequest) {
     limit: Math.min(limit, 100),
   });
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, {
+    headers: {
+      'Cache-Control': 'public, max-age=60, stale-while-revalidate=30',
+    },
+  });
 }

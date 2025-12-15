@@ -1,7 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
+import useSWR from 'swr';
 import type { Card, CreateCardInput } from '@/modules/cards/types';
+import { useDebounce } from './use-debounce';
 
 interface UseItemSearchReturn {
   searchResults: Card[];
@@ -12,55 +14,30 @@ interface UseItemSearchReturn {
   clearResults: () => void;
 }
 
+const fetcher = (url: string) =>
+  fetch(url).then((res) => {
+    if (!res.ok) throw new Error('Failed to search cards');
+    return res.json();
+  });
+
 export function useItemSearch(): UseItemSearchReturn {
-  const [searchResults, setSearchResults] = useState<Card[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchError, setSearchError] = useState<Error | null>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
 
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
+  const searchKey = debouncedQuery.trim()
+    ? `/api/cards?q=${encodeURIComponent(debouncedQuery)}${category ? `&category=${encodeURIComponent(category)}` : ''}`
+    : null;
 
-  const search = useCallback((query: string, category?: string) => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+  const { data, isLoading, error } = useSWR<{ cards: Card[] }>(searchKey, fetcher, {
+    keepPreviousData: true,
+  });
+
+  const search = useCallback((q: string, cat?: string) => {
+    setQuery(q);
+    if (cat !== undefined) {
+      setCategory(cat);
     }
-
-    if (!query.trim()) {
-      setSearchResults([]);
-      setIsSearching(false);
-      return;
-    }
-
-    setIsSearching(true);
-
-    debounceTimerRef.current = setTimeout(async () => {
-      try {
-        const params = new URLSearchParams({ q: query });
-        if (category) {
-          params.append('category', category);
-        }
-
-        const res = await fetch(`/api/cards?${params.toString()}`);
-        if (!res.ok) {
-          throw new Error('Failed to search cards');
-        }
-
-        const data = await res.json();
-        setSearchResults(data.cards || []);
-        setSearchError(null);
-      } catch (err) {
-        setSearchError(err instanceof Error ? err : new Error('Unknown error'));
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
   }, []);
 
   const createCard = useCallback(async (input: CreateCardInput): Promise<Card> => {
@@ -71,23 +48,23 @@ export function useItemSearch(): UseItemSearchReturn {
     });
 
     if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || 'Failed to create card');
+      const responseData = await res.json();
+      throw new Error(responseData.error || 'Failed to create card');
     }
 
-    const data = await res.json();
-    return data.card;
+    const responseData = await res.json();
+    return responseData.card;
   }, []);
 
   const clearResults = useCallback(() => {
-    setSearchResults([]);
-    setSearchError(null);
+    setQuery('');
+    setCategory('');
   }, []);
 
   return {
-    searchResults,
-    isSearching,
-    searchError,
+    searchResults: data?.cards ?? [],
+    isSearching: isLoading,
+    searchError: error ?? null,
     search,
     createCard,
     clearResults,

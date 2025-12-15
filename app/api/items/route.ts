@@ -27,7 +27,14 @@ export async function GET(request: NextRequest) {
 
   const cards = await searchCards(query, category, Math.min(limit, 100));
 
-  return NextResponse.json({ cards });
+  return NextResponse.json(
+    { cards },
+    {
+      headers: {
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=30',
+      },
+    }
+  );
 }
 
 /**
