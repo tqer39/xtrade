@@ -5,8 +5,8 @@ import { seedUsers } from '../data/users';
 
 describe('Seed Data', () => {
   describe('seedUsers', () => {
-    it('31名のテストユーザーが定義されている', () => {
-      expect(seedUsers).toHaveLength(31);
+    it('32名のテストユーザーが定義されている', () => {
+      expect(seedUsers).toHaveLength(32);
     });
 
     it('各ユーザーに必須フィールドが存在する', () => {

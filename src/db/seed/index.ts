@@ -155,6 +155,27 @@ async function main() {
         cardId: 'card-onepiece-001',
         priority: 0,
       },
+      // test-user-31 の欲しいカード（20件）
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-pokemon-001', priority: 0 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-pokemon-002', priority: 1 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-pokemon-003', priority: 2 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-pokemon-004', priority: 3 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-pokemon-005', priority: 4 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-yugioh-001', priority: 5 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-yugioh-002', priority: 6 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-yugioh-003', priority: 7 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-yugioh-004', priority: 8 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-yugioh-005', priority: 9 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-onepiece-001', priority: 10 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-onepiece-002', priority: 11 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-onepiece-003', priority: 12 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-onepiece-004', priority: 13 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-onepiece-005', priority: 14 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-mtg-001', priority: 15 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-mtg-002', priority: 16 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-mtg-003', priority: 17 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-ini-001', priority: 18 },
+      { id: generateId(), userId: 'test-user-31', cardId: 'card-ini-002', priority: 19 },
     ];
     for (const data of userWantCards) {
       await db.insert(schema.userWantCard).values(data);
