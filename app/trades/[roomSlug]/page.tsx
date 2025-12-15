@@ -267,7 +267,7 @@ export default function TradeRoomPage({ params }: Props) {
 
   if (isSessionPending) {
     return (
-      <div className="container mx-auto py-8 px-4 max-w-3xl">
+      <div className="container mx-auto py-8 px-4">
         <Skeleton className="h-8 w-32 mb-6" />
         <Skeleton className="h-64 w-full mb-6" />
         <Skeleton className="h-48 w-full" />
@@ -305,7 +305,7 @@ export default function TradeRoomPage({ params }: Props) {
 
   if (isLoading || !trade) {
     return (
-      <div className="container mx-auto py-8 px-4 max-w-3xl">
+      <div className="container mx-auto py-8 px-4">
         <Skeleton className="h-8 w-32 mb-6" />
         <Skeleton className="h-64 w-full mb-6" />
         <Skeleton className="h-48 w-full" />
@@ -337,7 +337,7 @@ export default function TradeRoomPage({ params }: Props) {
   const showProposeHint = trade.status === 'draft' && isInitiator && myItems.length === 0;
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-3xl">
+    <div className="container mx-auto py-8 px-4">
       {/* ヘッダー */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -369,7 +369,7 @@ export default function TradeRoomPage({ params }: Props) {
         {/* 相手側 */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">相手のオファー</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">相手の出品</CardTitle>
           </CardHeader>
           <CardContent>
             {theirProfile ? (
@@ -439,7 +439,7 @@ export default function TradeRoomPage({ params }: Props) {
         {/* 自分側 */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">あなたのオファー</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">あなたの出品</CardTitle>
           </CardHeader>
           <CardContent>
             {myProfile && (
@@ -688,11 +688,17 @@ export default function TradeRoomPage({ params }: Props) {
             ) : haveCards.length === 0 ? (
               <div className="text-center py-8">
                 <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-4">
                   持っているアイテムがありません。
                   <br />
                   先にアイテムを登録してください。
                 </p>
+                <Link href={`/users/${currentUserId}?tab=listings`}>
+                  <Button variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-1" />
+                    アイテムを登録する
+                  </Button>
+                </Link>
               </div>
             ) : (
               <div className="space-y-2">

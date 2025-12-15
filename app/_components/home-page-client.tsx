@@ -325,7 +325,6 @@ export function HomePageClient() {
                           isFavorited={favoriteStates[card.id] ?? false}
                           onToggle={() => toggleFavorite(card.id)}
                           size="sm"
-                          className="bg-black/40 hover:bg-black/60 backdrop-blur-sm"
                         />
                       </div>
                     )}
@@ -434,7 +433,7 @@ export function HomePageClient() {
 
             {/* ページネーション */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-4">
+              <div className="flex items-center justify-center gap-1 mt-4">
                 <Button
                   variant="outline"
                   size="icon"
@@ -444,9 +443,20 @@ export function HomePageClient() {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="text-sm text-muted-foreground min-w-[80px] text-center">
-                  {page} / {totalPages}
-                </span>
+                {/* ページ番号ボタン（現在ページ ±2） */}
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p >= Math.max(1, page - 2) && p <= Math.min(totalPages, page + 2))
+                  .map((p) => (
+                    <Button
+                      key={p}
+                      variant={p === page ? 'default' : 'outline'}
+                      size="icon"
+                      onClick={() => handlePageChange(p)}
+                      className="h-8 w-8"
+                    >
+                      {p}
+                    </Button>
+                  ))}
                 <Button
                   variant="outline"
                   size="icon"

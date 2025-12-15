@@ -34,14 +34,9 @@ export default function ItemDetailPage({ params }: Props) {
 
   const isLoggedIn = !!session?.user;
 
-  // 外部サイト（Twitter/X認証）からの遷移時はトップページに戻す
+  // ブラウザバックで前のページに戻る
   const handleBack = useCallback(() => {
-    const referrer = document.referrer;
-    if (!referrer || !referrer.includes(window.location.hostname)) {
-      router.push('/');
-    } else {
-      router.back();
-    }
+    router.back();
   }, [router]);
 
   useEffect(() => {
@@ -171,7 +166,7 @@ export default function ItemDetailPage({ params }: Props) {
 
   if (isLoading || !card) {
     return (
-      <div className="container mx-auto py-8 px-4 max-w-2xl">
+      <div className="container mx-auto py-8 px-4">
         <Skeleton className="h-8 w-32 mb-6" />
         <Skeleton className="aspect-[3/4] w-full max-w-md mx-auto mb-6" />
         <Skeleton className="h-8 w-48 mb-2" />
@@ -184,7 +179,7 @@ export default function ItemDetailPage({ params }: Props) {
   const currentUserId = session?.user?.id;
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-2xl">
+    <div className="container mx-auto py-8 px-4">
       {/* ヘッダー */}
       <div className="mb-6 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
@@ -326,9 +321,12 @@ export default function ItemDetailPage({ params }: Props) {
                             </Link>
                           ))}
                           {owner.wantCards.length > 5 && (
-                            <span className="text-xs text-muted-foreground self-center">
-                              他{owner.wantCards.length - 5}件
-                            </span>
+                            <Link
+                              href={`/users/${owner.userId}?tab=wants`}
+                              className="text-xs text-primary hover:underline self-center"
+                            >
+                              他{owner.wantCards.length - 5}件を見る
+                            </Link>
                           )}
                         </div>
                       )}
