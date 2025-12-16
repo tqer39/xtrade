@@ -14,6 +14,7 @@ import {
   RotateCcw,
   Send,
   Trash2,
+  Twitter,
   User,
   XCircle,
 } from 'lucide-react';
@@ -374,28 +375,32 @@ export default function TradeRoomPage({ params }: Props) {
           <CardContent>
             {theirProfile ? (
               <div className="flex items-center gap-3 mb-4">
-                {theirProfile.image ? (
-                  <img
-                    src={theirProfile.image}
-                    alt={theirProfile.name ?? ''}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                )}
+                <Link href={`/users/${theirProfile.id}`} className="flex-shrink-0">
+                  {theirProfile.image ? (
+                    <img
+                      src={theirProfile.image}
+                      alt={theirProfile.name ?? ''}
+                      className="w-10 h-10 rounded-full object-cover hover:opacity-80 transition-opacity cursor-pointer"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-muted/80 transition-colors cursor-pointer">
+                      <User className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                  )}
+                </Link>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{theirProfile.name ?? '名前未設定'}</p>
+                  <Link href={`/users/${theirProfile.id}`} className="hover:underline">
+                    <p className="font-medium truncate">{theirProfile.name ?? '名前未設定'}</p>
+                  </Link>
                   <div className="flex items-center gap-2 mt-1">
                     {theirProfile.twitterUsername && (
                       <a
                         href={`https://x.com/${theirProfile.twitterUsername}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-muted-foreground hover:text-primary"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
                       >
-                        @{theirProfile.twitterUsername}
+                        <Twitter className="w-3 h-3" />@{theirProfile.twitterUsername}
                       </a>
                     )}
                     <TrustBadge

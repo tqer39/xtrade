@@ -2,7 +2,10 @@
 
 import {
   ArrowLeft,
+  ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Edit2,
   Gift,
   Heart,
@@ -25,12 +28,17 @@ import { TrustBadge } from '@/components/trust';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { CategoryAutocomplete } from '@/components/ui/category-autocomplete';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { ViewToggle } from '@/components/view-toggle';
 import { useItemSearch } from '@/hooks/use-item-search';
+import { useMyCategories } from '@/hooks/use-my-categories';
+import { useMyItems } from '@/hooks/use-my-items';
 import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
 import type { Card as CardType } from '@/modules/cards/types';
@@ -113,6 +121,13 @@ export function UserProfileClient({ userId }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [wantSearchQuery, setWantSearchQuery] = useState('');
   const [filteredWantCards, setFilteredWantCards] = useState<WantCard[]>([]);
+
+  // ページネーション
+  const ITEMS_PER_PAGE = 12;
+  const initialListingsPage = parseInt(searchParams.get('lp') ?? '1', 10);
+  const initialWantPage = parseInt(searchParams.get('wp') ?? '1', 10);
+  const [listingsPage, setListingsPage] = useState(initialListingsPage);
+  const [wantCardsPage, setWantCardsPage] = useState(initialWantPage);
   const [wantText, setWantText] = useState<string>('');
   const [isEditingWantText, setIsEditingWantText] = useState(false);
   const [isSavingWantText, setIsSavingWantText] = useState(false);
@@ -129,7 +144,40 @@ export function UserProfileClient({ userId }: Props) {
     isSearching: isWantInlineSearching,
     search: searchWantItems,
     clearResults: clearWantInlineResults,
+    createCard,
   } = useItemSearch();
+
+  // インライン出品登録フォーム
+  const [showListingForm, setShowListingForm] = useState(false);
+  const [newListingName, setNewListingName] = useState('');
+  const [newListingCategory, setNewListingCategory] = useState('');
+  const [newListingDescription, setNewListingDescription] = useState('');
+  const [newListingImageUrl, setNewListingImageUrl] = useState<string | undefined>();
+  const [isAddingListing, setIsAddingListing] = useState(false);
+  const [addListingError, setAddListingError] = useState<string | null>(null);
+  const { categories: myCategories } = useMyCategories();
+  const { wantCards: myWantCards, addWantCard, removeWantCard } = useMyItems();
+
+  // カードが自分の欲しいものリストにあるか確認
+  const isInMyWantList = useCallback(
+    (cardId: string) => myWantCards.some((w) => w.card?.id === cardId || w.cardId === cardId),
+    [myWantCards]
+  );
+
+  // 欲しいものリストへの追加/削除をトグル
+  const handleToggleWant = async (cardId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      if (isInMyWantList(cardId)) {
+        await removeWantCard(cardId);
+      } else {
+        await addWantCard(cardId);
+      }
+    } catch (err) {
+      console.error('Failed to toggle want card:', err);
+    }
+  };
 
   // URLクエリパラメータからタブを取得（デフォルトは'listings'）
   const activeTab = searchParams.get('tab') || 'listings';
@@ -139,6 +187,49 @@ export function UserProfileClient({ userId }: Props) {
     (value: string) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set('tab', value);
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
+
+  // ページネーション計算
+  const listingsTotalPages = Math.ceil(filteredListings.length / ITEMS_PER_PAGE);
+  const wantCardsTotalPages = Math.ceil(filteredWantCards.length / ITEMS_PER_PAGE);
+
+  const paginatedListings = filteredListings.slice(
+    (listingsPage - 1) * ITEMS_PER_PAGE,
+    listingsPage * ITEMS_PER_PAGE
+  );
+  const paginatedWantCards = filteredWantCards.slice(
+    (wantCardsPage - 1) * ITEMS_PER_PAGE,
+    wantCardsPage * ITEMS_PER_PAGE
+  );
+
+  // 出品中ページ変更
+  const handleListingsPageChange = useCallback(
+    (newPage: number) => {
+      setListingsPage(newPage);
+      const params = new URLSearchParams(searchParams.toString());
+      if (newPage === 1) {
+        params.delete('lp');
+      } else {
+        params.set('lp', newPage.toString());
+      }
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
+
+  // 欲しいものページ変更
+  const handleWantCardsPageChange = useCallback(
+    (newPage: number) => {
+      setWantCardsPage(newPage);
+      const params = new URLSearchParams(searchParams.toString());
+      if (newPage === 1) {
+        params.delete('wp');
+      } else {
+        params.set('wp', newPage.toString());
+      }
       router.push(`?${params.toString()}`, { scroll: false });
     },
     [router, searchParams]
@@ -287,6 +378,7 @@ export function UserProfileClient({ userId }: Props) {
         )
       );
     }
+    setListingsPage(1); // 検索時はページをリセット
   }, [searchQuery, listings]);
 
   // 検索フィルター（欲しいもの）
@@ -303,6 +395,7 @@ export function UserProfileClient({ userId }: Props) {
         )
       );
     }
+    setWantCardsPage(1); // 検索時はページをリセット
   }, [wantSearchQuery, wantCards]);
 
   // wantText保存
@@ -369,6 +462,65 @@ export function UserProfileClient({ userId }: Props) {
     setWantInlineSearchQuery('');
     setAddWantItemError(null);
     clearWantInlineResults();
+  };
+
+  // 出品登録ハンドラー
+  const handleCreateAndAddListing = async () => {
+    if (!newListingName.trim()) {
+      setAddListingError('名前は必須です');
+      return;
+    }
+
+    setIsAddingListing(true);
+    setAddListingError(null);
+    try {
+      const card = await createCard({
+        name: newListingName.trim(),
+        category: newListingCategory.trim() || undefined,
+        description: newListingDescription.trim() || undefined,
+        imageUrl: newListingImageUrl,
+      });
+
+      // カードを出品リストに追加
+      const res = await fetch('/api/me/cards/have', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardId: card.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || '出品の追加に失敗しました');
+      }
+
+      // 成功したら listings を更新
+      const cardsRes = await fetch(`/api/users/${userId}/cards`);
+      if (cardsRes.ok) {
+        const cardsData = await cardsRes.json();
+        setListings(cardsData.cards ?? []);
+        setFilteredListings(cardsData.cards ?? []);
+      }
+
+      // フォームをリセット
+      setShowListingForm(false);
+      setNewListingName('');
+      setNewListingCategory('');
+      setNewListingDescription('');
+      setNewListingImageUrl(undefined);
+    } catch (err) {
+      setAddListingError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsAddingListing(false);
+    }
+  };
+
+  // 出品フォームをキャンセル
+  const handleCancelListingForm = () => {
+    setShowListingForm(false);
+    setNewListingName('');
+    setNewListingCategory('');
+    setNewListingDescription('');
+    setNewListingImageUrl(undefined);
+    setAddListingError(null);
   };
 
   if (isSessionPending) {
@@ -581,12 +733,68 @@ export function UserProfileClient({ userId }: Props) {
           {/* 出品するボタン（自分のプロフィールのみ） */}
           {isOwnProfile && (
             <div className="mb-4">
-              <Link href={`/items/search?mode=have&returnTo=/users/${userId}?tab=listings`}>
-                <Button className="w-full sm:w-auto">
+              {!showListingForm ? (
+                <Button className="w-full sm:w-auto" onClick={() => setShowListingForm(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   出品する
                 </Button>
-              </Link>
+              ) : (
+                <div className="space-y-3 rounded-lg border p-4">
+                  <h4 className="font-medium">新しいアイテムを登録</h4>
+                  {addListingError && <p className="text-sm text-destructive">{addListingError}</p>}
+                  <div className="space-y-2">
+                    <Label htmlFor="new-listing-name">アイテム名 *</Label>
+                    <Input
+                      id="new-listing-name"
+                      value={newListingName}
+                      onChange={(e) => setNewListingName(e.target.value)}
+                      placeholder="アイテム名を入力"
+                      disabled={isAddingListing}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-listing-category">カテゴリ (任意)</Label>
+                    <CategoryAutocomplete
+                      value={newListingCategory}
+                      onChange={setNewListingCategory}
+                      suggestions={myCategories}
+                      placeholder="例: ポケカ、遊戯王、アイドルグッズ"
+                      disabled={isAddingListing}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-listing-description">説明 (任意)</Label>
+                    <Input
+                      id="new-listing-description"
+                      value={newListingDescription}
+                      onChange={(e) => setNewListingDescription(e.target.value)}
+                      placeholder="アイテムの説明を入力"
+                      disabled={isAddingListing}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>画像 (任意)</Label>
+                    <ImageUpload
+                      value={newListingImageUrl}
+                      onChange={setNewListingImageUrl}
+                      disabled={isAddingListing}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleCancelListingForm}
+                      disabled={isAddingListing}
+                    >
+                      キャンセル
+                    </Button>
+                    <Button onClick={handleCreateAndAddListing} disabled={isAddingListing}>
+                      {isAddingListing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      登録して追加
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {listings.length === 0 ? (
@@ -621,7 +829,7 @@ export function UserProfileClient({ userId }: Props) {
                 </Card>
               ) : !isHydrated || viewMode === 'grid' ? (
                 <div className="columns-1 sm:columns-2 md:columns-3 gap-0.5">
-                  {filteredListings.map((card) => {
+                  {paginatedListings.map((card) => {
                     // 説明文を80文字に制限
                     const description = card.description
                       ? card.description.length > 80
@@ -648,6 +856,25 @@ export function UserProfileClient({ userId }: Props) {
                           )}
                           {/* 画像上のオーバーレイ */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                          {/* 他ユーザーの出品に欲しいものボタンを表示 */}
+                          {!isOwnProfile && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleWant(card.id, e)}
+                              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+                              aria-label={
+                                isInMyWantList(card.id) ? '欲しいものから削除' : '欲しいものに追加'
+                              }
+                            >
+                              <Heart
+                                className={`h-4 w-4 ${
+                                  isInMyWantList(card.id)
+                                    ? 'text-red-500 fill-red-500'
+                                    : 'text-white'
+                                }`}
+                              />
+                            </button>
+                          )}
                           <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
                             <p className="text-sm font-medium truncate">{card.name}</p>
                             {card.category && (
@@ -666,7 +893,7 @@ export function UserProfileClient({ userId }: Props) {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {filteredListings.map((card) => (
+                  {paginatedListings.map((card) => (
                     <Link key={card.id} href={`/items/${card.id}`} className="block">
                       <Card className="cursor-pointer transition-colors hover:bg-accent rounded-none border-x-0 first:border-t-0">
                         <CardContent className="p-2">
@@ -697,11 +924,91 @@ export function UserProfileClient({ userId }: Props) {
                                 </p>
                               )}
                             </div>
+                            {/* 他ユーザーの出品に欲しいものボタンを表示 */}
+                            {!isOwnProfile && (
+                              <button
+                                type="button"
+                                onClick={(e) => handleToggleWant(card.id, e)}
+                                className="flex-shrink-0 p-1.5 rounded-full hover:bg-muted transition-colors"
+                                aria-label={
+                                  isInMyWantList(card.id)
+                                    ? '欲しいものから削除'
+                                    : '欲しいものに追加'
+                                }
+                              >
+                                <Heart
+                                  className={`h-4 w-4 ${
+                                    isInMyWantList(card.id)
+                                      ? 'text-red-500 fill-red-500'
+                                      : 'text-muted-foreground'
+                                  }`}
+                                />
+                              </button>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
                     </Link>
                   ))}
+                </div>
+              )}
+
+              {/* ページネーション */}
+              {listingsTotalPages > 1 && (
+                <div className="flex items-center justify-center gap-1 mt-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleListingsPageChange(1)}
+                    disabled={listingsPage <= 1}
+                    className="h-8 w-8"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleListingsPageChange(listingsPage - 1)}
+                    disabled={listingsPage <= 1}
+                    className="h-8 w-8"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {Array.from({ length: listingsTotalPages }, (_, i) => i + 1)
+                    .filter(
+                      (p) =>
+                        p >= Math.max(1, listingsPage - 2) &&
+                        p <= Math.min(listingsTotalPages, listingsPage + 2)
+                    )
+                    .map((p) => (
+                      <Button
+                        key={p}
+                        variant={p === listingsPage ? 'default' : 'outline'}
+                        size="icon"
+                        onClick={() => handleListingsPageChange(p)}
+                        className="h-8 w-8"
+                      >
+                        {p}
+                      </Button>
+                    ))}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleListingsPageChange(listingsPage + 1)}
+                    disabled={listingsPage >= listingsTotalPages}
+                    className="h-8 w-8"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleListingsPageChange(listingsTotalPages)}
+                    disabled={listingsPage >= listingsTotalPages}
+                    className="h-8 w-8"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
                 </div>
               )}
             </>
@@ -838,7 +1145,7 @@ export function UserProfileClient({ userId }: Props) {
                 </Card>
               ) : !isHydrated || viewMode === 'grid' ? (
                 <div className="columns-1 sm:columns-2 md:columns-3 gap-0.5">
-                  {filteredWantCards.map((wantCard) => (
+                  {paginatedWantCards.map((wantCard) => (
                     <Link
                       key={wantCard.id}
                       href={`/items/${wantCard.card.id}`}
@@ -869,7 +1176,7 @@ export function UserProfileClient({ userId }: Props) {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {filteredWantCards.map((wantCard) => (
+                  {paginatedWantCards.map((wantCard) => (
                     <Link key={wantCard.id} href={`/items/${wantCard.card.id}`} className="block">
                       <Card className="cursor-pointer transition-colors hover:bg-accent rounded-none border-x-0 first:border-t-0">
                         <CardContent className="p-2">
@@ -905,6 +1212,65 @@ export function UserProfileClient({ userId }: Props) {
                       </Card>
                     </Link>
                   ))}
+                </div>
+              )}
+
+              {/* ページネーション */}
+              {wantCardsTotalPages > 1 && (
+                <div className="flex items-center justify-center gap-1 mt-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleWantCardsPageChange(1)}
+                    disabled={wantCardsPage <= 1}
+                    className="h-8 w-8"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleWantCardsPageChange(wantCardsPage - 1)}
+                    disabled={wantCardsPage <= 1}
+                    className="h-8 w-8"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {Array.from({ length: wantCardsTotalPages }, (_, i) => i + 1)
+                    .filter(
+                      (p) =>
+                        p >= Math.max(1, wantCardsPage - 2) &&
+                        p <= Math.min(wantCardsTotalPages, wantCardsPage + 2)
+                    )
+                    .map((p) => (
+                      <Button
+                        key={p}
+                        variant={p === wantCardsPage ? 'default' : 'outline'}
+                        size="icon"
+                        onClick={() => handleWantCardsPageChange(p)}
+                        className="h-8 w-8"
+                      >
+                        {p}
+                      </Button>
+                    ))}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleWantCardsPageChange(wantCardsPage + 1)}
+                    disabled={wantCardsPage >= wantCardsTotalPages}
+                    className="h-8 w-8"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleWantCardsPageChange(wantCardsTotalPages)}
+                    disabled={wantCardsPage >= wantCardsTotalPages}
+                    className="h-8 w-8"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
                 </div>
               )}
             </>

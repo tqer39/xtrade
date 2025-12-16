@@ -26,7 +26,7 @@ export function useItemSearch(): UseItemSearchReturn {
   const debouncedQuery = useDebounce(query, 300);
 
   const searchKey = debouncedQuery.trim()
-    ? `/api/cards?q=${encodeURIComponent(debouncedQuery)}${category ? `&category=${encodeURIComponent(category)}` : ''}`
+    ? `/api/items?q=${encodeURIComponent(debouncedQuery)}${category ? `&category=${encodeURIComponent(category)}` : ''}`
     : null;
 
   const { data, isLoading, error } = useSWR<{ cards: Card[] }>(searchKey, fetcher, {
@@ -41,15 +41,19 @@ export function useItemSearch(): UseItemSearchReturn {
   }, []);
 
   const createCard = useCallback(async (input: CreateCardInput): Promise<Card> => {
-    const res = await fetch('/api/cards', {
+    const res = await fetch('/api/items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     });
 
     if (!res.ok) {
-      const responseData = await res.json();
-      throw new Error(responseData.error || 'Failed to create card');
+      const contentType = res.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        const responseData = await res.json();
+        throw new Error(responseData.error || 'Failed to create card');
+      }
+      throw new Error(`Failed to create card: ${res.status}`);
     }
 
     const responseData = await res.json();
