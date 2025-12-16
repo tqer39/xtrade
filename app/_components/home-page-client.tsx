@@ -39,11 +39,12 @@ export function HomePageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // URLからページ番号を取得
+  // URLからページ番号と検索クエリを取得
   const initialPage = parseInt(searchParams.get('p') ?? '1', 10);
+  const initialQuery = searchParams.getAll('q').join(' ');
 
   // 検索入力値とデバウンス
-  const [searchInput, setSearchInput] = useState('');
+  const [searchInput, setSearchInput] = useState(initialQuery);
   const debouncedSearch = useDebounce(searchInput, 500);
 
   const {
@@ -57,10 +58,28 @@ export function HomePageClient() {
     refetch,
   } = useLatestItems({ limit: 12, initialPage });
 
-  // デバウンスされた検索値を反映
+  // デバウンスされた検索値を反映し、URLを更新
   useEffect(() => {
     setQuery(debouncedSearch);
-  }, [debouncedSearch, setQuery]);
+
+    // URLを更新
+    const params = new URLSearchParams();
+
+    // 検索クエリをスペースで分割して複数の q パラメータに設定
+    const keywords = debouncedSearch.trim().split(/\s+/).filter(Boolean);
+    for (const keyword of keywords) {
+      params.append('q', keyword);
+    }
+
+    // ページ番号を維持（1以外の場合）
+    const currentPage = searchParams.get('p');
+    if (currentPage && currentPage !== '1') {
+      params.set('p', currentPage);
+    }
+
+    const queryString = params.toString();
+    router.replace(queryString ? `/?${queryString}` : '/', { scroll: false });
+  }, [debouncedSearch, setQuery, router, searchParams]);
 
   // ページ変更時にURLを更新
   const handlePageChange = (newPage: number) => {

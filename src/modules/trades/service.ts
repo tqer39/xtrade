@@ -133,6 +133,7 @@ export async function getTradeDetail(roomSlug: string): Promise<TradeDetail | nu
     .select({
       cardId: schema.tradeItem.cardId,
       cardName: schema.card.name,
+      cardImageUrl: schema.card.imageUrl,
       offeredByUserId: schema.tradeItem.offeredByUserId,
     })
     .from(schema.tradeItem)

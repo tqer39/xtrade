@@ -387,25 +387,27 @@ export default function TradeRoomPage({ params }: Props) {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{theirProfile.name ?? '名前未設定'}</p>
-                  {theirProfile.twitterUsername && (
-                    <a
-                      href={`https://x.com/${theirProfile.twitterUsername}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground hover:text-primary"
-                    >
-                      @{theirProfile.twitterUsername}
-                    </a>
-                  )}
-                  <TrustBadge
-                    grade={theirProfile.trustGrade}
-                    score={theirProfile.trustScore}
-                    showScore
-                    size="sm"
-                  />
+                  <div className="flex items-center gap-2 mt-1">
+                    {theirProfile.twitterUsername && (
+                      <a
+                        href={`https://x.com/${theirProfile.twitterUsername}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground hover:text-primary"
+                      >
+                        @{theirProfile.twitterUsername}
+                      </a>
+                    )}
+                    <TrustBadge
+                      grade={theirProfile.trustGrade}
+                      score={theirProfile.trustScore}
+                      showScore
+                      size="sm"
+                    />
+                  </div>
                   <Link
                     href={`/users/${theirProfile.id}/trust`}
-                    className="flex items-center gap-0.5 text-xs text-primary hover:underline"
+                    className="flex items-center gap-0.5 text-xs text-primary hover:underline mt-1"
                   >
                     スコア詳細
                     <ChevronRight className="w-3 h-3" />
@@ -419,13 +421,26 @@ export default function TradeRoomPage({ params }: Props) {
             {theirItems.length > 0 ? (
               <div className="space-y-2">
                 {theirItems.map((item) => (
-                  <div
+                  <Link
                     key={item.cardId}
-                    className="flex items-center gap-2 p-2 rounded-lg bg-muted"
+                    href={`/items/${item.cardId}`}
+                    className="flex items-center gap-3 p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
                   >
-                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-background">
+                      {item.cardImageUrl ? (
+                        <img
+                          src={item.cardImageUrl}
+                          alt={item.cardName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
                     <span className="flex-1 text-sm truncate">{item.cardName}</span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -457,25 +472,27 @@ export default function TradeRoomPage({ params }: Props) {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{myProfile.name ?? '名前未設定'}</p>
-                  {myProfile.twitterUsername && (
-                    <a
-                      href={`https://x.com/${myProfile.twitterUsername}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground hover:text-primary"
-                    >
-                      @{myProfile.twitterUsername}
-                    </a>
-                  )}
-                  <TrustBadge
-                    grade={myProfile.trustGrade}
-                    score={myProfile.trustScore}
-                    showScore
-                    size="sm"
-                  />
+                  <div className="flex items-center gap-2 mt-1">
+                    {myProfile.twitterUsername && (
+                      <a
+                        href={`https://x.com/${myProfile.twitterUsername}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-muted-foreground hover:text-primary"
+                      >
+                        @{myProfile.twitterUsername}
+                      </a>
+                    )}
+                    <TrustBadge
+                      grade={myProfile.trustGrade}
+                      score={myProfile.trustScore}
+                      showScore
+                      size="sm"
+                    />
+                  </div>
                   <Link
                     href={`/users/${myProfile.id}/trust`}
-                    className="flex items-center gap-0.5 text-xs text-primary hover:underline"
+                    className="flex items-center gap-0.5 text-xs text-primary hover:underline mt-1"
                   >
                     スコア詳細
                     <ChevronRight className="w-3 h-3" />
@@ -489,19 +506,36 @@ export default function TradeRoomPage({ params }: Props) {
                 {myItems.map((item) => (
                   <div
                     key={item.cardId}
-                    className="flex items-center gap-2 p-2 rounded-lg bg-muted"
+                    className="flex items-center gap-3 p-2 rounded-lg bg-muted"
                   >
-                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                    <span className="flex-1 text-sm truncate">{item.cardName}</span>
+                    <Link
+                      href={`/items/${item.cardId}`}
+                      className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                    >
+                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-background">
+                        {item.cardImageUrl ? (
+                          <img
+                            src={item.cardImageUrl}
+                            alt={item.cardName}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center">
+                            <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      <span className="flex-1 text-sm truncate">{item.cardName}</span>
+                    </Link>
                     {canEditOffer && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6"
+                        className="h-8 w-8 flex-shrink-0"
                         onClick={() => handleRemoveItem(item.cardId)}
                         disabled={isUpdatingOffer}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
                   </div>
@@ -655,6 +689,10 @@ export default function TradeRoomPage({ params }: Props) {
           <p>
             <span className="text-muted-foreground">作成日:</span>{' '}
             {new Date(trade.createdAt).toLocaleDateString('ja-JP')}
+          </p>
+          <p>
+            <span className="text-muted-foreground">更新日:</span>{' '}
+            {new Date(trade.updatedAt).toLocaleDateString('ja-JP')}
           </p>
           {trade.proposedExpiredAt && (
             <p>

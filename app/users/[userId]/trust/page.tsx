@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, Twitter, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
@@ -222,20 +222,24 @@ export default function TrustDetailPage({ params }: Props) {
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
-            {userData.user.image ? (
-              <img
-                src={userData.user.image}
-                alt={userData.user.name ?? ''}
-                className="w-16 h-16 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                <User className="w-8 h-8 text-muted-foreground" />
-              </div>
-            )}
+            <Link href={`/users/${userId}`} className="flex-shrink-0">
+              {userData.user.image ? (
+                <img
+                  src={userData.user.image}
+                  alt={userData.user.name ?? ''}
+                  className="w-16 h-16 rounded-full object-cover hover:opacity-80 transition-opacity cursor-pointer"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center hover:bg-muted/80 transition-colors cursor-pointer">
+                  <User className="w-8 h-8 text-muted-foreground" />
+                </div>
+              )}
+            </Link>
             <div className="flex-1">
               <div className="flex items-center gap-3 flex-wrap">
-                <h2 className="text-xl font-bold">{userData.user.name ?? '名前未設定'}</h2>
+                <Link href={`/users/${userId}`} className="hover:underline">
+                  <h2 className="text-xl font-bold">{userData.user.name ?? '名前未設定'}</h2>
+                </Link>
                 <TrustBadge
                   grade={userData.trustGrade}
                   size="lg"
@@ -248,9 +252,10 @@ export default function TrustDetailPage({ params }: Props) {
                   href={`https://x.com/${userData.user.twitterUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline mt-1"
                 >
-                  @{userData.user.twitterUsername}
+                  <Twitter className="w-4 h-4" />@{userData.user.twitterUsername}{' '}
+                  のプロフィールを見る
                 </a>
               )}
             </div>

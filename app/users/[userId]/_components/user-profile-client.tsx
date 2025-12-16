@@ -561,10 +561,14 @@ export function UserProfileClient({ userId }: Props) {
               下書き ({activeTrades.filter((t) => t.status === 'draft').length})
             </TabsTrigger>
           )}
-          <TabsTrigger value="activeTrades">
-            トレード中 ({activeTrades.filter((t) => t.status !== 'draft').length})
-          </TabsTrigger>
-          <TabsTrigger value="completedTrades">成約済 ({completedTrades.length})</TabsTrigger>
+          {isOwnProfile && (
+            <TabsTrigger value="activeTrades">
+              トレード中 ({activeTrades.filter((t) => t.status !== 'draft').length})
+            </TabsTrigger>
+          )}
+          {isOwnProfile && (
+            <TabsTrigger value="completedTrades">成約済 ({completedTrades.length})</TabsTrigger>
+          )}
           {isOwnProfile && (
             <TabsTrigger value="reviews">レビュー ({userData.stats.reviewCount})</TabsTrigger>
           )}

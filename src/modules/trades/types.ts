@@ -46,6 +46,7 @@ export interface TradeParticipant {
 export interface TradeItem {
   cardId: string;
   cardName: string;
+  cardImageUrl: string | null;
   offeredByUserId: string;
 }
 
