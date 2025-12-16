@@ -3,6 +3,8 @@
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Gift,
   ImageIcon,
   Search,
@@ -225,7 +227,7 @@ export function HomePageClient() {
             <div
               className={
                 !isHydrated || viewMode === 'grid'
-                  ? 'columns-2 sm:columns-3 md:columns-4 gap-0.5'
+                  ? 'columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-0.5'
                   : 'space-y-2'
               }
             >
@@ -247,7 +249,7 @@ export function HomePageClient() {
                 : 'まだアイテムが登録されていません'}
             </p>
           ) : !isHydrated || viewMode === 'grid' ? (
-            <div className="columns-2 sm:columns-3 md:columns-4 gap-0.5">
+            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-0.5">
               {latestItems.map((card) => (
                 <Link
                   key={card.id}
@@ -456,6 +458,17 @@ export function HomePageClient() {
           {/* ページネーション */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1 mt-4">
+              {/* 最初へ << */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(1)}
+                disabled={page <= 1}
+                className="h-8 w-8"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              {/* 前へ < */}
               <Button
                 variant="outline"
                 size="icon"
@@ -479,6 +492,7 @@ export function HomePageClient() {
                     {p}
                   </Button>
                 ))}
+              {/* 次へ > */}
               <Button
                 variant="outline"
                 size="icon"
@@ -487,6 +501,16 @@ export function HomePageClient() {
                 className="h-8 w-8"
               >
                 <ChevronRight className="h-4 w-4" />
+              </Button>
+              {/* 最後へ >> */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={page >= totalPages}
+                className="h-8 w-8"
+              >
+                <ChevronsRight className="h-4 w-4" />
               </Button>
             </div>
           )}

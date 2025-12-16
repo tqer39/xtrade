@@ -119,18 +119,6 @@ export function UserProfileClient({ userId }: Props) {
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
   const wantTextRef = useRef<HTMLTextAreaElement>(null);
 
-  // インライン出品検索
-  const [showInlineSearch, setShowInlineSearch] = useState(false);
-  const [inlineSearchQuery, setInlineSearchQuery] = useState('');
-  const [isAddingItem, setIsAddingItem] = useState(false);
-  const [addItemError, setAddItemError] = useState<string | null>(null);
-  const {
-    searchResults: inlineSearchResults,
-    isSearching: isInlineSearching,
-    search: searchItems,
-    clearResults: clearInlineResults,
-  } = useItemSearch();
-
   // インライン欲しいもの検索
   const [showWantInlineSearch, setShowWantInlineSearch] = useState(false);
   const [wantInlineSearchQuery, setWantInlineSearchQuery] = useState('');
@@ -335,52 +323,6 @@ export function UserProfileClient({ userId }: Props) {
     } finally {
       setIsSavingWantText(false);
     }
-  };
-
-  // インライン検索のクエリ変更
-  const handleInlineSearchChange = (value: string) => {
-    setInlineSearchQuery(value);
-    searchItems(value);
-  };
-
-  // インライン検索でアイテムを追加
-  const handleAddItemFromSearch = async (cardId: string) => {
-    setIsAddingItem(true);
-    setAddItemError(null);
-    try {
-      const res = await fetch('/api/me/cards/have', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cardId }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'アイテムの追加に失敗しました');
-      }
-      // 追加成功したら listings を更新
-      const cardsRes = await fetch(`/api/users/${userId}/cards`);
-      if (cardsRes.ok) {
-        const cardsData = await cardsRes.json();
-        setListings(cardsData.cards ?? []);
-        setFilteredListings(cardsData.cards ?? []);
-      }
-      // 検索をリセット
-      setShowInlineSearch(false);
-      setInlineSearchQuery('');
-      clearInlineResults();
-    } catch (err) {
-      setAddItemError(err instanceof Error ? err.message : 'エラーが発生しました');
-    } finally {
-      setIsAddingItem(false);
-    }
-  };
-
-  // インライン検索をキャンセル
-  const handleCancelInlineSearch = () => {
-    setShowInlineSearch(false);
-    setInlineSearchQuery('');
-    setAddItemError(null);
-    clearInlineResults();
   };
 
   // 欲しいもの - インライン検索のクエリ変更
@@ -632,97 +574,15 @@ export function UserProfileClient({ userId }: Props) {
         </TabsList>
 
         <TabsContent value="listings">
-          {/* 出品するボタン・インライン検索（自分のプロフィールのみ） */}
+          {/* 出品するボタン（自分のプロフィールのみ） */}
           {isOwnProfile && (
             <div className="mb-4">
-              {!showInlineSearch ? (
-                <Button className="w-full sm:w-auto" onClick={() => setShowInlineSearch(true)}>
+              <Link href={`/items/search?mode=have&returnTo=/users/${userId}?tab=listings`}>
+                <Button className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
                   出品する
                 </Button>
-              ) : (
-                <div className="space-y-3 rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">アイテムを検索して追加</h4>
-                    <Button variant="ghost" size="icon" onClick={handleCancelInlineSearch}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="アイテム名で検索..."
-                      value={inlineSearchQuery}
-                      onChange={(e) => handleInlineSearchChange(e.target.value)}
-                      className="pl-9"
-                      autoFocus
-                    />
-                  </div>
-                  {addItemError && <p className="text-sm text-destructive">{addItemError}</p>}
-                  {isInlineSearching ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : inlineSearchQuery && inlineSearchResults.length === 0 ? (
-                    <div className="text-center py-4">
-                      <p className="text-muted-foreground text-sm mb-2">
-                        「{inlineSearchQuery}」に一致するアイテムが見つかりません
-                      </p>
-                      <Link href={`/items/search?mode=have&returnTo=/users/${userId}?tab=listings`}>
-                        <Button variant="outline" size="sm">
-                          新規登録して出品
-                        </Button>
-                      </Link>
-                    </div>
-                  ) : inlineSearchResults.length > 0 ? (
-                    <div className="max-h-64 overflow-y-auto space-y-2">
-                      {inlineSearchResults.map((card) => (
-                        <button
-                          key={card.id}
-                          type="button"
-                          onClick={() => handleAddItemFromSearch(card.id)}
-                          disabled={isAddingItem}
-                          className="w-full flex items-center gap-3 p-2 rounded-lg border hover:bg-muted transition-colors text-left disabled:opacity-50"
-                        >
-                          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
-                            {card.imageUrl ? (
-                              <img
-                                src={card.imageUrl}
-                                alt={card.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate text-sm">{card.name}</p>
-                            {card.category && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                {card.category}
-                              </p>
-                            )}
-                          </div>
-                          {isAddingItem ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Plus className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                  <div className="pt-2 border-t">
-                    <Link href={`/items/search?mode=have&returnTo=/users/${userId}?tab=listings`}>
-                      <Button variant="link" size="sm" className="p-0 h-auto">
-                        新しいアイテムを登録する →
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
+              </Link>
             </div>
           )}
           {listings.length === 0 ? (
@@ -756,7 +616,7 @@ export function UserProfileClient({ userId }: Props) {
                   </CardContent>
                 </Card>
               ) : !isHydrated || viewMode === 'grid' ? (
-                <div className="columns-2 sm:columns-3 gap-0.5">
+                <div className="columns-1 sm:columns-2 md:columns-3 gap-0.5">
                   {filteredListings.map((card) => {
                     // 説明文を80文字に制限
                     const description = card.description
@@ -973,7 +833,7 @@ export function UserProfileClient({ userId }: Props) {
                   </CardContent>
                 </Card>
               ) : !isHydrated || viewMode === 'grid' ? (
-                <div className="columns-2 sm:columns-3 gap-0.5">
+                <div className="columns-1 sm:columns-2 md:columns-3 gap-0.5">
                   {filteredWantCards.map((wantCard) => (
                     <Link
                       key={wantCard.id}

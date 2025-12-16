@@ -52,7 +52,7 @@ export function ItemGrid({
   }
 
   return (
-    <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-0.5">
+    <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-0.5">
       {items.map((item) => (
         <ItemGridItem
           key={item.id}

@@ -66,7 +66,7 @@ describe('ItemGrid', () => {
     it('アイテムをcolumnsレイアウトで表示すること', () => {
       const { container } = render(<ItemGrid items={mockHaveCards} type="have" />);
 
-      const columnsContainer = container.querySelector('.columns-2');
+      const columnsContainer = container.querySelector('.columns-1');
       expect(columnsContainer).toBeInTheDocument();
     });
 

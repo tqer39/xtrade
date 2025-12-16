@@ -77,7 +77,7 @@ export function ItemGridFilters({
         >
           <Filter className="h-4 w-4" />
         </Button>
-        <div className="hidden sm:flex gap-1 border rounded-md p-1">
+        <div className="flex gap-1 border rounded-md p-1">
           <Button
             variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
             size="icon"
