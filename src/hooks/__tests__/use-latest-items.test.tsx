@@ -168,4 +168,101 @@ describe('useLatestItems', () => {
       expect(result.current.latestItems[0].name).toBe('New Card');
     });
   });
+
+  describe('query パラメーター', () => {
+    it('初期クエリを指定できる', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ cards: [] }),
+      });
+
+      renderHook(() => useLatestItems({ query: 'pokemon' }), { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith('/api/items/latest?limit=12&page=1&q=pokemon');
+      });
+    });
+
+    it('setQuery でクエリを変更できる', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ cards: [] }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ cards: [{ id: '1', name: 'Found' }] }),
+        });
+
+      const { result } = renderHook(() => useLatestItems(), { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      act(() => {
+        result.current.setQuery('search-term');
+      });
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          '/api/items/latest?limit=12&page=1&q=search-term'
+        );
+      });
+
+      // ページが1にリセットされることを確認
+      expect(result.current.page).toBe(1);
+    });
+  });
+
+  describe('ページネーション', () => {
+    it('setPage でページを変更できる', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ cards: [], total: 100, totalPages: 10 }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({ cards: [{ id: '1', name: 'Page 2' }], total: 100, totalPages: 10 }),
+        });
+
+      const { result } = renderHook(() => useLatestItems(), { wrapper: createWrapper() });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(result.current.total).toBe(100);
+      expect(result.current.totalPages).toBe(10);
+
+      act(() => {
+        result.current.setPage(2);
+      });
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith('/api/items/latest?limit=12&page=2');
+      });
+
+      expect(result.current.page).toBe(2);
+    });
+
+    it('initialPage を指定できる', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ cards: [] }),
+      });
+
+      const { result } = renderHook(() => useLatestItems({ initialPage: 3 }), {
+        wrapper: createWrapper(),
+      });
+
+      expect(result.current.page).toBe(3);
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith('/api/items/latest?limit=12&page=3');
+      });
+    });
+  });
 });
