@@ -61,6 +61,12 @@ export function HomePageClient() {
     // URLを更新
     const params = new URLSearchParams();
 
+    // view パラメータを保持
+    const currentView = searchParams.get('view');
+    if (currentView) {
+      params.set('view', currentView);
+    }
+
     // 検索クエリをスペースで分割して複数の q パラメータに設定
     const keywords = debouncedSearch.trim().split(/\s+/).filter(Boolean);
     for (const keyword of keywords) {
