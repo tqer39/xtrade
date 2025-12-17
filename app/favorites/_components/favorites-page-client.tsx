@@ -100,6 +100,7 @@ function FavoriteUserItem({
           <FavoriteButton
             isFavorited={true}
             onToggle={() => onRemove(favoriteUser.favoriteUserId)}
+            iconType="star"
           />
         </div>
       </CardContent>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,8 @@ interface FavoriteButtonProps {
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   className?: string;
+  /** アイコンの種類: heart=アイテム用(赤), star=ユーザー用(黄) */
+  iconType?: 'heart' | 'star';
 }
 
 const sizeClasses = {
@@ -31,7 +33,12 @@ export function FavoriteButton({
   size = 'md',
   disabled = false,
   className,
+  iconType = 'heart',
 }: FavoriteButtonProps) {
+  const Icon = iconType === 'star' ? Star : Heart;
+  const activeColor = iconType === 'star' ? 'text-yellow-500' : 'text-red-500';
+  const hoverColor = iconType === 'star' ? 'hover:text-yellow-500' : 'hover:text-red-500';
+  const activeHoverColor = iconType === 'star' ? 'hover:text-yellow-600' : 'hover:text-red-600';
   const [isLoading, setIsLoading] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [prevFavorited, setPrevFavorited] = useState(isFavorited);
@@ -67,16 +74,14 @@ export function FavoriteButton({
       className={cn(
         sizeClasses[size],
         'transition-colors',
-        isFavorited
-          ? 'text-red-500 hover:text-red-600'
-          : 'text-muted-foreground hover:text-red-500',
+        isFavorited ? `${activeColor} ${activeHoverColor}` : `text-muted-foreground ${hoverColor}`,
         className
       )}
       onClick={handleClick}
       disabled={isLoading || disabled}
       aria-label={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
     >
-      <Heart
+      <Icon
         className={cn(
           iconSizes[size],
           isFavorited && 'fill-current',

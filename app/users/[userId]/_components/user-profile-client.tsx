@@ -12,6 +12,7 @@ import {
   Loader2,
   Plus,
   Search,
+  Star,
   Twitter,
   User,
   X,
@@ -1557,7 +1558,7 @@ export function UserProfileClient({ userId }: Props) {
                       className="flex-shrink-0"
                       title="お気に入りから削除"
                     >
-                      <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+                      <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                     </Button>
                   </div>
                 ))}

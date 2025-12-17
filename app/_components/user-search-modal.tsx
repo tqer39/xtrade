@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart, Loader2, Search, User, X } from 'lucide-react';
+import { Loader2, Search, Star, User, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import useSWR from 'swr';
@@ -201,10 +201,10 @@ export function UserSearchModal({ open, onOpenChange }: UserSearchModalProps) {
                       onClick={() => toggleFavorite(user.id)}
                       className="flex-shrink-0"
                     >
-                      <Heart
+                      <Star
                         className={`h-4 w-4 ${
                           favoriteUsers[user.id]
-                            ? 'fill-red-500 text-red-500'
+                            ? 'fill-yellow-500 text-yellow-500'
                             : 'text-muted-foreground'
                         }`}
                       />
