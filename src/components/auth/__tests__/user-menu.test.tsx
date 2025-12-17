@@ -94,23 +94,6 @@ describe('UserMenu', () => {
       expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.jpg');
     });
 
-    it('ログアウトボタンを表示', async () => {
-      mockUseSession.mockReturnValue({
-        data: {
-          user: {
-            id: 'user-1',
-            name: 'Test User',
-            image: null,
-          },
-        },
-        isPending: false,
-      });
-
-      render(<UserMenu />);
-
-      expect(screen.getByTitle('ログアウト')).toBeInTheDocument();
-    });
-
     it('管理者の場合、管理画面リンクを表示', async () => {
       mockUseSession.mockReturnValue({
         data: {

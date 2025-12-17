@@ -9,9 +9,10 @@ const mockUseLatestItems = vi.fn();
 const mockPush = vi.fn();
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, replace: vi.fn() }),
   useSearchParams: () => ({
     get: vi.fn().mockReturnValue(null),
+    getAll: vi.fn().mockReturnValue([]),
     toString: vi.fn().mockReturnValue(''),
   }),
   usePathname: () => '/',
@@ -47,6 +48,11 @@ vi.mock('@/components/auth', () => ({
 }));
 
 vi.mock('@/components/layout', () => ({
+  Header: () => (
+    <header data-testid="header">
+      <span>xtrade</span>
+    </header>
+  ),
   Footer: () => <footer data-testid="footer">Footer</footer>,
 }));
 
@@ -209,7 +215,7 @@ describe('HomePageClient', () => {
       expect(screen.getByText('まだアイテムが登録されていません')).toBeInTheDocument();
     });
 
-    it('UserMenuを表示', () => {
+    it('Headerを表示', () => {
       mockUseSession.mockReturnValue({
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
@@ -226,7 +232,7 @@ describe('HomePageClient', () => {
 
       render(<HomePageClient />);
 
-      expect(screen.getByTestId('user-menu')).toBeInTheDocument();
+      expect(screen.getByTestId('header')).toBeInTheDocument();
     });
   });
 });

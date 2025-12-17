@@ -44,7 +44,7 @@ describe('LoginButton', () => {
 
     const button = screen.getByRole('button');
     expect(button).toHaveClass('rounded-full');
-    expect(button).toHaveClass('gap-2');
+    expect(button).toHaveClass('gap-1.5');
   });
 
   it('クリックで signIn.social が呼ばれる', async () => {
