@@ -179,30 +179,30 @@ export function HomePageClient() {
 
         {/* 最近登録されたアイテム一覧 */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-medium">最近登録されたアイテム</h2>
-            {isHydrated && <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
-          </div>
+          <h2 className="text-lg font-medium mb-3">最近登録されたアイテム</h2>
 
-          {/* インライン検索フォーム */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="アイテム名で検索..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-9 pr-9"
-            />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={() => setSearchInput('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+          {/* インライン検索フォーム + ビュー切り替え */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="アイテム名で検索..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="pl-9 pr-9"
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {isHydrated && <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
           </div>
           {isLatestLoading ? (
             <div
