@@ -1,12 +1,10 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 import { AddEmailForm } from '@/components/auth/add-email-form';
-import { Button } from '@/components/ui/button';
+import { Header } from '@/components/layout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/lib/auth-client';
 
@@ -46,20 +44,7 @@ function SettingsContent() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-2xl">
       {/* ヘッダー */}
-      <div className="mb-6 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
-          xtrade
-        </Link>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="gap-1 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          戻る
-        </Button>
-      </div>
+      <Header showBackButton />
 
       <h1 className="text-2xl font-bold mb-6">設定</h1>
 

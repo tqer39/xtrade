@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -22,7 +21,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { LoginButton } from '@/components/auth/login-button';
-import { Footer } from '@/components/layout';
+import { Footer, Header } from '@/components/layout';
 import { type ReviewItem, ReviewList } from '@/components/reviews';
 import { TrustBadge } from '@/components/trust';
 import { Badge } from '@/components/ui/badge';
@@ -44,19 +43,6 @@ import { useSession } from '@/lib/auth-client';
 import type { Card as CardType } from '@/modules/cards/types';
 import type { UserTradeListItem } from '@/modules/trades';
 import type { TrustGrade } from '@/modules/trust';
-
-// 外部サイト（Twitter/X認証）からの遷移時はトップページに戻す
-function useHandleBack() {
-  const router = useRouter();
-  return useCallback(() => {
-    const referrer = document.referrer;
-    if (!referrer || !referrer.includes(window.location.hostname)) {
-      router.push('/');
-    } else {
-      router.back();
-    }
-  }, [router]);
-}
 
 interface UserTrustData {
   user: {
@@ -106,7 +92,6 @@ interface FavoriteUser {
 export function UserProfileClient({ userId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const handleBack = useHandleBack();
   const { data: session, isPending: isSessionPending } = useSession();
   const [userData, setUserData] = useState<UserTrustData | null>(null);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -481,11 +466,7 @@ export function UserProfileClient({ userId }: Props) {
       <div className="min-h-screen flex flex-col">
         <div className="container mx-auto px-4 py-4 flex-1">
           {/* ヘッダー */}
-          <div className="flex items-center justify-between mb-6">
-            <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
-              xtrade
-            </Link>
-          </div>
+          <Header showBackButton />
           {/* コンテンツ */}
           <div className="text-center py-12">
             <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -530,20 +511,7 @@ export function UserProfileClient({ userId }: Props) {
   return (
     <div className="container mx-auto py-8 px-4">
       {/* ヘッダー */}
-      <div className="mb-6 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
-          xtrade
-        </Link>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="gap-1 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          戻る
-        </Button>
-      </div>
+      <Header showBackButton />
 
       {/* ユーザーヘッダー */}
       <div className="flex items-center gap-4 mb-8">

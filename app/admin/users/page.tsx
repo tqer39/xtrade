@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { Header } from '@/components/layout';
 import { useSession } from '@/lib/auth-client';
 
 interface AllowedUser {
@@ -191,13 +192,12 @@ export default function AdminUsersPage() {
 
   return (
     <div style={styles.container}>
+      <div className="container mx-auto px-4 max-w-2xl">
+        <Header showBackButton />
+      </div>
+
       <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>ユーザー管理</h1>
-          <button type="button" onClick={() => router.push('/')} style={styles.backButton}>
-            戻る
-          </button>
-        </div>
+        <h1 style={styles.title}>ユーザー管理</h1>
 
         {/* 新規ユーザー追加フォーム */}
         <div style={styles.section}>

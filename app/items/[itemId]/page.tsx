@@ -1,12 +1,13 @@
 'use client';
 
-import { ArrowLeft, Gift, ImageIcon, Loader2, Mail, User } from 'lucide-react';
+import { Gift, ImageIcon, Loader2, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { LoginButton } from '@/components/auth';
 import { FavoriteButton } from '@/components/favorites/favorite-button';
+import { Header } from '@/components/layout';
 import { TrustBadge } from '@/components/trust';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -181,20 +182,7 @@ export default function ItemDetailPage({ params }: Props) {
   return (
     <div className="container mx-auto py-8 px-4">
       {/* ヘッダー */}
-      <div className="mb-6 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
-          xtrade
-        </Link>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="gap-1 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          戻る
-        </Button>
-      </div>
+      <Header showBackButton />
 
       {/* アイテム画像 */}
       <div className="mb-6">

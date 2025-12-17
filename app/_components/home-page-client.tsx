@@ -8,17 +8,14 @@ import {
   Gift,
   ImageIcon,
   Search,
-  Shield,
   User,
-  Users,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { UserMenu } from '@/components/auth';
 import { FavoriteButton } from '@/components/favorites/favorite-button';
-import { Footer } from '@/components/layout';
+import { Footer, Header } from '@/components/layout';
 import { TrustBadge } from '@/components/trust/trust-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,7 +29,6 @@ import { useLatestItems } from '@/hooks/use-latest-items';
 import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
 import type { TrustGrade } from '@/modules/trust/types';
-import { UserSearchModal } from './user-search-modal';
 
 export function HomePageClient() {
   const { data: session, isPending: isSessionPending } = useSession();
@@ -97,7 +93,6 @@ export function HomePageClient() {
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [favoriteStates, setFavoriteStates] = useState<Record<string, boolean>>({});
-  const [isUserSearchOpen, setIsUserSearchOpen] = useState(false);
 
   // お気に入り状態を一括取得
   useEffect(() => {
@@ -167,12 +162,7 @@ export function HomePageClient() {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
-            xtrade
-          </Link>
-          <UserMenu />
-        </div>
+        <Header />
         <div className="text-center py-12">
           <p className="text-destructive mb-4">エラーが発生しました: {error.message}</p>
           <Button onClick={() => refetch()}>再読み込み</Button>
@@ -185,35 +175,7 @@ export function HomePageClient() {
     <div className="min-h-screen flex flex-col">
       <div className="container mx-auto px-4 py-4 flex-1">
         {/* ヘッダー */}
-        <div className="flex items-center justify-between mb-6">
-          <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
-            xtrade
-          </Link>
-          <div className="flex items-center gap-3">
-            {/* ログイン済みの場合、ユーザー検索アイコンを表示 */}
-            {isLoggedIn && session?.user && (
-              <button
-                type="button"
-                onClick={() => setIsUserSearchOpen(true)}
-                className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted hover:bg-muted/80 transition-colors text-sm text-muted-foreground hover:text-foreground"
-                title="ユーザー検索"
-              >
-                <Users className="h-3.5 w-3.5" />
-              </button>
-            )}
-            {/* ログイン済みの場合、信頼性詳細画面へのリンクを表示 */}
-            {isLoggedIn && session?.user && (
-              <Link
-                href={`/users/${session.user.id}/trust`}
-                className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted hover:bg-muted/80 transition-colors text-sm text-muted-foreground hover:text-foreground"
-                title="信頼性スコア"
-              >
-                <Shield className="h-3.5 w-3.5" />
-              </Link>
-            )}
-            <UserMenu />
-          </div>
-        </div>
+        <Header />
 
         {/* 最近登録されたアイテム一覧 */}
         <div className="mb-8">
@@ -538,9 +500,6 @@ export function HomePageClient() {
 
       {/* フッター（ゲストユーザーにのみ広告表示） */}
       <Footer showAd={!isLoggedIn} adSlot={adSlot} />
-
-      {/* ユーザー検索モーダル */}
-      <UserSearchModal open={isUserSearchOpen} onOpenChange={setIsUserSearchOpen} />
     </div>
   );
 }
