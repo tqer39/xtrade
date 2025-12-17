@@ -455,7 +455,7 @@ export function UserProfileClient({ userId }: Props) {
 
   if (isSessionPending) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 px-4">
         <Skeleton className="h-32 w-full mb-6" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -489,7 +489,7 @@ export function UserProfileClient({ userId }: Props) {
 
   if (error) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 px-4">
         <div className="text-center py-12">
           <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground">{error}</p>
@@ -500,7 +500,7 @@ export function UserProfileClient({ userId }: Props) {
 
   if (isLoading || !userData) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 px-4">
         <Skeleton className="h-32 w-full mb-6" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -510,7 +510,7 @@ export function UserProfileClient({ userId }: Props) {
   const isOwnProfile = session.user.id === userId;
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-4 px-4">
       {/* ヘッダー */}
       <Header showBackButton />
 

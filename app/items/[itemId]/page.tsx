@@ -153,7 +153,7 @@ export default function ItemDetailPage({ params }: Props) {
 
   if (error) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 px-4">
         <div className="text-center py-12">
           <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground mb-4">{error}</p>
@@ -167,7 +167,7 @@ export default function ItemDetailPage({ params }: Props) {
 
   if (isLoading || !card) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 px-4">
         <Skeleton className="h-8 w-32 mb-6" />
         <Skeleton className="aspect-[3/4] w-full max-w-md mx-auto mb-6" />
         <Skeleton className="h-8 w-48 mb-2" />
@@ -180,7 +180,7 @@ export default function ItemDetailPage({ params }: Props) {
   const currentUserId = session?.user?.id;
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-4 px-4">
       {/* ヘッダー */}
       <Header showBackButton />
 

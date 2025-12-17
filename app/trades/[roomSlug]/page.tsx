@@ -268,7 +268,7 @@ export default function TradeRoomPage({ params }: Props) {
 
   if (isSessionPending) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 px-4">
         <Skeleton className="h-8 w-32 mb-6" />
         <Skeleton className="h-64 w-full mb-6" />
         <Skeleton className="h-48 w-full" />
@@ -278,7 +278,7 @@ export default function TradeRoomPage({ params }: Props) {
 
   if (!session?.user) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 px-4">
         <div className="text-center py-12">
           <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground mb-4">
@@ -292,7 +292,7 @@ export default function TradeRoomPage({ params }: Props) {
 
   if (error) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 px-4">
         <div className="text-center py-12">
           <AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-muted-foreground mb-4">{error}</p>
@@ -306,7 +306,7 @@ export default function TradeRoomPage({ params }: Props) {
 
   if (isLoading || !trade) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="container mx-auto py-4 px-4">
         <Skeleton className="h-8 w-32 mb-6" />
         <Skeleton className="h-64 w-full mb-6" />
         <Skeleton className="h-48 w-full" />
@@ -338,7 +338,7 @@ export default function TradeRoomPage({ params }: Props) {
   const showProposeHint = trade.status === 'draft' && isInitiator && myItems.length === 0;
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-4 px-4">
       {/* ヘッダー */}
       <Header showBackButton />
 
