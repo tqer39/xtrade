@@ -53,8 +53,12 @@ export function useLatestItems(options: UseLatestItemsOptions = {}): UseLatestIt
   );
 
   const handleSetQuery = useCallback((newQuery: string) => {
-    setQueryState(newQuery);
-    setPage(1); // 検索時はページをリセット
+    setQueryState((prev) => {
+      if (prev !== newQuery) {
+        setPage(1); // クエリが変わった時のみページをリセット
+      }
+      return newQuery;
+    });
   }, []);
 
   return {
