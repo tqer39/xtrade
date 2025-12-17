@@ -1,10 +1,10 @@
 'use client';
 
-import { LogOut, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { signOut, useSession } from '@/lib/auth-client';
+import { useSession } from '@/lib/auth-client';
 import { XIcon } from '../icons/x-icon';
 import { LoginButton } from './login-button';
 
@@ -74,15 +74,6 @@ export function UserMenu() {
           <Settings className="h-4 w-4" />
         </Button>
       </Link>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => signOut()}
-        className="h-8 w-8"
-        title="ログアウト"
-      >
-        <LogOut className="h-4 w-4" />
-      </Button>
     </div>
   );
 }

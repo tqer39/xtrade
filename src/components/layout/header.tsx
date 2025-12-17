@@ -1,13 +1,13 @@
 'use client';
 
-import { ArrowLeft, Shield, Users } from 'lucide-react';
+import { ArrowLeft, LogOut, Shield, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { UserMenu } from '@/components/auth';
 import { Button } from '@/components/ui/button';
-import { useSession } from '@/lib/auth-client';
+import { signOut, useSession } from '@/lib/auth-client';
 
 import { UserSearchModal } from '../../../app/_components/user-search-modal';
 
@@ -30,10 +30,23 @@ export function Header({ showBackButton = false }: HeaderProps) {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        {/* 左側: ロゴ */}
-        <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
-          xtrade
-        </Link>
+        {/* 左側: ロゴ + ログアウト */}
+        <div className="flex items-center gap-3">
+          <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
+            xtrade
+          </Link>
+          {isLoggedIn && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => signOut()}
+              className="h-8 w-8"
+              title="ログアウト"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
 
         {/* 右側: コントロール */}
         <div className="flex items-center gap-3">
