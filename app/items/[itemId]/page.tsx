@@ -206,8 +206,8 @@ export default function ItemDetailPage({ params }: Props) {
               <ImageIcon className="h-16 w-16 text-muted-foreground" />
             </div>
           )}
-          {/* お気に入りボタン */}
-          {isLoggedIn && (
+          {/* お気に入りボタン - 自分が所有者でない場合のみ表示 */}
+          {isLoggedIn && !owners.some((owner) => owner.userId === currentUserId) && (
             <div className="absolute top-2 right-2">
               <FavoriteButton isFavorited={isFavorited} onToggle={toggleFavorite} size="lg" />
             </div>

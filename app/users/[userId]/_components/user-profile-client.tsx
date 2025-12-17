@@ -134,18 +134,8 @@ export function UserProfileClient({ userId }: Props) {
   const { viewMode, setViewMode, isHydrated } = useViewPreference();
   const wantTextRef = useRef<HTMLTextAreaElement>(null);
 
-  // インライン欲しいもの検索
-  const [showWantInlineSearch, setShowWantInlineSearch] = useState(false);
-  const [wantInlineSearchQuery, setWantInlineSearchQuery] = useState('');
-  const [isAddingWantItem, setIsAddingWantItem] = useState(false);
-  const [addWantItemError, setAddWantItemError] = useState<string | null>(null);
-  const {
-    searchResults: wantInlineSearchResults,
-    isSearching: isWantInlineSearching,
-    search: searchWantItems,
-    clearResults: clearWantInlineResults,
-    createCard,
-  } = useItemSearch();
+  // 出品登録用
+  const { createCard } = useItemSearch();
 
   // インライン出品登録フォーム
   const [showListingForm, setShowListingForm] = useState(false);
@@ -416,52 +406,6 @@ export function UserProfileClient({ userId }: Props) {
     } finally {
       setIsSavingWantText(false);
     }
-  };
-
-  // 欲しいもの - インライン検索のクエリ変更
-  const handleWantInlineSearchChange = (value: string) => {
-    setWantInlineSearchQuery(value);
-    searchWantItems(value);
-  };
-
-  // 欲しいもの - インライン検索でアイテムを追加
-  const handleAddWantItemFromSearch = async (cardId: string) => {
-    setIsAddingWantItem(true);
-    setAddWantItemError(null);
-    try {
-      const res = await fetch('/api/me/cards/want', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cardId }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || '欲しいものの追加に失敗しました');
-      }
-      // 追加成功したら wantCards を更新
-      const wantRes = await fetch(`/api/users/${userId}/want-cards`);
-      if (wantRes.ok) {
-        const wantData = await wantRes.json();
-        setWantCards(wantData.wantCards ?? []);
-        setFilteredWantCards(wantData.wantCards ?? []);
-      }
-      // 検索をリセット
-      setShowWantInlineSearch(false);
-      setWantInlineSearchQuery('');
-      clearWantInlineResults();
-    } catch (err) {
-      setAddWantItemError(err instanceof Error ? err.message : 'エラーが発生しました');
-    } finally {
-      setIsAddingWantItem(false);
-    }
-  };
-
-  // 欲しいもの - インライン検索をキャンセル
-  const handleCancelWantInlineSearch = () => {
-    setShowWantInlineSearch(false);
-    setWantInlineSearchQuery('');
-    setAddWantItemError(null);
-    clearWantInlineResults();
   };
 
   // 出品登録ハンドラー
@@ -1019,98 +963,12 @@ export function UserProfileClient({ userId }: Props) {
           {/* 欲しいもの追加（自分のプロフィールのみ） */}
           {isOwnProfile && (
             <div className="mb-4">
-              {!showWantInlineSearch ? (
-                <Button className="w-full sm:w-auto" onClick={() => setShowWantInlineSearch(true)}>
+              <Link href="/">
+                <Button className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
-                  欲しいものを追加
+                  トップページで検索して追加
                 </Button>
-              ) : (
-                <div className="space-y-3 rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">欲しいアイテムを検索して追加</h4>
-                    <Button variant="ghost" size="icon" onClick={handleCancelWantInlineSearch}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="アイテム名で検索..."
-                      value={wantInlineSearchQuery}
-                      onChange={(e) => handleWantInlineSearchChange(e.target.value)}
-                      className="pl-9"
-                      autoFocus
-                    />
-                  </div>
-                  {addWantItemError && (
-                    <p className="text-sm text-destructive">{addWantItemError}</p>
-                  )}
-                  {isWantInlineSearching ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : wantInlineSearchQuery && wantInlineSearchResults.length === 0 ? (
-                    <div className="text-center py-4">
-                      <p className="text-muted-foreground text-sm mb-2">
-                        「{wantInlineSearchQuery}」に一致するアイテムが見つかりません
-                      </p>
-                      <Link
-                        href={`/items/search?mode=want&returnTo=/users/${userId}?tab=wantCards`}
-                      >
-                        <Button variant="outline" size="sm">
-                          新規登録して追加
-                        </Button>
-                      </Link>
-                    </div>
-                  ) : wantInlineSearchResults.length > 0 ? (
-                    <div className="max-h-64 overflow-y-auto space-y-2">
-                      {wantInlineSearchResults.map((card) => (
-                        <button
-                          key={card.id}
-                          type="button"
-                          onClick={() => handleAddWantItemFromSearch(card.id)}
-                          disabled={isAddingWantItem}
-                          className="w-full flex items-center gap-3 p-2 rounded-lg border hover:bg-muted transition-colors text-left disabled:opacity-50"
-                        >
-                          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-muted">
-                            {card.imageUrl ? (
-                              <img
-                                src={card.imageUrl}
-                                alt={card.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate text-sm">{card.name}</p>
-                            {card.category && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                {card.category}
-                              </p>
-                            )}
-                          </div>
-                          {isAddingWantItem ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Plus className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                  <div className="pt-2 border-t">
-                    <Link href={`/items/search?mode=want&returnTo=/users/${userId}?tab=wantCards`}>
-                      <Button variant="link" size="sm" className="p-0 h-auto">
-                        新しいアイテムを登録する →
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
+              </Link>
             </div>
           )}
           {wantCards.length === 0 ? (

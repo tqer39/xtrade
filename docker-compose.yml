@@ -37,6 +37,18 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Mailpit - ローカルメールサーバー（開発用）
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: xtrade-mailpit
+    ports:
+      - '8025:8025' # Web UI
+      - '1025:1025' # SMTP
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    restart: unless-stopped
+
   # LocalStack 初期設定（S3 バケット作成）
   localstack-setup:
     image: amazon/aws-cli:latest
