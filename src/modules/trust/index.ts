@@ -3,7 +3,9 @@ export {
   calcCombinedTrustScore,
   calcCombinedTrustScoreWithEmail,
   calcEmailVerificationScore,
+  calcRecentTradeScore,
   calcReviewScore,
+  calcTotalTradeScore,
   calcTrustScore,
   calcXProfileScore,
 } from './calc-trust-score';

@@ -1,14 +1,15 @@
 'use client';
 
-import { ArrowLeft, Twitter, User } from 'lucide-react';
+import { ArrowLeft, Loader2, RefreshCw, Twitter, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { use, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 
 import { LoginButton } from '@/components/auth/login-button';
 import { TrustBadge } from '@/components/trust/trust-badge';
 import { TrustHistoryChart } from '@/components/trust/trust-history-chart';
 import { TrustRadarChart } from '@/components/trust/trust-radar-chart';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,6 +39,11 @@ interface UserTrustDetailData {
   };
   history: TrustScoreHistoryEntry[];
   updatedAt: string | null;
+  isOwnProfile?: boolean;
+  jobStatus?: {
+    status: string;
+    createdAt: string;
+  } | null;
 }
 
 interface Props {
@@ -82,35 +88,67 @@ export default function TrustDetailPage({ params }: Props) {
   const [userData, setUserData] = useState<UserTrustDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRecalculating, setIsRecalculating] = useState(false);
+  const [recalcError, setRecalcError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!session?.user) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/users/${userId}/trust`);
+      if (!res.ok) {
+        if (res.status === 404) {
+          setError('ユーザーが見つかりません');
+        } else {
+          throw new Error('データの取得に失敗しました');
+        }
+        return;
+      }
+      const data = await res.json();
+      setUserData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId, session?.user]);
 
   useEffect(() => {
-    async function fetchData() {
-      if (!session?.user) return;
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const res = await fetch(`/api/users/${userId}/trust`);
-        if (!res.ok) {
-          if (res.status === 404) {
-            setError('ユーザーが見つかりません');
-          } else {
-            throw new Error('データの取得に失敗しました');
-          }
-          return;
-        }
-        const data = await res.json();
-        setUserData(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'エラーが発生しました');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     fetchData();
-  }, [userId, session?.user]);
+  }, [fetchData]);
+
+  // ジョブ状態をポーリング（スコアリング中の場合）
+  useEffect(() => {
+    if (!userData?.jobStatus) return;
+
+    const interval = setInterval(() => {
+      fetchData();
+    }, 10000); // 10秒ごとに更新
+
+    return () => clearInterval(interval);
+  }, [userData?.jobStatus, fetchData]);
+
+  const handleRecalculate = useCallback(async () => {
+    setIsRecalculating(true);
+    setRecalcError(null);
+
+    try {
+      const res = await fetch('/api/me/trust/recalc', { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || data.error || '再計算リクエストに失敗しました');
+      }
+      // 成功したらデータを再取得
+      await fetchData();
+    } catch (err) {
+      setRecalcError(err instanceof Error ? err.message : 'エラーが発生しました');
+    } finally {
+      setIsRecalculating(false);
+    }
+  }, [fetchData]);
 
   if (isSessionPending) {
     return (
@@ -262,6 +300,53 @@ export default function TrustDetailPage({ params }: Props) {
           </div>
         </CardContent>
       </Card>
+
+      {/* スコアリング中アラート */}
+      {userData.jobStatus && (
+        <Alert className="mb-6">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <AlertTitle>スコアリング中...</AlertTitle>
+          <AlertDescription>
+            信頼性スコアを計算しています。しばらくお待ちください。
+            {userData.jobStatus.status === 'queued' && '（キュー待機中）'}
+            {userData.jobStatus.status === 'running' && '（計算中）'}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* 再計算ボタン（自分のプロフィールの場合のみ） */}
+      {userData.isOwnProfile && !userData.jobStatus && (
+        <div className="mb-6 flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+          <div>
+            <p className="text-sm font-medium">信頼性スコアを再計算</p>
+            <p className="text-xs text-muted-foreground">
+              Twitter アカウント情報を最新に更新します
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRecalculate}
+            disabled={isRecalculating}
+            className="gap-2"
+          >
+            {isRecalculating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            再計算
+          </Button>
+        </div>
+      )}
+
+      {/* 再計算エラー */}
+      {recalcError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTitle>エラー</AlertTitle>
+          <AlertDescription>{recalcError}</AlertDescription>
+        </Alert>
+      )}
 
       {/* 3軸スコア詳細 */}
       <div className="grid gap-6 md:grid-cols-2 mb-6">

@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, or } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { type NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/drizzle';
@@ -20,6 +20,7 @@ export async function GET(_request: NextRequest, { params }: { params: Params })
   }
 
   const { userId } = await params;
+  const isOwnProfile = session.user.id === userId;
 
   // ユーザー情報とスコアを取得
   const users = await db
@@ -91,6 +92,31 @@ export async function GET(_request: NextRequest, { params }: { params: Params })
       ? Math.round((tradeStat.completedCount / totalTrades) * 100)
       : null;
 
+  // 自分のプロフィールの場合、ジョブ状態を取得
+  let jobStatus: { status: string; createdAt: string } | null = null;
+  if (isOwnProfile) {
+    const jobs = await db
+      .select({
+        status: schema.userTrustJob.status,
+        createdAt: schema.userTrustJob.createdAt,
+      })
+      .from(schema.userTrustJob)
+      .where(
+        and(
+          eq(schema.userTrustJob.userId, userId),
+          or(eq(schema.userTrustJob.status, 'queued'), eq(schema.userTrustJob.status, 'running'))
+        )
+      )
+      .limit(1);
+
+    if (jobs[0]) {
+      jobStatus = {
+        status: jobs[0].status,
+        createdAt: jobs[0].createdAt.toISOString(),
+      };
+    }
+  }
+
   return NextResponse.json({
     user: {
       id: user.id,
@@ -138,5 +164,8 @@ export async function GET(_request: NextRequest, { params }: { params: Params })
       createdAt: h.createdAt,
     })),
     updatedAt: user.trustScoreUpdatedAt?.toISOString() ?? null,
+    // 自分のプロフィールの場合のみ返す
+    isOwnProfile,
+    jobStatus,
   });
 }
