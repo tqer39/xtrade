@@ -468,6 +468,7 @@ export function HomePageClient() {
                     variant={p === page ? 'default' : 'outline'}
                     size="icon"
                     onClick={() => handlePageChange(p)}
+                    disabled={p === page}
                     className="h-8 w-8"
                   >
                     {p}
