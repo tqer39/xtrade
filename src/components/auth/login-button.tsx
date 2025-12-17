@@ -26,7 +26,7 @@ export function LoginButton() {
   };
 
   return (
-    <Button onClick={handleLogin} className="rounded-full gap-2 px-6 py-5 text-base font-semibold">
+    <Button onClick={handleLogin} size="sm" className="rounded-full gap-1.5 px-3 h-8">
       <XLogo />
       ログイン
     </Button>
@@ -36,8 +36,8 @@ export function LoginButton() {
 function XLogo() {
   return (
     <svg
-      width="20"
-      height="20"
+      width="14"
+      height="14"
       viewBox="0 0 24 24"
       fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"

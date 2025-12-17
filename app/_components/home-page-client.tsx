@@ -145,7 +145,7 @@ export function HomePageClient() {
 
   if (isSessionPending) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4">
         <Skeleton className="h-8 w-48 mb-6" />
         <Skeleton className="h-10 w-full mb-4" />
         <div className="space-y-3">
@@ -161,7 +161,7 @@ export function HomePageClient() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4">
         <Header />
         <div className="text-center py-12">
           <p className="text-destructive mb-4">エラーが発生しました: {error.message}</p>

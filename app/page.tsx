@@ -4,7 +4,7 @@ import { HomePageClient } from './_components/home-page-client';
 
 function HomePageFallback() {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-4">
       <Skeleton className="h-8 w-48 mb-6" />
       <Skeleton className="h-10 w-full mb-4" />
       <div className="space-y-3">
