@@ -139,6 +139,24 @@ export const auth = betterAuth({
     },
   },
 
+  // データベースフック
+  // X OAuth ログイン時に emailVerified が自動で true になるのを防ぐ
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          // X OAuth からの emailVerified を無視し、本サービスでの認証を必須にする
+          return {
+            data: {
+              ...user,
+              emailVerified: false,
+            },
+          };
+        },
+      },
+    },
+  },
+
   // メール認証設定
   emailVerification: {
     // X Auth 必須なので初回サインアップ時には送信しない

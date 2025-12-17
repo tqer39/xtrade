@@ -141,6 +141,13 @@
       "when": 1766020000000,
       "tag": "0019_remove_quantity",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1766110000000,
+      "tag": "0020_reset_email_verified",
+      "breakpoints": true
     }
   ]
 }

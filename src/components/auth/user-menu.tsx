@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -69,6 +69,11 @@ export function UserMenu() {
           <Link href="/admin/users">管理画面</Link>
         </Button>
       )}
+      <Link href="/settings" title="設定">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Settings className="h-4 w-4" />
+        </Button>
+      </Link>
       <Button
         variant="ghost"
         size="icon"
