@@ -40,7 +40,7 @@ export function Header({ showBackButton = false }: HeaderProps) {
               variant="ghost"
               size="icon"
               onClick={() => signOut()}
-              className="h-8 w-8"
+              className="h-8 w-8 translate-y-[2px]"
               title="ログアウト"
             >
               <LogOut className="h-4 w-4" />
