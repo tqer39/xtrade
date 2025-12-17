@@ -73,10 +73,14 @@ export function HomePageClient() {
       params.append('q', keyword);
     }
 
-    // ページ番号を維持（1以外の場合）
-    const currentPage = searchParams.get('p');
-    if (currentPage && currentPage !== '1') {
-      params.set('p', currentPage);
+    // 検索クエリが変更されていない場合のみページ番号を維持
+    const previousQuery = searchParams.getAll('q').join(' ');
+    const newQuery = debouncedSearch.trim();
+    if (previousQuery === newQuery) {
+      const currentPage = searchParams.get('p');
+      if (currentPage && currentPage !== '1') {
+        params.set('p', currentPage);
+      }
     }
 
     const queryString = params.toString();
