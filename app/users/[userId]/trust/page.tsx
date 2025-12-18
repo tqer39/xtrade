@@ -90,6 +90,7 @@ export default function TrustDetailPage({ params }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [recalcError, setRecalcError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!session?.user) return;
@@ -147,6 +148,21 @@ export default function TrustDetailPage({ params }: Props) {
       setRecalcError(err instanceof Error ? err.message : 'エラーが発生しました');
     } finally {
       setIsRecalculating(false);
+    }
+  }, [fetchData]);
+
+  // キューにあるジョブを今すぐ処理（ローカル開発用）
+  const handleProcessNow = useCallback(async () => {
+    setIsProcessing(true);
+    try {
+      await fetch('/api/cron/trust-worker');
+      // 少し待ってからデータを再取得
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await fetchData();
+    } catch (error) {
+      console.error('Failed to process job:', error);
+    } finally {
+      setIsProcessing(false);
     }
   }, [fetchData]);
 
@@ -306,10 +322,29 @@ export default function TrustDetailPage({ params }: Props) {
         <Alert className="mb-6">
           <Loader2 className="h-4 w-4 animate-spin" />
           <AlertTitle>スコアリング中...</AlertTitle>
-          <AlertDescription>
-            信頼性スコアを計算しています。しばらくお待ちください。
-            {userData.jobStatus.status === 'queued' && '（キュー待機中）'}
-            {userData.jobStatus.status === 'running' && '（計算中）'}
+          <AlertDescription className="flex flex-col gap-2">
+            <span>
+              信頼性スコアを計算しています。しばらくお待ちください。
+              {userData.jobStatus.status === 'queued' && '（キュー待機中）'}
+              {userData.jobStatus.status === 'running' && '（計算中）'}
+            </span>
+            {/* キュー待機中の場合、手動で処理を開始できるボタンを表示 */}
+            {userData.jobStatus.status === 'queued' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleProcessNow}
+                disabled={isProcessing}
+                className="w-fit gap-2"
+              >
+                {isProcessing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                今すぐ処理
+              </Button>
+            )}
           </AlertDescription>
         </Alert>
       )}
