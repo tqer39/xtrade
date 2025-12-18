@@ -70,7 +70,7 @@
     "@types/pg": "8.16.0",
     "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "5.1.2",
-    "@vitest/coverage-v8": "4.0.15",
+    "@vitest/coverage-v8": "4.0.16",
     "drizzle-kit": "^0.31.8",
     "jsdom": "27.3.0",
     "sharp": "^0.34.5",
@@ -79,7 +79,7 @@
     "textlint-rule-preset-ja-technical-writing": "12.0.2",
     "textlint-rule-preset-smarthr": "1.36.1",
     "textlint-rule-prh": "6.1.0",
-    "vitest": "4.0.15"
+    "vitest": "4.0.16"
   },
   "overrides": {
     "esbuild": "0.27.2"
