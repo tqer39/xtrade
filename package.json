@@ -82,6 +82,6 @@
     "vitest": "4.0.15"
   },
   "overrides": {
-    "esbuild": "0.27.1"
+    "esbuild": "0.27.2"
   }
 }
