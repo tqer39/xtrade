@@ -1,12 +1,16 @@
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, or } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
 import {
   type BehaviorScoreInput,
   calcBehaviorScore,
+  calcRecentTradeScore,
   calcReviewScore,
+  calcTotalTradeScore,
+  calcTwitterScore,
   calcXProfileScore,
+  type NewTrustScoreInput,
   type ReviewScoreInput,
 } from '@/modules/trust';
 import {
@@ -59,7 +63,7 @@ export async function GET(request: NextRequest) {
       // X API を叩いてプロフィール取得
       const profile = await fetchXUserProfile(job.userId);
 
-      // Xプロフィールスコア計算
+      // 旧スコア計算（後方互換性のため維持）
       const xProfileInput = profileToTrustScoreInput(profile);
       const xProfileScore = calcXProfileScore(xProfileInput);
 
@@ -103,25 +107,105 @@ export async function GET(request: NextRequest) {
       };
       const reviewScore = calcReviewScore(reviewInput);
 
-      // 合計スコア計算
-      const totalScore = xProfileScore + behaviorScore + reviewScore;
-      const grade =
-        totalScore >= 80
-          ? 'S'
-          : totalScore >= 65
-            ? 'A'
-            : totalScore >= 50
-              ? 'B'
-              : totalScore >= 35
-                ? 'C'
-                : 'D';
+      // =====================================
+      // 新3軸スコアリングシステム
+      // =====================================
 
-      // users テーブル更新
+      // 直近10件のトレード情報を取得
+      const recentTrades = await db
+        .select({
+          id: schema.trade.id,
+          status: schema.trade.status,
+        })
+        .from(schema.trade)
+        .where(
+          and(
+            or(
+              eq(schema.trade.initiatorUserId, job.userId),
+              eq(schema.trade.responderUserId, job.userId)
+            ),
+            inArray(schema.trade.status, ['completed', 'canceled', 'disputed'])
+          )
+        )
+        .orderBy(desc(schema.trade.updatedAt))
+        .limit(10);
+
+      // 直近トレードの評価を取得
+      const recentTradeIds = recentTrades.map((t) => t.id);
+      const recentReviews =
+        recentTradeIds.length > 0
+          ? await db
+              .select({
+                tradeId: schema.tradeReview.tradeId,
+                rating: schema.tradeReview.rating,
+              })
+              .from(schema.tradeReview)
+              .where(
+                and(
+                  inArray(schema.tradeReview.tradeId, recentTradeIds),
+                  eq(schema.tradeReview.revieweeUserId, job.userId)
+                )
+              )
+          : [];
+
+      const reviewMap = new Map(recentReviews.map((r) => [r.tradeId, r.rating]));
+
+      // 新スコア計算用の入力を作成
+      const totalTrades =
+        (tradeStat?.completedCount ?? 0) +
+        (tradeStat?.canceledCount ?? 0) +
+        (tradeStat?.disputedCount ?? 0);
+
+      const newScoreInput: NewTrustScoreInput = {
+        // Twitter データ
+        xAccountCreatedAt: profile.created_at ? new Date(profile.created_at) : undefined,
+        xFollowersCount: profile.public_metrics?.followers_count,
+        xStatusesCount: profile.public_metrics?.tweet_count,
+        xVerified: profile.verified,
+        // 取引データ
+        totalTrades,
+        completedTrades: tradeStat?.completedCount ?? 0,
+        troubledTrades: tradeStat?.disputedCount ?? 0,
+        averageRating: reviewStat?.avgRating ? reviewStat.avgRating / 10 : 0,
+        recentTrades: recentTrades.map((t) => ({
+          completed: t.status === 'completed',
+          troubled: t.status === 'disputed',
+          rating: reviewMap.get(t.id) ?? 3, // レビューがない場合はデフォルト3
+        })),
+      };
+
+      // 新3軸スコア計算
+      const twitterScoreResult = calcTwitterScore(newScoreInput);
+      const totalTradeScoreResult = calcTotalTradeScore(newScoreInput);
+      const recentTradeScoreResult = calcRecentTradeScore(newScoreInput);
+
+      // 新しい総合スコアとグレード
+      const newTotalScore =
+        twitterScoreResult.score + totalTradeScoreResult.score + recentTradeScoreResult.score;
+      const newGrade =
+        newTotalScore >= 90
+          ? 'S'
+          : newTotalScore >= 75
+            ? 'A'
+            : newTotalScore >= 60
+              ? 'B'
+              : newTotalScore >= 45
+                ? 'C'
+                : newTotalScore >= 30
+                  ? 'D'
+                  : 'E';
+
+      // users テーブル更新（旧スコアと新スコアの両方を保存）
       await db
         .update(schema.user)
         .set({
-          trustScore: totalScore,
-          trustGrade: grade,
+          // 新3軸スコア
+          twitterScore: twitterScoreResult.score,
+          totalTradeScore: totalTradeScoreResult.score,
+          recentTradeScore: recentTradeScoreResult.score,
+          trustScore: newTotalScore,
+          trustGrade: newGrade,
+          // 旧スコア（後方互換性）
           xProfileScore,
           behaviorScore,
           reviewScore,

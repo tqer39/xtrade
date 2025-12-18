@@ -3,10 +3,12 @@ export {
   calcCombinedTrustScore,
   calcCombinedTrustScoreWithEmail,
   calcEmailVerificationScore,
+  calcNewTrustScore,
   calcRecentTradeScore,
   calcReviewScore,
   calcTotalTradeScore,
   calcTrustScore,
+  calcTwitterScore,
   calcXProfileScore,
 } from './calc-trust-score';
 export type {
@@ -14,6 +16,7 @@ export type {
   CombinedTrustScoreResult,
   CombinedTrustScoreWithEmailResult,
   EmailVerificationInput,
+  NewTrustScoreInput,
   ReviewScoreInput,
   TrustGrade,
   TrustJobStatus,
