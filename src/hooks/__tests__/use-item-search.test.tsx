@@ -78,7 +78,7 @@ describe('useItemSearch', () => {
         { timeout: 1000 }
       );
 
-      expect(global.fetch).toHaveBeenCalledWith('/api/cards?q=pokemon');
+      expect(global.fetch).toHaveBeenCalledWith('/api/items?q=pokemon');
     });
 
     it('カテゴリ付きで検索を実行', async () => {
@@ -102,7 +102,7 @@ describe('useItemSearch', () => {
         { timeout: 1000 }
       );
 
-      expect(global.fetch).toHaveBeenCalledWith('/api/cards?q=dragon&category=yugioh');
+      expect(global.fetch).toHaveBeenCalledWith('/api/items?q=dragon&category=yugioh');
     });
 
     it('API エラー時にエラーステートを設定', async () => {
@@ -147,7 +147,7 @@ describe('useItemSearch', () => {
         });
       });
 
-      expect(global.fetch).toHaveBeenCalledWith('/api/cards', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'New Card', category: 'pokemon' }),
@@ -158,6 +158,9 @@ describe('useItemSearch', () => {
     it('作成エラー時に例外をスロー', async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
+        headers: {
+          get: (name: string) => (name === 'content-type' ? 'application/json' : null),
+        },
         json: () => Promise.resolve({ error: 'Validation error' }),
       });
 
@@ -176,6 +179,9 @@ describe('useItemSearch', () => {
     it('エラーメッセージがない場合はデフォルトメッセージ', async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
+        headers: {
+          get: (name: string) => (name === 'content-type' ? 'application/json' : null),
+        },
         json: () => Promise.resolve({}),
       });
 
