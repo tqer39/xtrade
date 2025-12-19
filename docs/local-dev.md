@@ -75,20 +75,46 @@ TWITTER_CLIENT_SECRET="your-client-secret"
 3. Navigate to "Keys and tokens"
 4. Copy Client ID and Client Secret
 
-### 5. Setup Local Database
+### 5. Setup Local Database & Storage
 
 #### Option A: Using Docker (Recommended)
 
+Docker Compose starts PostgreSQL and LocalStack (S3-compatible storage):
+
 ```bash
-# Start PostgreSQL container
+# Start PostgreSQL + LocalStack containers
 docker-compose up -d
 
 # Run migrations
 npm run db:migrate
 
+# Seed sample data (optional)
+npm run db:seed
+
+# Or run migrations + seed in one command
+just db-setup
+
 # Open Drizzle Studio (optional)
 npm run db:studio
 ```
+
+**About LocalStack (Image Storage):**
+
+LocalStack is an AWS S3-compatible local storage emulator. It allows you to test image upload functionality locally.
+
+For local development, set the following in `.env.local`:
+
+```bash
+R2_ACCESS_KEY_ID=test
+R2_SECRET_ACCESS_KEY=test
+R2_ENDPOINT=http://localhost:4566
+R2_BUCKET_NAME=xtrade-card-images-dev
+R2_PUBLIC_URL=http://localhost:4566/xtrade-card-images-dev
+```
+
+**LocalStack Web UI (Optional):**
+
+To use LocalStack's Web UI, visit [LocalStack Web Application](https://app.localstack.cloud/) (free account registration required).
 
 #### Option B: Using Existing PostgreSQL
 
@@ -104,6 +130,8 @@ createdb xtrade
 # Run migrations
 npm run db:migrate
 ```
+
+For image storage, use Cloudflare R2 dev environment or start LocalStack separately.
 
 ### 6. Start Development Server
 

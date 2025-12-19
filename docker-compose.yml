@@ -17,6 +17,58 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # LocalStack - AWS サービスのローカルエミュレータ（S3/R2 互換）
+  localstack:
+    image: localstack/localstack:latest
+    container_name: xtrade-localstack
+    environment:
+      - SERVICES=s3
+      - DEBUG=0
+      - PERSISTENCE=1
+    ports:
+      - '4566:4566' # LocalStack Gateway
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:4566/_localstack/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Mailpit - ローカルメールサーバー（開発用）
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: xtrade-mailpit
+    ports:
+      - '8025:8025' # Web UI
+      - '1025:1025' # SMTP
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    restart: unless-stopped
+
+  # LocalStack 初期設定（S3 バケット作成）
+  localstack-setup:
+    image: amazon/aws-cli:latest
+    container_name: xtrade-localstack-setup
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: >
+      /bin/sh -c "
+      aws --endpoint-url=http://localstack:4566 s3 mb s3://xtrade-card-images-dev 2>/dev/null || true;
+      aws --endpoint-url=http://localstack:4566 s3api put-bucket-policy --bucket xtrade-card-images-dev --policy '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"s3:GetObject\",\"Resource\":\"arn:aws:s3:::xtrade-card-images-dev/*\"}]}' 2>/dev/null || true;
+      echo 'LocalStack S3 setup complete';
+      "
+
 volumes:
   postgres_data:
+    driver: local
+  localstack_data:
     driver: local

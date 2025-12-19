@@ -4,29 +4,42 @@ import { HomePageClient } from '../_components/home-page-client';
 
 // モック設定
 const mockUseSession = vi.fn();
-const mockUseMyCards = vi.fn();
-const mockUseMySets = vi.fn();
-const mockUseLatestCards = vi.fn();
+const mockUseMyItems = vi.fn();
+const mockUseLatestItems = vi.fn();
 const mockPush = vi.fn();
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, replace: vi.fn() }),
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue(null),
+    getAll: vi.fn().mockReturnValue([]),
+    toString: vi.fn().mockReturnValue(''),
+  }),
+  usePathname: () => '/',
+}));
+
+vi.mock('@/hooks/use-view-preference', () => ({
+  useViewPreference: () => ({
+    viewMode: 'grid',
+    setViewMode: vi.fn(),
+    isHydrated: true,
+  }),
 }));
 
 vi.mock('@/lib/auth-client', () => ({
   useSession: () => mockUseSession(),
 }));
 
-vi.mock('@/hooks/use-my-cards', () => ({
-  useMyCards: () => mockUseMyCards(),
+vi.mock('@/hooks/use-my-items', () => ({
+  useMyItems: () => mockUseMyItems(),
 }));
 
-vi.mock('@/hooks/use-my-sets', () => ({
-  useMySets: () => mockUseMySets(),
+vi.mock('@/hooks/use-latest-items', () => ({
+  useLatestItems: () => mockUseLatestItems(),
 }));
 
-vi.mock('@/hooks/use-latest-cards', () => ({
-  useLatestCards: () => mockUseLatestCards(),
+vi.mock('@/hooks/use-debounce', () => ({
+  useDebounce: (value: string) => value,
 }));
 
 vi.mock('@/components/auth', () => ({
@@ -35,40 +48,35 @@ vi.mock('@/components/auth', () => ({
 }));
 
 vi.mock('@/components/layout', () => ({
+  Header: () => (
+    <header data-testid="header">
+      <span>xtrade</span>
+    </header>
+  ),
   Footer: () => <footer data-testid="footer">Footer</footer>,
 }));
 
-const defaultSetsReturn = {
-  sets: [],
-  isLoading: false,
-  error: null,
-  createSet: vi.fn(),
-  updateSet: vi.fn(),
-  deleteSet: vi.fn(),
-  getSetDetail: vi.fn(),
-  addCardToSet: vi.fn(),
-  removeCardFromSet: vi.fn(),
-  refetch: vi.fn(),
-};
-
-const defaultLatestCardsReturn = {
-  latestCards: [],
+const defaultLatestItemsReturn = {
+  latestItems: [],
   isLoading: false,
   error: null,
   refetch: vi.fn(),
+  page: 1,
+  totalPages: 1,
+  setPage: vi.fn(),
+  setQuery: vi.fn(),
 };
 
 describe('HomePageClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseMySets.mockReturnValue(defaultSetsReturn);
-    mockUseLatestCards.mockReturnValue(defaultLatestCardsReturn);
+    mockUseLatestItems.mockReturnValue(defaultLatestItemsReturn);
   });
 
   describe('ローディング状態', () => {
     it('セッション読み込み中はローディング表示', () => {
       mockUseSession.mockReturnValue({ data: null, isPending: true });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -86,9 +94,9 @@ describe('HomePageClient', () => {
   });
 
   describe('未ログイン状態', () => {
-    it('ログインボタンを表示', () => {
+    it('xtradeタイトルを表示', () => {
       mockUseSession.mockReturnValue({ data: null, isPending: false });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -100,12 +108,12 @@ describe('HomePageClient', () => {
 
       render(<HomePageClient />);
 
-      expect(screen.getByText('ログイン')).toBeInTheDocument();
+      expect(screen.getByText('xtrade')).toBeInTheDocument();
     });
 
-    it('最新カード一覧セクションを表示', () => {
+    it('最近登録されたアイテムセクションを表示', () => {
       mockUseSession.mockReturnValue({ data: null, isPending: false });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -117,12 +125,12 @@ describe('HomePageClient', () => {
 
       render(<HomePageClient />);
 
-      expect(screen.getByText('最近登録されたカード')).toBeInTheDocument();
+      expect(screen.getByText('最近登録されたアイテム')).toBeInTheDocument();
     });
 
     it('フッターを表示', () => {
       mockUseSession.mockReturnValue({ data: null, isPending: false });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -144,14 +152,18 @@ describe('HomePageClient', () => {
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
       });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
-        error: new Error('Failed to fetch'),
+        error: null,
         addHaveCard: vi.fn(),
         addWantCard: vi.fn(),
         refetch: vi.fn(),
+      });
+      mockUseLatestItems.mockReturnValue({
+        ...defaultLatestItemsReturn,
+        error: new Error('Failed to fetch'),
       });
 
       render(<HomePageClient />);
@@ -162,20 +174,13 @@ describe('HomePageClient', () => {
   });
 
   describe('ログイン状態', () => {
-    it('タブとカード一覧を表示', async () => {
+    it('最近登録されたアイテム一覧を表示', async () => {
       mockUseSession.mockReturnValue({
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
       });
-      mockUseMyCards.mockReturnValue({
-        haveCards: [
-          {
-            id: 'have-1',
-            cardId: 'card-1',
-            quantity: 2,
-            card: { id: 'card-1', name: 'Test Card', category: 'pokemon', rarity: 'SR' },
-          },
-        ],
+      mockUseMyItems.mockReturnValue({
+        haveCards: [],
         wantCards: [],
         isLoading: false,
         error: null,
@@ -187,18 +192,15 @@ describe('HomePageClient', () => {
       render(<HomePageClient />);
 
       expect(screen.getByText('xtrade')).toBeInTheDocument();
-      expect(screen.getByText('持っている (1)')).toBeInTheDocument();
-      expect(screen.getByText('欲しい (0)')).toBeInTheDocument();
-      expect(screen.getByText('セット (0)')).toBeInTheDocument();
-      expect(screen.getByText('Test Card')).toBeInTheDocument();
+      expect(screen.getByText('最近登録されたアイテム')).toBeInTheDocument();
     });
 
-    it('カードがない場合は空の状態を表示', () => {
+    it('アイテムがない場合は空の状態を表示', () => {
       mockUseSession.mockReturnValue({
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
       });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -210,15 +212,15 @@ describe('HomePageClient', () => {
 
       render(<HomePageClient />);
 
-      expect(screen.getByText('まだカードを登録していません')).toBeInTheDocument();
+      expect(screen.getByText('まだアイテムが登録されていません')).toBeInTheDocument();
     });
 
-    it('UserMenuを表示', () => {
+    it('Headerを表示', () => {
       mockUseSession.mockReturnValue({
         data: { user: { id: 'user-1', name: 'Test User' } },
         isPending: false,
       });
-      mockUseMyCards.mockReturnValue({
+      mockUseMyItems.mockReturnValue({
         haveCards: [],
         wantCards: [],
         isLoading: false,
@@ -230,7 +232,7 @@ describe('HomePageClient', () => {
 
       render(<HomePageClient />);
 
-      expect(screen.getByTestId('user-menu')).toBeInTheDocument();
+      expect(screen.getByTestId('header')).toBeInTheDocument();
     });
   });
 });

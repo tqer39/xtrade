@@ -101,9 +101,11 @@ describe('FavoriteButton', () => {
       const mockParentClick = vi.fn();
 
       render(
-        <button type="button" onClick={mockParentClick}>
+        // biome-ignore lint/a11y/useKeyWithClickEvents: テスト用のラッパー
+        // biome-ignore lint/a11y/noStaticElementInteractions: テスト用のラッパー
+        <div onClick={mockParentClick}>
           <FavoriteButton isFavorited={false} onToggle={mockOnToggle} />
-        </button>
+        </div>
       );
 
       const favoriteButton = screen.getByRole('button', { name: 'お気に入りに追加' });

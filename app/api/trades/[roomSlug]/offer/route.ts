@@ -8,7 +8,7 @@ type Params = Promise<{ roomSlug: string }>;
 /**
  * POST: オファー内容を更新
  *
- * Body: { items: Array<{ cardId: string, quantity: number }> }
+ * Body: { items: Array<{ cardId: string }> }
  */
 export async function POST(request: NextRequest, { params }: { params: Params }) {
   const session = await auth.api.getSession({
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest, { params }: { params: Params })
     return NextResponse.json({ error: 'Trade not found' }, { status: 404 });
   }
 
-  let body: { items?: Array<{ cardId?: string; quantity?: number }> };
+  let body: { items?: Array<{ cardId?: string }> };
   try {
     body = await request.json();
   } catch {
@@ -44,17 +44,11 @@ export async function POST(request: NextRequest, { params }: { params: Params })
     if (!item.cardId || typeof item.cardId !== 'string') {
       return NextResponse.json({ error: 'Each item must have a cardId' }, { status: 400 });
     }
-    if (typeof item.quantity !== 'number' || item.quantity < 1) {
-      return NextResponse.json(
-        { error: 'Each item must have a positive quantity' },
-        { status: 400 }
-      );
-    }
   }
 
   try {
     await updateOffer(trade, session.user.id, {
-      items: items as Array<{ cardId: string; quantity: number }>,
+      items: items as Array<{ cardId: string }>,
     });
     return NextResponse.json({ success: true });
   } catch (error) {

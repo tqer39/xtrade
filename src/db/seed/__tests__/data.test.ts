@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { seedCards } from '../data/cards';
 import { seedTradeHistory, seedTradeItems, seedTrades } from '../data/trades';
+import { seedTrustHistory } from '../data/trust-history';
 import { seedUsers } from '../data/users';
 
 describe('Seed Data', () => {
   describe('seedUsers', () => {
-    it('3名のテストユーザーが定義されている', () => {
-      expect(seedUsers).toHaveLength(3);
+    it('32名のテストユーザーが定義されている', () => {
+      expect(seedUsers).toHaveLength(32);
     });
 
     it('各ユーザーに必須フィールドが存在する', () => {
@@ -36,16 +37,16 @@ describe('Seed Data', () => {
   });
 
   describe('seedCards', () => {
-    it('15件のサンプルカードが定義されている', () => {
-      expect(seedCards).toHaveLength(15);
+    it('127件のサンプルアイテムが定義されている', () => {
+      expect(seedCards).toHaveLength(127);
     });
 
-    it('各カードに必須フィールドが存在する', () => {
+    it('各アイテムに必須フィールドが存在する', () => {
       for (const card of seedCards) {
         expect(card.id).toBeDefined();
         expect(card.name).toBeDefined();
         expect(card.category).toBeDefined();
-        expect(card.rarity).toBeDefined();
+        expect(card.description).toBeDefined();
       }
     });
 
@@ -54,7 +55,7 @@ describe('Seed Data', () => {
       expect(categories.size).toBeGreaterThan(1);
     });
 
-    it('カードIDが一意である', () => {
+    it('アイテムIDが一意である', () => {
       const ids = seedCards.map((c) => c.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(ids.length);
@@ -132,6 +133,42 @@ describe('Seed Data', () => {
       const ids = seedTradeHistory.map((h) => h.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(ids.length);
+    });
+  });
+
+  describe('seedTrustHistory', () => {
+    it('20件の信頼性スコア履歴が定義されている', () => {
+      expect(seedTrustHistory).toHaveLength(20);
+    });
+
+    it('各履歴に必須フィールドが存在する', () => {
+      for (const history of seedTrustHistory) {
+        expect(history.id).toBeDefined();
+        expect(history.userId).toBe('test-user-31');
+        expect(history.trustScore).toBeGreaterThanOrEqual(0);
+        expect(history.trustScore).toBeLessThanOrEqual(100);
+        expect(history.twitterScore).toBeGreaterThanOrEqual(0);
+        expect(history.twitterScore).toBeLessThanOrEqual(40);
+        expect(history.totalTradeScore).toBeGreaterThanOrEqual(0);
+        expect(history.totalTradeScore).toBeLessThanOrEqual(40);
+        expect(history.recentTradeScore).toBeGreaterThanOrEqual(0);
+        expect(history.recentTradeScore).toBeLessThanOrEqual(20);
+        expect(history.reason).toBeDefined();
+        expect(history.createdAt).toBeInstanceOf(Date);
+      }
+    });
+
+    it('信頼性スコア履歴IDが一意である', () => {
+      const ids = seedTrustHistory.map((h) => h.id);
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(ids.length);
+    });
+
+    it('スコアが時系列で上昇している', () => {
+      // 最初と最後のスコアを比較
+      const firstScore = seedTrustHistory[0].trustScore;
+      const lastScore = seedTrustHistory[seedTrustHistory.length - 1].trustScore;
+      expect(lastScore).toBeGreaterThan(firstScore);
     });
   });
 });

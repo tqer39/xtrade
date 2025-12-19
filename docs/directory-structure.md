@@ -38,7 +38,7 @@ xtrade/
 ├── src/
 │   ├── components/               # Common UI components
 │   │   ├── ui/                   # shadcn/ui components
-│   │   ├── layouts/
+│   │   ├── layout/               # Common layout (Header, Footer)
 │   │   └── features/             # Feature-specific components
 │   ├── db/                       # Database
 │   │   ├── schema/               # Drizzle schema (by domain)

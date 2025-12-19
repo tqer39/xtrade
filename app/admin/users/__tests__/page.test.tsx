@@ -13,7 +13,26 @@ vi.mock('@/lib/auth-client', () => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
+    back: vi.fn(),
   }),
+  usePathname: () => '/admin/users',
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue(null),
+    toString: vi.fn().mockReturnValue(''),
+  }),
+}));
+
+vi.mock('@/components/layout', () => ({
+  Header: ({ showBackButton }: { showBackButton?: boolean }) => (
+    <header data-testid="header">
+      Header{' '}
+      {showBackButton && (
+        <button type="button" onClick={() => mockPush('/')}>
+          戻る
+        </button>
+      )}
+    </header>
+  ),
 }));
 
 // fetch モック

@@ -19,6 +19,7 @@ interface AddEmailFormProps {
 
 /**
  * メールアドレス追加・認証フォーム
+ * 認証済みでもメールアドレスの変更が可能
  */
 export function AddEmailForm({
   currentEmail,
@@ -27,6 +28,7 @@ export function AddEmailForm({
 }: AddEmailFormProps) {
   const [email, setEmail] = useState(currentEmail || '');
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(!emailVerified);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,11 +94,23 @@ export function AddEmailForm({
         <CardDescription>メールアドレスを認証すると、信頼スコアが向上します。</CardDescription>
       </CardHeader>
       <CardContent>
-        {emailVerified ? (
-          <div className="text-sm text-muted-foreground">
-            <p>
-              登録済みメールアドレス: <strong>{currentEmail}</strong>
-            </p>
+        {emailVerified && !isEditing ? (
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              <p>
+                登録済みメールアドレス: <strong>{currentEmail}</strong>
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditing(true);
+                setMessage(null);
+              }}
+              className="w-full"
+            >
+              メールアドレスを変更する
+            </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -111,6 +125,11 @@ export function AddEmailForm({
                 required
                 disabled={isLoading}
               />
+              {emailVerified && (
+                <p className="text-xs text-muted-foreground">
+                  現在の認証済みアドレス: {currentEmail}
+                </p>
+              )}
             </div>
 
             {message && (
@@ -125,12 +144,37 @@ export function AddEmailForm({
               </div>
             )}
 
-            <Button type="submit" disabled={isLoading || !email} className="w-full">
-              {isLoading ? '送信中...' : '認証メールを送信'}
-            </Button>
+            <div className="flex gap-2">
+              {emailVerified && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEmail(currentEmail || '');
+                    setMessage(null);
+                  }}
+                  className="flex-1"
+                >
+                  キャンセル
+                </Button>
+              )}
+              <Button
+                type="submit"
+                disabled={isLoading || !email}
+                className={emailVerified ? 'flex-1' : 'w-full'}
+              >
+                {isLoading
+                  ? '送信中...'
+                  : emailVerified
+                    ? '新しいアドレスに認証メールを送信'
+                    : '認証メールを送信'}
+              </Button>
+            </div>
 
             <p className="text-xs text-muted-foreground">
               認証メールは1時間に3回まで送信できます。
+              {emailVerified && '新しいアドレスで認証すると、以前の認証は無効になります。'}
             </p>
           </form>
         )}

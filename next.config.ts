@@ -70,6 +70,25 @@ const nextConfig: NextConfig = {
         hostname: '*.r2.dev',
         pathname: '/**',
       },
+      // LocalStack（ローカル開発用）
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '4566',
+        pathname: '/**',
+      },
+      // Picsum Photos（テストデータ用）
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+        pathname: '/**',
+      },
+      // DiceBear（アバター生成用）
+      {
+        protocol: 'https',
+        hostname: 'api.dicebear.com',
+        pathname: '/**',
+      },
     ],
   },
 };

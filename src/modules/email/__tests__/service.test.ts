@@ -10,6 +10,12 @@ vi.mock('../resend-client', () => ({
   getFromEmail: vi.fn(() => 'noreply@test.com'),
 }));
 
+// Mailpit クライアントをモック
+vi.mock('../mailpit-client', () => ({
+  isMailpitEnabled: vi.fn(() => false),
+  sendViaMailpit: vi.fn(),
+}));
+
 // テンプレートをモック
 vi.mock('../templates/verification', () => ({
   VerificationEmail: vi.fn(() => '<div>Mock Email</div>'),
@@ -20,6 +26,7 @@ vi.mock('@react-email/components', () => ({
   render: vi.fn(() => Promise.resolve('<html>Test Email</html>')),
 }));
 
+import { isMailpitEnabled, sendViaMailpit } from '../mailpit-client';
 import { getResendClient } from '../resend-client';
 import { sendVerificationEmail } from '../service';
 
@@ -107,5 +114,54 @@ describe('sendVerificationEmail', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Unknown error');
+  });
+
+  describe('Mailpit 切り替え', () => {
+    it('MAIL_PROVIDER=mailpit の場合は Mailpit 経由で送信する', async () => {
+      vi.mocked(isMailpitEnabled).mockReturnValue(true);
+      vi.mocked(sendViaMailpit).mockResolvedValue({
+        success: true,
+        messageId: 'mailpit-msg-456',
+      });
+
+      const result = await sendVerificationEmail({
+        to: 'user@example.com',
+        verificationUrl: 'https://example.com/verify?token=abc',
+        userName: 'Test User',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe('mailpit-msg-456');
+      expect(sendViaMailpit).toHaveBeenCalledWith({
+        from: 'xtrade <noreply@test.com>',
+        to: 'user@example.com',
+        subject: 'メールアドレスを認証してください - xtrade',
+        html: '<html>Test Email</html>',
+      });
+      expect(getResendClient).not.toHaveBeenCalled();
+    });
+
+    it('MAIL_PROVIDER=resend の場合は Resend 経由で送信する', async () => {
+      vi.mocked(isMailpitEnabled).mockReturnValue(false);
+      const mockSend = vi.fn().mockResolvedValue({
+        data: { id: 'resend-msg-789' },
+        error: null,
+      });
+
+      vi.mocked(getResendClient).mockReturnValue({
+        emails: { send: mockSend },
+      } as unknown as ReturnType<typeof getResendClient>);
+
+      const result = await sendVerificationEmail({
+        to: 'user@example.com',
+        verificationUrl: 'https://example.com/verify?token=abc',
+        userName: 'Test User',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.messageId).toBe('resend-msg-789');
+      expect(sendViaMailpit).not.toHaveBeenCalled();
+      expect(mockSend).toHaveBeenCalled();
+    });
   });
 });

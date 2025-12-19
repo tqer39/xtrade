@@ -38,7 +38,7 @@ xtrade/
 ├── src/
 │   ├── components/               # 共通 UI コンポーネント
 │   │   ├── ui/                   # shadcn/ui コンポーネント
-│   │   ├── layouts/
+│   │   ├── layout/               # 共通レイアウト（Header, Footer）
 │   │   └── features/             # 機能別コンポーネント
 │   ├── db/                       # データベース
 │   │   ├── schema/               # Drizzle スキーマ（ドメイン別）

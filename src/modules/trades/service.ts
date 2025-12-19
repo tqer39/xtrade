@@ -1,18 +1,24 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
-import { nanoid } from 'nanoid';
+import { and, desc, eq, inArray, or } from 'drizzle-orm';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
 import type { TrustGrade } from '@/modules/trust';
-import { canParticipate, validateTransition } from './state-machine';
-import type { CreateTradeInput, Trade, TradeDetail, TradeStatus, UpdateOfferInput } from './types';
+import { canParticipate, validateTransition, validateUncancel } from './state-machine';
+import type {
+  CreateTradeInput,
+  Trade,
+  TradeDetail,
+  TradeStatus,
+  UpdateOfferInput,
+  UserTradeListItem,
+} from './types';
 import { TradeTransitionError } from './types';
 
 /**
- * roomSlug を生成（nanoid を使用）
+ * roomSlug を生成（UUIDを使用）
  */
 function generateRoomSlug(): string {
-  return nanoid(10);
+  return randomUUID();
 }
 
 /**
@@ -22,12 +28,13 @@ export async function createTrade(
   initiatorUserId: string,
   input: CreateTradeInput = {}
 ): Promise<Trade> {
-  const newTrade = {
+  const newTrade: Trade = {
     id: randomUUID(),
     roomSlug: generateRoomSlug(),
     initiatorUserId,
     responderUserId: input.responderUserId ?? null,
     status: 'draft' as const,
+    statusBeforeCancel: null,
     proposedExpiredAt: input.proposedExpiredAt ?? null,
     agreedExpiredAt: null,
     createdAt: new Date(),
@@ -45,6 +52,17 @@ export async function createTrade(
     changedByUserId: initiatorUserId,
     createdAt: new Date(),
   });
+
+  // 初期カードが指定されている場合、responderのオファーとして追加
+  if (input.initialCardId && input.responderUserId) {
+    await db.insert(schema.tradeItem).values({
+      id: randomUUID(),
+      tradeId: newTrade.id,
+      offeredByUserId: input.responderUserId,
+      cardId: input.initialCardId,
+      createdAt: new Date(),
+    });
+  }
 
   return newTrade;
 }
@@ -64,6 +82,7 @@ export async function getTradeByRoomSlug(roomSlug: string): Promise<Trade | null
   return {
     ...trades[0],
     status: trades[0].status as TradeStatus,
+    statusBeforeCancel: trades[0].statusBeforeCancel as TradeStatus | null,
   };
 }
 
@@ -82,6 +101,7 @@ export async function getTradeDetail(roomSlug: string): Promise<TradeDetail | nu
       twitterUsername: schema.user.twitterUsername,
       image: schema.user.image,
       trustGrade: schema.user.trustGrade,
+      trustScore: schema.user.trustScore,
     })
     .from(schema.user)
     .where(eq(schema.user.id, trade.initiatorUserId))
@@ -100,6 +120,7 @@ export async function getTradeDetail(roomSlug: string): Promise<TradeDetail | nu
         twitterUsername: schema.user.twitterUsername,
         image: schema.user.image,
         trustGrade: schema.user.trustGrade,
+        trustScore: schema.user.trustScore,
       })
       .from(schema.user)
       .where(eq(schema.user.id, trade.responderUserId))
@@ -112,7 +133,7 @@ export async function getTradeDetail(roomSlug: string): Promise<TradeDetail | nu
     .select({
       cardId: schema.tradeItem.cardId,
       cardName: schema.card.name,
-      quantity: schema.tradeItem.quantity,
+      cardImageUrl: schema.card.imageUrl,
       offeredByUserId: schema.tradeItem.offeredByUserId,
     })
     .from(schema.tradeItem)
@@ -129,11 +150,13 @@ export async function getTradeDetail(roomSlug: string): Promise<TradeDetail | nu
     initiator: {
       ...initiator,
       trustGrade: initiator.trustGrade as TrustGrade | null,
+      trustScore: initiator.trustScore,
     },
     responder: responder
       ? {
           ...responder,
           trustGrade: responder.trustGrade as TrustGrade | null,
+          trustScore: responder.trustScore,
         }
       : null,
     initiatorItems,
@@ -158,8 +181,8 @@ export async function updateOffer(
     throw new TradeTransitionError('You are not a participant in this trade', 'UNAUTHORIZED');
   }
 
-  // draft または proposed 状態でのみオファー更新可能
-  if (!['draft', 'proposed'].includes(trade.status)) {
+  // draft 状態でのみオファー更新可能（提案後は編集不可）
+  if (trade.status !== 'draft') {
     throw new TradeTransitionError('Cannot update offer in current status', 'INVALID_TRANSITION');
   }
 
@@ -177,7 +200,6 @@ export async function updateOffer(
       tradeId: trade.id,
       offeredByUserId: userId,
       cardId: item.cardId,
-      quantity: item.quantity,
       createdAt: new Date(),
     }));
 
@@ -202,6 +224,11 @@ export async function transitionTrade(
     status: toStatus,
     updatedAt: new Date(),
   };
+
+  // キャンセルに遷移する場合は、元のステータスを保存
+  if (toStatus === 'canceled') {
+    updateData.statusBeforeCancel = trade.status;
+  }
 
   // agreed に遷移する場合は期限を設定
   if (toStatus === 'agreed' && options.agreedExpiredAt) {
@@ -244,6 +271,40 @@ async function updateTradeStatsForParticipants(trade: Trade): Promise<void> {
 }
 
 /**
+ * キャンセルを取り消し、元のステータスに戻す
+ */
+export async function uncancelTrade(trade: Trade, userId: string): Promise<TradeStatus> {
+  // バリデーション
+  validateUncancel(trade, userId);
+
+  // statusBeforeCancel は validateUncancel で確認済み
+  const previousStatus = trade.statusBeforeCancel as TradeStatus;
+
+  // 状態を元に戻す
+  await db
+    .update(schema.trade)
+    .set({
+      status: previousStatus,
+      statusBeforeCancel: null, // クリア
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.trade.id, trade.id));
+
+  // 履歴を記録
+  await db.insert(schema.tradeHistory).values({
+    id: randomUUID(),
+    tradeId: trade.id,
+    fromStatus: 'canceled',
+    toStatus: previousStatus,
+    changedByUserId: userId,
+    reason: 'キャンセル取り消し',
+    createdAt: new Date(),
+  });
+
+  return previousStatus;
+}
+
+/**
  * 応答者を設定する
  */
 export async function setResponder(trade: Trade, responderUserId: string): Promise<void> {
@@ -262,4 +323,117 @@ export async function setResponder(trade: Trade, responderUserId: string): Promi
       updatedAt: new Date(),
     })
     .where(eq(schema.trade.id, trade.id));
+}
+
+/**
+ * ユーザーの取引一覧を取得
+ */
+export async function getUserTrades(
+  userId: string,
+  statusFilter?: 'active' | 'completed'
+): Promise<UserTradeListItem[]> {
+  // ユーザーが参加している取引を取得
+  let whereCondition = or(
+    eq(schema.trade.initiatorUserId, userId),
+    eq(schema.trade.responderUserId, userId)
+  );
+
+  // ステータスフィルター
+  if (statusFilter === 'active') {
+    // 進行中: draft, proposed, agreed
+    whereCondition = and(
+      whereCondition,
+      or(
+        eq(schema.trade.status, 'draft'),
+        eq(schema.trade.status, 'proposed'),
+        eq(schema.trade.status, 'agreed')
+      )
+    );
+  } else if (statusFilter === 'completed') {
+    // 成約済: completed
+    whereCondition = and(whereCondition, eq(schema.trade.status, 'completed'));
+  }
+
+  const trades = await db
+    .select()
+    .from(schema.trade)
+    .where(whereCondition)
+    .orderBy(desc(schema.trade.updatedAt));
+
+  // 取引相手のIDを収集
+  const partnerIds = new Set<string>();
+  for (const trade of trades) {
+    const partnerId =
+      trade.initiatorUserId === userId ? trade.responderUserId : trade.initiatorUserId;
+    if (partnerId) {
+      partnerIds.add(partnerId);
+    }
+  }
+
+  // 取引相手の情報を一括取得
+  const partners =
+    partnerIds.size > 0
+      ? await db
+          .select({
+            id: schema.user.id,
+            name: schema.user.name,
+            twitterUsername: schema.user.twitterUsername,
+            image: schema.user.image,
+          })
+          .from(schema.user)
+          .where(inArray(schema.user.id, Array.from(partnerIds)))
+      : [];
+  const partnerMap = new Map(partners.map((p) => [p.id, p]));
+
+  // トレードアイテムを一括取得
+  const tradeIds = trades.map((t) => t.id);
+  const allTradeItems =
+    tradeIds.length > 0
+      ? await db
+          .select({
+            tradeId: schema.tradeItem.tradeId,
+            cardId: schema.tradeItem.cardId,
+            cardName: schema.card.name,
+            cardCategory: schema.card.category,
+            cardImageUrl: schema.card.imageUrl,
+            offeredByUserId: schema.tradeItem.offeredByUserId,
+          })
+          .from(schema.tradeItem)
+          .innerJoin(schema.card, eq(schema.tradeItem.cardId, schema.card.id))
+          .where(inArray(schema.tradeItem.tradeId, tradeIds))
+      : [];
+
+  // トレードIDごとにアイテムをグルーピング
+  const tradeItemsMap = new Map<string, typeof allTradeItems>();
+  for (const item of allTradeItems) {
+    const items = tradeItemsMap.get(item.tradeId) ?? [];
+    items.push(item);
+    tradeItemsMap.set(item.tradeId, items);
+  }
+
+  // 結果を組み立て
+  const results: UserTradeListItem[] = trades.map((trade) => {
+    const partnerId =
+      trade.initiatorUserId === userId ? trade.responderUserId : trade.initiatorUserId;
+    const partner = partnerId ? (partnerMap.get(partnerId) ?? null) : null;
+    const items = tradeItemsMap.get(trade.id) ?? [];
+
+    return {
+      id: trade.id,
+      roomSlug: trade.roomSlug,
+      status: trade.status as TradeStatus,
+      partner,
+      items: items.map((item) => ({
+        cardId: item.cardId,
+        cardName: item.cardName,
+        cardCategory: item.cardCategory,
+        cardImageUrl: item.cardImageUrl,
+        offeredByUserId: item.offeredByUserId,
+      })),
+      createdAt: trade.createdAt.toISOString(),
+      updatedAt: trade.updatedAt.toISOString(),
+    };
+  });
+
+  return results;
 }

@@ -6,6 +6,13 @@ import { UserMenu } from '../user-menu';
 const mockSignOut = vi.fn();
 const mockUseSession = vi.fn();
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
+  useSearchParams: () => ({
+    toString: () => '',
+  }),
+}));
+
 vi.mock('@/lib/auth-client', () => ({
   signOut: () => mockSignOut(),
   useSession: () => mockUseSession(),
@@ -85,23 +92,6 @@ describe('UserMenu', () => {
       const avatar = screen.getByAltText('Test User');
       expect(avatar).toBeInTheDocument();
       expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.jpg');
-    });
-
-    it('ログアウトボタンを表示', async () => {
-      mockUseSession.mockReturnValue({
-        data: {
-          user: {
-            id: 'user-1',
-            name: 'Test User',
-            image: null,
-          },
-        },
-        isPending: false,
-      });
-
-      render(<UserMenu />);
-
-      expect(screen.getByText('ログアウト')).toBeInTheDocument();
     });
 
     it('管理者の場合、管理画面リンクを表示', async () => {

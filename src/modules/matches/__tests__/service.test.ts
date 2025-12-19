@@ -141,10 +141,10 @@ describe('matches/service', () => {
           trustScore: 75,
         },
       ]);
-      // 相手が持っていて自分が欲しいカード
-      mockWhere.mockResolvedValueOnce([{ cardId: 'card-2', cardName: 'Card 2' }]);
-      // 自分が持っていて相手が欲しいカード
-      mockWhere.mockResolvedValueOnce([{ cardId: 'card-1', cardName: 'Card 1' }]);
+      // 相手が持っていて自分が欲しいカード（バッチ取得: userId付き）
+      mockWhere.mockResolvedValueOnce([{ userId: 'user-2', cardId: 'card-2', cardName: 'Card 2' }]);
+      // 自分が持っていて相手が欲しいカード（バッチ取得: userId付き）
+      mockWhere.mockResolvedValueOnce([{ userId: 'user-2', cardId: 'card-1', cardName: 'Card 1' }]);
 
       const result = await findMatches('user-1');
 
@@ -184,13 +184,12 @@ describe('matches/service', () => {
           trustScore: 70,
         },
       ]);
-      // user-2: theyHaveIWant
-      mockWhere.mockResolvedValueOnce([{ cardId: 'card-2', cardName: 'Card 2' }]);
-      // user-2: iHaveTheyWant
-      mockWhere.mockResolvedValueOnce([]);
-      // user-3: theyHaveIWant
-      mockWhere.mockResolvedValueOnce([{ cardId: 'card-2', cardName: 'Card 2' }]);
-      // user-3: iHaveTheyWant
+      // バッチ取得: theyHaveIWant（userId付き）
+      mockWhere.mockResolvedValueOnce([
+        { userId: 'user-2', cardId: 'card-2', cardName: 'Card 2' },
+        { userId: 'user-3', cardId: 'card-2', cardName: 'Card 2' },
+      ]);
+      // バッチ取得: iHaveTheyWant（userId付き）
       mockWhere.mockResolvedValueOnce([]);
 
       const result = await findMatches('user-1', { limit: 1, offset: 0 });
@@ -246,16 +245,14 @@ describe('matches/service', () => {
           trustScore: 70,
         },
       ]);
-      // user-2: theyHaveIWant (1 card)
-      mockWhere.mockResolvedValueOnce([{ cardId: 'card-3', cardName: 'Card 3' }]);
-      // user-2: iHaveTheyWant
-      mockWhere.mockResolvedValueOnce([]);
-      // user-3: theyHaveIWant (2 cards - higher score)
+      // バッチ取得: theyHaveIWant（userId付き）
+      // user-2: 1 card, user-3: 2 cards
       mockWhere.mockResolvedValueOnce([
-        { cardId: 'card-3', cardName: 'Card 3' },
-        { cardId: 'card-4', cardName: 'Card 4' },
+        { userId: 'user-2', cardId: 'card-3', cardName: 'Card 3' },
+        { userId: 'user-3', cardId: 'card-3', cardName: 'Card 3' },
+        { userId: 'user-3', cardId: 'card-4', cardName: 'Card 4' },
       ]);
-      // user-3: iHaveTheyWant
+      // バッチ取得: iHaveTheyWant（userId付き）
       mockWhere.mockResolvedValueOnce([]);
 
       const result = await findMatches('user-1');

@@ -7,6 +7,13 @@ const _mockSignIn = {
   social: vi.fn(),
 };
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/',
+  useSearchParams: () => ({
+    toString: () => '',
+  }),
+}));
+
 vi.mock('@/lib/auth-client', () => ({
   signIn: {
     social: vi.fn(),
@@ -37,7 +44,7 @@ describe('LoginButton', () => {
 
     const button = screen.getByRole('button');
     expect(button).toHaveClass('rounded-full');
-    expect(button).toHaveClass('gap-2');
+    expect(button).toHaveClass('gap-1.5');
   });
 
   it('クリックで signIn.social が呼ばれる', async () => {

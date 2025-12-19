@@ -18,6 +18,7 @@ export function ViewToggle({ viewMode, onViewModeChange, className }: ViewToggle
         variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
         size="icon-sm"
         onClick={() => onViewModeChange('grid')}
+        disabled={viewMode === 'grid'}
         aria-label="グリッド表示"
         aria-pressed={viewMode === 'grid'}
       >
@@ -27,6 +28,7 @@ export function ViewToggle({ viewMode, onViewModeChange, className }: ViewToggle
         variant={viewMode === 'list' ? 'secondary' : 'ghost'}
         size="icon-sm"
         onClick={() => onViewModeChange('list')}
+        disabled={viewMode === 'list'}
         aria-label="リスト表示"
         aria-pressed={viewMode === 'list'}
       >

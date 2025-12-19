@@ -21,6 +21,7 @@ export interface Trade {
   initiatorUserId: string;
   responderUserId: string | null;
   status: TradeStatus;
+  statusBeforeCancel: TradeStatus | null; // キャンセル前のステータス（取り消し用）
   proposedExpiredAt: Date | null;
   agreedExpiredAt: Date | null;
   createdAt: Date;
@@ -36,6 +37,7 @@ export interface TradeParticipant {
   twitterUsername: string | null;
   image: string | null;
   trustGrade: TrustGrade | null;
+  trustScore: number | null;
 }
 
 /**
@@ -44,7 +46,7 @@ export interface TradeParticipant {
 export interface TradeItem {
   cardId: string;
   cardName: string;
-  quantity: number;
+  cardImageUrl: string | null;
   offeredByUserId: string;
 }
 
@@ -71,6 +73,7 @@ export interface TradeDetail {
 export interface CreateTradeInput {
   responderUserId?: string;
   proposedExpiredAt?: Date;
+  initialCardId?: string; // カード詳細画面から開始時、相手のオファーに追加するカードID
 }
 
 /**
@@ -79,7 +82,6 @@ export interface CreateTradeInput {
 export interface UpdateOfferInput {
   items: Array<{
     cardId: string;
-    quantity: number;
   }>;
 }
 
@@ -94,4 +96,28 @@ export class TradeTransitionError extends Error {
     super(message);
     this.name = 'TradeTransitionError';
   }
+}
+
+/**
+ * ユーザーの取引一覧アイテム
+ */
+export interface UserTradeListItem {
+  id: string;
+  roomSlug: string;
+  status: TradeStatus;
+  partner: {
+    id: string;
+    name: string | null;
+    twitterUsername: string | null;
+    image: string | null;
+  } | null;
+  items: Array<{
+    cardId: string;
+    cardName: string;
+    cardCategory: string | null;
+    cardImageUrl: string | null;
+    offeredByUserId: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
 }

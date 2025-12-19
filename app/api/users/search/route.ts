@@ -25,5 +25,12 @@ export async function GET(request: NextRequest) {
 
   const users = await searchUsers(query, Math.min(limit, 100));
 
-  return NextResponse.json({ users });
+  return NextResponse.json(
+    { users },
+    {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=30',
+      },
+    }
+  );
 }

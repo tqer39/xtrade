@@ -1,6 +1,7 @@
-import { and, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, or, sql } from 'drizzle-orm';
 import { db } from '@/db/drizzle';
 import * as schema from '@/db/schema';
+import { calcRecentTradeScore, calcTotalTradeScore } from '@/modules/trust';
 import type { UserStats } from './types';
 
 /**
@@ -87,6 +88,143 @@ export async function updateUserTradeStats(userId: string): Promise<void> {
         updatedAt: new Date(),
       },
     });
+
+  // 信頼スコアの取引関連部分を更新
+  await updateUserTrustScoreFromTrades(userId);
+}
+
+/**
+ * トレード関連の信頼スコアを更新
+ */
+async function updateUserTrustScoreFromTrades(userId: string): Promise<void> {
+  try {
+    // トレード統計を取得
+    const tradeStats = await db
+      .select()
+      .from(schema.userTradeStats)
+      .where(eq(schema.userTradeStats.userId, userId))
+      .limit(1);
+
+    // レビュー統計を取得
+    const reviewStats = await db
+      .select()
+      .from(schema.userReviewStats)
+      .where(eq(schema.userReviewStats.userId, userId))
+      .limit(1);
+
+    const tradeStat = tradeStats[0];
+    const reviewStat = reviewStats[0];
+
+    // トレード統計からスコア計算用の入力を作成
+    const totalTrades =
+      (tradeStat?.completedCount ?? 0) +
+      (tradeStat?.canceledCount ?? 0) +
+      (tradeStat?.disputedCount ?? 0);
+    const completedTrades = tradeStat?.completedCount ?? 0;
+    const troubledTrades = tradeStat?.disputedCount ?? 0;
+    const averageRating = reviewStat?.avgRating ? reviewStat.avgRating / 10 : 0;
+
+    // 直近10件のトレード情報を取得
+    const recentTrades = await db
+      .select({
+        id: schema.trade.id,
+        status: schema.trade.status,
+      })
+      .from(schema.trade)
+      .where(
+        and(
+          or(eq(schema.trade.initiatorUserId, userId), eq(schema.trade.responderUserId, userId)),
+          inArray(schema.trade.status, ['completed', 'canceled', 'disputed'])
+        )
+      )
+      .orderBy(desc(schema.trade.updatedAt))
+      .limit(10);
+
+    // 直近トレードの評価を取得
+    const recentTradeIds = recentTrades.map((t) => t.id);
+    const recentReviews =
+      recentTradeIds.length > 0
+        ? await db
+            .select({
+              tradeId: schema.tradeReview.tradeId,
+              rating: schema.tradeReview.rating,
+            })
+            .from(schema.tradeReview)
+            .where(
+              and(
+                inArray(schema.tradeReview.tradeId, recentTradeIds),
+                eq(schema.tradeReview.revieweeUserId, userId)
+              )
+            )
+        : [];
+
+    const reviewMap = new Map(recentReviews.map((r) => [r.tradeId, r.rating]));
+
+    // 直近トレードデータを整形
+    const recentTradesInput = recentTrades.map((t) => ({
+      completed: t.status === 'completed',
+      troubled: t.status === 'disputed',
+      rating: reviewMap.get(t.id) ?? 3, // レビューがない場合はデフォルト3
+    }));
+
+    // スコア計算
+    const totalTradeScoreResult = calcTotalTradeScore({
+      totalTrades,
+      completedTrades,
+      troubledTrades,
+      averageRating,
+      recentTrades: recentTradesInput,
+    });
+
+    const recentTradeScoreResult = calcRecentTradeScore({
+      totalTrades,
+      completedTrades,
+      troubledTrades,
+      averageRating,
+      recentTrades: recentTradesInput,
+    });
+
+    // ユーザーの現在のTwitterスコアを取得
+    const users = await db
+      .select({
+        twitterScore: schema.user.twitterScore,
+      })
+      .from(schema.user)
+      .where(eq(schema.user.id, userId))
+      .limit(1);
+
+    const twitterScore = users[0]?.twitterScore ?? 0;
+
+    // 新しい総合スコアを計算
+    const newTotalScore = twitterScore + totalTradeScoreResult.score + recentTradeScoreResult.score;
+    const newGrade =
+      newTotalScore >= 90
+        ? 'S'
+        : newTotalScore >= 75
+          ? 'A'
+          : newTotalScore >= 60
+            ? 'B'
+            : newTotalScore >= 45
+              ? 'C'
+              : newTotalScore >= 30
+                ? 'D'
+                : 'E';
+
+    // ユーザーテーブルを更新
+    await db
+      .update(schema.user)
+      .set({
+        totalTradeScore: totalTradeScoreResult.score,
+        recentTradeScore: recentTradeScoreResult.score,
+        trustScore: newTotalScore,
+        trustGrade: newGrade,
+        trustScoreUpdatedAt: new Date(),
+      })
+      .where(eq(schema.user.id, userId));
+  } catch (error) {
+    console.error('Failed to update trust score from trades:', error);
+    // エラーは無視して続行（統計更新自体は成功させる）
+  }
 }
 
 /**

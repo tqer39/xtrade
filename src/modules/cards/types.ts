@@ -1,16 +1,20 @@
 /**
- * カードの基本情報
+ * アイテムの基本情報
+ * フリーフォーマットでカードに限らず何でも交換可能
  */
 export interface Card {
   id: string;
   name: string;
-  category: string;
-  rarity: string | null;
+  category: string | null; // カテゴリは任意
+  description: string | null; // アイテムの説明
   imageUrl: string | null;
   createdByUserId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
+
+// エイリアス
+export type Item = Card;
 
 /**
  * ユーザーが持っているカード
@@ -19,7 +23,6 @@ export interface UserHaveCard {
   id: string;
   userId: string;
   cardId: string;
-  quantity: number;
   createdAt: Date;
   updatedAt: Date;
   card?: Card;
@@ -39,21 +42,23 @@ export interface UserWantCard {
 }
 
 /**
- * カード作成の入力
+ * アイテム作成の入力
  */
 export interface CreateCardInput {
   name: string;
-  category: string;
-  rarity?: string;
+  category?: string; // カテゴリは任意
+  description?: string; // アイテムの説明
   imageUrl?: string;
 }
+
+// エイリアス
+export type CreateItemInput = CreateCardInput;
 
 /**
  * 持っているカード追加の入力
  */
 export interface AddHaveCardInput {
   cardId: string;
-  quantity: number;
 }
 
 /**
@@ -82,15 +87,18 @@ export interface CardSet {
 }
 
 /**
- * カード情報（簡易版、一覧表示用）
+ * アイテム情報（簡易版、一覧表示用）
  */
 export interface CardSummary {
   id: string;
   name: string;
-  category: string;
-  rarity: string | null;
+  category: string | null;
+  description: string | null;
   imageUrl: string | null;
 }
+
+// エイリアス
+export type ItemSummary = CardSummary;
 
 /**
  * カードセット内のアイテム
@@ -99,7 +107,6 @@ export interface CardSetItem {
   id: string;
   setId: string;
   cardId: string;
-  quantity: number;
   createdAt: Date;
   card?: CardSummary;
 }
@@ -142,12 +149,20 @@ export interface UpdateCardSetInput {
  */
 export interface AddCardToSetInput {
   cardId: string;
-  quantity?: number;
 }
 
 // =====================================
 // カード所有者関連
 // =====================================
+
+/**
+ * カード所有者が欲しいカードの簡易情報
+ */
+export interface CardOwnerWantCard {
+  cardId: string;
+  cardName: string;
+  cardImageUrl: string | null;
+}
 
 /**
  * カード所有者の情報
@@ -159,5 +174,27 @@ export interface CardOwner {
   twitterUsername: string | null;
   trustScore: number | null;
   trustGrade: string | null;
-  quantity: number;
+  wantText?: string | null;
+  wantCards?: CardOwnerWantCard[];
+}
+
+/**
+ * カード作成者の簡易情報
+ */
+export interface CardCreator {
+  id: string;
+  name: string;
+  image: string | null;
+  twitterUsername: string | null;
+  trustScore: number | null;
+  trustGrade: string | null;
+  wantText?: string | null;
+  wantCards?: CardOwnerWantCard[];
+}
+
+/**
+ * 作成者情報付きのカード
+ */
+export interface CardWithCreator extends Card {
+  creator: CardCreator | null;
 }

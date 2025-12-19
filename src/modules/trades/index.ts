@@ -2,8 +2,10 @@ export {
   createTrade,
   getTradeByRoomSlug,
   getTradeDetail,
+  getUserTrades,
   setResponder,
   transitionTrade,
+  uncancelTrade,
   updateOffer,
 } from './service';
 export {
@@ -20,5 +22,6 @@ export type {
   TradeParticipant,
   TradeStatus,
   UpdateOfferInput,
+  UserTradeListItem,
 } from './types';
 export { TradeTransitionError } from './types';

@@ -46,7 +46,6 @@ vi.mock('@/db/schema', () => ({
     tradeId: 'tradeItem.tradeId',
     offeredByUserId: 'tradeItem.offeredByUserId',
     cardId: 'tradeItem.cardId',
-    quantity: 'tradeItem.quantity',
     createdAt: 'tradeItem.createdAt',
   },
   tradeHistory: {
@@ -218,6 +217,7 @@ describe('trades/service', () => {
         initiatorUserId: 'user-1',
         responderUserId: 'user-2',
         status: 'draft' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),
@@ -236,6 +236,7 @@ describe('trades/service', () => {
         initiatorUserId: 'user-1',
         responderUserId: 'user-2',
         status: 'draft' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),
@@ -247,20 +248,23 @@ describe('trades/service', () => {
       expect(mockDelete).toHaveBeenCalled();
     });
 
-    it('proposed 状態でオファー更新可能', async () => {
+    it('proposed 状態ではオファー更新不可', async () => {
       const trade = {
         id: 'trade-1',
         roomSlug: 'abc123',
         initiatorUserId: 'user-1',
         responderUserId: 'user-2',
         status: 'proposed' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      await expect(updateOffer(trade, 'user-1', { items: [] })).resolves.not.toThrow();
+      await expect(updateOffer(trade, 'user-1', { items: [] })).rejects.toThrow(
+        TradeTransitionError
+      );
     });
 
     it('agreed 状態ではオファー更新不可', async () => {
@@ -270,6 +274,7 @@ describe('trades/service', () => {
         initiatorUserId: 'user-1',
         responderUserId: 'user-2',
         status: 'agreed' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),
@@ -288,6 +293,7 @@ describe('trades/service', () => {
         initiatorUserId: 'user-1',
         responderUserId: 'user-2',
         status: 'draft' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),
@@ -295,10 +301,7 @@ describe('trades/service', () => {
       };
 
       await updateOffer(trade, 'user-1', {
-        items: [
-          { cardId: 'card-1', quantity: 2 },
-          { cardId: 'card-2', quantity: 1 },
-        ],
+        items: [{ cardId: 'card-1' }, { cardId: 'card-2' }],
       });
 
       expect(mockValues).toHaveBeenCalled();
@@ -313,6 +316,7 @@ describe('trades/service', () => {
         initiatorUserId: 'user-1',
         responderUserId: 'user-2',
         status: 'draft' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),
@@ -332,6 +336,7 @@ describe('trades/service', () => {
         initiatorUserId: 'user-1',
         responderUserId: 'user-2',
         status: 'proposed' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),
@@ -351,6 +356,7 @@ describe('trades/service', () => {
         initiatorUserId: 'user-1',
         responderUserId: 'user-2',
         status: 'proposed' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),
@@ -373,6 +379,7 @@ describe('trades/service', () => {
         initiatorUserId: 'user-1',
         responderUserId: null,
         status: 'draft' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),
@@ -391,6 +398,7 @@ describe('trades/service', () => {
         initiatorUserId: 'user-1',
         responderUserId: 'user-2',
         status: 'draft' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),
@@ -407,6 +415,7 @@ describe('trades/service', () => {
         initiatorUserId: 'user-1',
         responderUserId: null,
         status: 'draft' as const,
+        statusBeforeCancel: null,
         proposedExpiredAt: null,
         agreedExpiredAt: null,
         createdAt: new Date(),

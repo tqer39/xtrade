@@ -1,13 +1,17 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
-// R2 クライアント設定
+// R2/S3 互換ストレージ クライアント設定
+const isLocalStack = process.env.R2_ENDPOINT?.includes('localhost');
+
 export const r2Client = new S3Client({
-  region: 'auto',
+  region: isLocalStack ? 'us-east-1' : 'auto',
   endpoint: process.env.R2_ENDPOINT,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID ?? '',
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? '',
   },
+  // LocalStack では path-style アクセスが必要
+  forcePathStyle: isLocalStack,
 });
 
 export const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME ?? '';
@@ -21,6 +25,7 @@ export async function uploadToR2(key: string, body: Buffer, contentType: string)
       Key: key,
       Body: body,
       ContentType: contentType,
+      CacheControl: 'public, max-age=31536000, immutable',
     })
   );
 

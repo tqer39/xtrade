@@ -4,10 +4,9 @@ import { auth } from '@/lib/auth';
 import { upsertHaveCard } from '@/modules/cards';
 
 /**
- * POST: 持っているカードを追加/更新
+ * POST: 持っているカードを追加
  *
- * Body: { cardId: string, quantity: number }
- * quantity が 0 の場合は削除
+ * Body: { cardId: string }
  */
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({
@@ -18,29 +17,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { cardId?: string; quantity?: number };
+  let body: { cardId?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { cardId, quantity } = body;
+  const { cardId } = body;
 
   if (!cardId || typeof cardId !== 'string') {
     return NextResponse.json({ error: 'cardId is required' }, { status: 400 });
   }
 
-  if (typeof quantity !== 'number' || quantity < 0) {
-    return NextResponse.json({ error: 'quantity must be a non-negative number' }, { status: 400 });
-  }
-
   try {
-    const result = await upsertHaveCard(session.user.id, { cardId, quantity });
-
-    if (result === null) {
-      return NextResponse.json({ deleted: true });
-    }
+    const result = await upsertHaveCard(session.user.id, { cardId });
 
     return NextResponse.json({ haveCard: result }, { status: 201 });
   } catch (error) {

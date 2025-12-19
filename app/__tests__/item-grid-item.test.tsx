@@ -1,0 +1,171 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { UserHaveCard, UserWantCard } from '@/modules/cards/types';
+import { ItemGridItem } from '../_components/item-grid-item';
+
+describe('ItemGridItem', () => {
+  const mockCard = {
+    id: 'card-1',
+    name: 'テストアイテム',
+    category: 'INI',
+    description: 'テスト用のアイテムです',
+    imageUrl: 'https://example.com/image.jpg',
+    createdByUserId: 'user-1',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const mockHaveCard: UserHaveCard = {
+    id: 'have-1',
+    userId: 'user-1',
+    cardId: 'card-1',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    card: mockCard,
+  };
+
+  const mockWantCard: UserWantCard = {
+    id: 'want-1',
+    userId: 'user-1',
+    cardId: 'card-1',
+    priority: 5,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    card: mockCard,
+  };
+
+  describe('基本レンダリング', () => {
+    it('アイテム画像を表示すること', () => {
+      render(<ItemGridItem item={mockHaveCard} type="have" />);
+
+      const img = screen.getByAltText('テストアイテム');
+      expect(img).toBeInTheDocument();
+    });
+
+    it('画像がない場合はプレースホルダーを表示すること', () => {
+      const cardWithoutImage: UserHaveCard = {
+        ...mockHaveCard,
+        card: {
+          ...mockCard,
+          imageUrl: null,
+        },
+      };
+
+      const { container } = render(<ItemGridItem item={cardWithoutImage} type="have" />);
+
+      const svgIcon = container.querySelector('svg.lucide-image');
+      expect(svgIcon).toBeInTheDocument();
+    });
+
+    it('cardがnullの場合はnullを返すこと', () => {
+      const itemWithNullCard: UserHaveCard = {
+        ...mockHaveCard,
+        card: null as unknown as undefined,
+      };
+
+      const { container } = render(<ItemGridItem item={itemWithNullCard} type="have" />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('cardがundefinedの場合はnullを返すこと', () => {
+      const itemWithoutCard: UserHaveCard = {
+        ...mockHaveCard,
+        card: undefined,
+      };
+
+      const { container } = render(<ItemGridItem item={itemWithoutCard} type="have" />);
+      expect(container.firstChild).toBeNull();
+    });
+  });
+
+  describe('持っているアイテム表示', () => {
+    it('アイテム画像を表示すること', () => {
+      render(<ItemGridItem item={mockHaveCard} type="have" />);
+
+      expect(screen.getByAltText('テストアイテム')).toBeInTheDocument();
+    });
+  });
+
+  describe('欲しいアイテム表示', () => {
+    it('優先度バッジを表示すること', () => {
+      render(<ItemGridItem item={mockWantCard} type="want" />);
+
+      expect(screen.getByText('P5')).toBeInTheDocument();
+    });
+
+    it('優先度がnullの場合はバッジを表示しないこと', () => {
+      const wantCardWithoutPriority: UserWantCard = {
+        ...mockWantCard,
+        priority: null,
+      };
+
+      render(<ItemGridItem item={wantCardWithoutPriority} type="want" />);
+      expect(screen.queryByText(/^P\d+$/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('インタラクション', () => {
+    it('クリック時にonCardClickが呼ばれること', () => {
+      const handleClick = vi.fn();
+
+      render(<ItemGridItem item={mockHaveCard} type="have" onCardClick={handleClick} />);
+
+      const button = screen.getByRole('button');
+      fireEvent.click(button);
+
+      expect(handleClick).toHaveBeenCalledWith(mockHaveCard);
+    });
+
+    it('お気に入りボタンをクリック時にonFavoriteToggleが呼ばれること', () => {
+      const handleFavoriteToggle = vi.fn();
+
+      render(
+        <ItemGridItem
+          item={mockHaveCard}
+          type="have"
+          onFavoriteToggle={handleFavoriteToggle}
+          isFavorite={false}
+        />
+      );
+
+      // お気に入りボタンは2番目のボタン（最初はカード全体）
+      const buttons = screen.getAllByRole('button');
+      const favoriteButton = buttons[1];
+      fireEvent.click(favoriteButton);
+
+      expect(handleFavoriteToggle).toHaveBeenCalledWith('card-1', true);
+    });
+
+    it('お気に入り解除時にonFavoriteToggleが呼ばれること', () => {
+      const handleFavoriteToggle = vi.fn();
+
+      render(
+        <ItemGridItem
+          item={mockHaveCard}
+          type="have"
+          onFavoriteToggle={handleFavoriteToggle}
+          isFavorite={true}
+        />
+      );
+
+      const buttons = screen.getAllByRole('button');
+      const favoriteButton = buttons[1];
+      fireEvent.click(favoriteButton);
+
+      expect(handleFavoriteToggle).toHaveBeenCalledWith('card-1', false);
+    });
+  });
+
+  describe('ホバー状態', () => {
+    it('ホバー時にオーバーレイ情報を表示すること', () => {
+      render(<ItemGridItem item={mockHaveCard} type="have" />);
+
+      const button = screen.getByRole('button');
+      fireEvent.mouseEnter(button);
+
+      // アイテム名は複数箇所に表示されるのでgetAllByTextを使用
+      expect(screen.getAllByText('テストアイテム').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('INI').length).toBeGreaterThan(0);
+    });
+  });
+});

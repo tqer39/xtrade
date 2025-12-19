@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
@@ -135,6 +136,39 @@ export const auth = betterAuth({
         type: 'string',
         defaultValue: 'user',
         required: false,
+      },
+    },
+  },
+
+  // データベースフック
+  // X OAuth ログイン時に emailVerified が自動で true になるのを防ぐ
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          // X OAuth からの emailVerified を無視し、本サービスでの認証を必須にする
+          return {
+            data: {
+              ...user,
+              emailVerified: false,
+            },
+          };
+        },
+        after: async (user) => {
+          // 初回ログイン時に信頼スコア再計算ジョブを作成
+          try {
+            await db.insert(schema.userTrustJob).values({
+              id: randomUUID(),
+              userId: user.id,
+              status: 'queued',
+              createdAt: new Date(),
+            });
+            console.log(`Trust score job created for new user: ${user.id}`);
+          } catch (error) {
+            // ジョブ作成に失敗してもユーザー登録は継続
+            console.error('Failed to create trust score job:', error);
+          }
+        },
       },
     },
   },

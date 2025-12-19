@@ -76,7 +76,7 @@ export function ReviewForm({
     <Card className={cn('w-full max-w-md', className)} {...props}>
       <CardHeader>
         <CardTitle>レビューを投稿</CardTitle>
-        <CardDescription>{partnerName}さんとの取引を評価してください</CardDescription>
+        <CardDescription>{partnerName}さんとのトレードを評価してください</CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -97,7 +97,7 @@ export function ReviewForm({
               id="comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="取引の感想を書いてください..."
+              placeholder="トレードの感想を書いてください..."
               className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               maxLength={500}
             />

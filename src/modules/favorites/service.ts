@@ -5,33 +5,35 @@ import * as schema from '@/db/schema';
 import type { FavoriteCheckResult, UserFavoriteCard, UserFavoriteUser } from './types';
 
 // =====================================
-// お気に入りカード関連
+// お気に入りカード関連（userWantCard テーブルを使用）
+// お気に入り = 欲しいもの として統合
 // =====================================
 
 /**
  * ユーザーのお気に入りカード一覧を取得
+ * ※ userWantCard テーブルから取得（お気に入り = 欲しいもの）
  */
 export async function getUserFavoriteCards(userId: string): Promise<UserFavoriteCard[]> {
   const favoriteCards = await db
     .select({
-      id: schema.userFavoriteCard.id,
-      userId: schema.userFavoriteCard.userId,
-      cardId: schema.userFavoriteCard.cardId,
-      createdAt: schema.userFavoriteCard.createdAt,
+      id: schema.userWantCard.id,
+      userId: schema.userWantCard.userId,
+      cardId: schema.userWantCard.cardId,
+      createdAt: schema.userWantCard.createdAt,
       card: {
         id: schema.card.id,
         name: schema.card.name,
         category: schema.card.category,
-        rarity: schema.card.rarity,
+        description: schema.card.description,
         imageUrl: schema.card.imageUrl,
         createdByUserId: schema.card.createdByUserId,
         createdAt: schema.card.createdAt,
         updatedAt: schema.card.updatedAt,
       },
     })
-    .from(schema.userFavoriteCard)
-    .innerJoin(schema.card, eq(schema.userFavoriteCard.cardId, schema.card.id))
-    .where(eq(schema.userFavoriteCard.userId, userId))
+    .from(schema.userWantCard)
+    .innerJoin(schema.card, eq(schema.userWantCard.cardId, schema.card.id))
+    .where(eq(schema.userWantCard.userId, userId))
     .orderBy(schema.card.name);
 
   return favoriteCards;
@@ -39,6 +41,7 @@ export async function getUserFavoriteCards(userId: string): Promise<UserFavorite
 
 /**
  * カードをお気に入りに追加
+ * ※ userWantCard テーブルに追加（お気に入り = 欲しいもの）
  */
 export async function addFavoriteCard(userId: string, cardId: string): Promise<UserFavoriteCard> {
   // カードが存在するか確認
@@ -51,57 +54,61 @@ export async function addFavoriteCard(userId: string, cardId: string): Promise<U
   // 既にお気に入りに追加済みか確認
   const existing = await db
     .select()
-    .from(schema.userFavoriteCard)
-    .where(
-      and(eq(schema.userFavoriteCard.userId, userId), eq(schema.userFavoriteCard.cardId, cardId))
-    )
+    .from(schema.userWantCard)
+    .where(and(eq(schema.userWantCard.userId, userId), eq(schema.userWantCard.cardId, cardId)))
     .limit(1);
 
   if (existing[0]) {
     // 既に存在する場合はそのまま返す
     return {
-      ...existing[0],
+      id: existing[0].id,
+      userId: existing[0].userId,
+      cardId: existing[0].cardId,
+      createdAt: existing[0].createdAt,
       card: card[0],
     };
   }
 
-  // 新規作成
+  // 新規作成（priority: 0 でデフォルト追加）
   const newRecord = {
     id: randomUUID(),
     userId,
     cardId,
+    priority: 0,
     createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
-  await db.insert(schema.userFavoriteCard).values(newRecord);
+  await db.insert(schema.userWantCard).values(newRecord);
 
   return {
-    ...newRecord,
+    id: newRecord.id,
+    userId: newRecord.userId,
+    cardId: newRecord.cardId,
+    createdAt: newRecord.createdAt,
     card: card[0],
   };
 }
 
 /**
  * カードをお気に入りから削除
+ * ※ userWantCard テーブルから削除（お気に入り = 欲しいもの）
  */
 export async function removeFavoriteCard(userId: string, cardId: string): Promise<void> {
   await db
-    .delete(schema.userFavoriteCard)
-    .where(
-      and(eq(schema.userFavoriteCard.userId, userId), eq(schema.userFavoriteCard.cardId, cardId))
-    );
+    .delete(schema.userWantCard)
+    .where(and(eq(schema.userWantCard.userId, userId), eq(schema.userWantCard.cardId, cardId)));
 }
 
 /**
  * カードがお気に入りに追加されているか確認
+ * ※ userWantCard テーブルを確認（お気に入り = 欲しいもの）
  */
 export async function isCardFavorited(userId: string, cardId: string): Promise<boolean> {
   const existing = await db
-    .select({ id: schema.userFavoriteCard.id })
-    .from(schema.userFavoriteCard)
-    .where(
-      and(eq(schema.userFavoriteCard.userId, userId), eq(schema.userFavoriteCard.cardId, cardId))
-    )
+    .select({ id: schema.userWantCard.id })
+    .from(schema.userWantCard)
+    .where(and(eq(schema.userWantCard.userId, userId), eq(schema.userWantCard.cardId, cardId)))
     .limit(1);
 
   return existing.length > 0;
@@ -242,6 +249,7 @@ export async function isUserFavorited(userId: string, favoriteUserId: string): P
 
 /**
  * 複数のカード/ユーザーのお気に入り状態を一括確認
+ * ※ カードのお気に入りは userWantCard テーブルを確認（お気に入り = 欲しいもの）
  */
 export async function checkFavorites(
   userId: string,
@@ -253,16 +261,13 @@ export async function checkFavorites(
     users: {},
   };
 
-  // カードのお気に入り状態を取得
+  // カードのお気に入り状態を取得（userWantCard テーブルから）
   if (cardIds.length > 0) {
     const favoriteCards = await db
-      .select({ cardId: schema.userFavoriteCard.cardId })
-      .from(schema.userFavoriteCard)
+      .select({ cardId: schema.userWantCard.cardId })
+      .from(schema.userWantCard)
       .where(
-        and(
-          eq(schema.userFavoriteCard.userId, userId),
-          inArray(schema.userFavoriteCard.cardId, cardIds)
-        )
+        and(eq(schema.userWantCard.userId, userId), inArray(schema.userWantCard.cardId, cardIds))
       );
 
     const favoriteCardIds = new Set(favoriteCards.map((fc) => fc.cardId));

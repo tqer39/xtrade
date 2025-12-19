@@ -31,7 +31,9 @@ describe('ReviewForm', () => {
     it('取引相手の名前を含む説明を表示する', () => {
       render(<ReviewForm {...defaultProps} />);
 
-      expect(screen.getByText('テストユーザーさんとの取引を評価してください')).toBeInTheDocument();
+      expect(
+        screen.getByText('テストユーザーさんとのトレードを評価してください')
+      ).toBeInTheDocument();
     });
 
     it('評価ラベルを表示する', () => {

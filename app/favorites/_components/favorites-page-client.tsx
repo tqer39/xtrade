@@ -42,10 +42,14 @@ function FavoriteCardItem({
           )}
           <div className="flex-1 min-w-0">
             <p className="font-medium truncate">{card.name}</p>
-            <div className="flex flex-wrap gap-1 mt-1">
-              <Badge variant="secondary">{card.category}</Badge>
-              {card.rarity && <Badge variant="outline">{card.rarity}</Badge>}
-            </div>
+            {card.category && (
+              <div className="flex flex-wrap gap-1 mt-1">
+                <Badge variant="secondary">{card.category}</Badge>
+              </div>
+            )}
+            {card.description && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{card.description}</p>
+            )}
           </div>
           <FavoriteButton isFavorited={true} onToggle={() => onRemove(favoriteCard.cardId)} />
         </div>
@@ -96,6 +100,7 @@ function FavoriteUserItem({
           <FavoriteButton
             isFavorited={true}
             onToggle={() => onRemove(favoriteUser.favoriteUserId)}
+            iconType="star"
           />
         </div>
       </CardContent>
@@ -143,7 +148,7 @@ export function FavoritesPageClient() {
         <TabsList className="mb-4">
           <TabsTrigger value="cards" className="gap-2">
             <span>🃏</span>
-            カード ({favoriteCards.length})
+            アイテム ({favoriteCards.length})
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2">
             <User className="w-4 h-4" />
@@ -161,9 +166,9 @@ export function FavoritesPageClient() {
           ) : favoriteCards.length === 0 ? (
             <div className="text-center py-12">
               <Heart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">お気に入りのカードはまだありません</p>
+              <p className="text-muted-foreground">お気に入りのアイテムはまだありません</p>
               <p className="text-sm text-muted-foreground mt-2">
-                検索結果やマッチング画面からカードをお気に入りに追加できます
+                検索結果やマッチング画面からアイテムをお気に入りに追加できます
               </p>
             </div>
           ) : (

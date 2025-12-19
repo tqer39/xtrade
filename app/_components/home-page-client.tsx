@@ -1,78 +1,161 @@
 'use client';
 
-import { ImageIcon, Plus, Search } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Gift,
+  ImageIcon,
+  Search,
+  User,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { LoginButton, UserMenu } from '@/components/auth';
-import { Footer } from '@/components/layout';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import { FavoriteButton } from '@/components/favorites/favorite-button';
+import { Footer, Header } from '@/components/layout';
+import { TrustBadge } from '@/components/trust/trust-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLatestCards } from '@/hooks/use-latest-cards';
-import { useMyCards } from '@/hooks/use-my-cards';
-import { useMySets } from '@/hooks/use-my-sets';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ViewToggle } from '@/components/view-toggle';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useLatestItems } from '@/hooks/use-latest-items';
+import { useViewPreference } from '@/hooks/use-view-preference';
 import { useSession } from '@/lib/auth-client';
-import { CardListItem } from './card-list-item';
-import { CardOwnerList } from './card-owner-list';
-import { SetDetailModal } from './set-detail-modal';
-import { SetListItem } from './set-list-item';
+import type { TrustGrade } from '@/modules/trust/types';
 
 export function HomePageClient() {
-  const router = useRouter();
   const { data: session, isPending: isSessionPending } = useSession();
-  const { haveCards, wantCards, isLoading, error, refetch } = useMyCards();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // URLからページ番号と検索クエリを取得
+  const initialPage = parseInt(searchParams.get('p') ?? '1', 10);
+  const initialQuery = searchParams.getAll('q').join(' ');
+
+  // 検索入力値とデバウンス
+  const [searchInput, setSearchInput] = useState(initialQuery);
+  const debouncedSearch = useDebounce(searchInput, 500);
+
   const {
-    sets,
-    isLoading: isSetsLoading,
-    error: setsError,
-    createSet,
-    updateSet,
-    deleteSet,
-    getSetDetail,
-    removeCardFromSet,
-    refetch: refetchSets,
-  } = useMySets();
-  const { latestCards, isLoading: isLatestLoading } = useLatestCards(20);
-  const [selectedSetId, setSelectedSetId] = useState<string | null>(null);
-  const [isSetDetailOpen, setIsSetDetailOpen] = useState(false);
-  const [newSetName, setNewSetName] = useState('');
-  const [isCreatingSet, setIsCreatingSet] = useState(false);
-  const [setDetailKey, setSetDetailKey] = useState(0);
-  const [selectedCardForOwners, setSelectedCardForOwners] = useState<string | null>(null);
+    latestItems,
+    isLoading: isLatestLoading,
+    error,
+    page,
+    totalPages,
+    setPage,
+    setQuery,
+    refetch,
+  } = useLatestItems({ limit: 12, initialPage });
 
-  const handleSelectSet = (setId: string) => {
-    setSelectedSetId(setId);
-    setIsSetDetailOpen(true);
-  };
+  // デバウンスされた検索値を反映し、URLを更新
+  useEffect(() => {
+    setQuery(debouncedSearch);
 
-  const handleCreateSet = async () => {
-    if (!newSetName.trim()) return;
-    setIsCreatingSet(true);
-    try {
-      const newSet = await createSet(newSetName.trim());
-      setNewSetName('');
-      setSelectedSetId(newSet.id);
-      setIsSetDetailOpen(true);
-    } finally {
-      setIsCreatingSet(false);
+    // URLを更新
+    const params = new URLSearchParams();
+
+    // view パラメータを保持
+    const currentView = searchParams.get('view');
+    if (currentView) {
+      params.set('view', currentView);
     }
+
+    // 検索クエリをスペースで分割して複数の q パラメータに設定
+    const keywords = debouncedSearch.trim().split(/\s+/).filter(Boolean);
+    for (const keyword of keywords) {
+      params.append('q', keyword);
+    }
+
+    // 検索クエリが変更されていない場合のみページ番号を維持
+    const previousQuery = searchParams.getAll('q').join(' ');
+    const newQuery = debouncedSearch.trim();
+    if (previousQuery === newQuery) {
+      const currentPage = searchParams.get('p');
+      if (currentPage && currentPage !== '1') {
+        params.set('p', currentPage);
+      }
+    }
+
+    const queryString = params.toString();
+    router.replace(queryString ? `/?${queryString}` : '/', { scroll: false });
+  }, [debouncedSearch, setQuery, router, searchParams]);
+
+  // ページ変更時にURLを更新
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    const params = new URLSearchParams(searchParams.toString());
+    if (newPage === 1) {
+      params.delete('p');
+    } else {
+      params.set('p', newPage.toString());
+    }
+    const queryString = params.toString();
+    router.push(queryString ? `/?${queryString}` : '/', { scroll: false });
   };
 
-  // セットへのカード追加は検索ページへ遷移
-  const handleAddCardToSet = (setId: string) => {
-    router.push(`/cards/search?mode=set&setId=${setId}&returnTo=/`);
-  };
+  const { viewMode, setViewMode, isHydrated } = useViewPreference();
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  const [favoriteStates, setFavoriteStates] = useState<Record<string, boolean>>({});
+
+  // お気に入り状態を一括取得
+  useEffect(() => {
+    if (!session?.user || latestItems.length === 0) return;
+
+    const cardIds = latestItems.map((card) => card.id);
+    fetch('/api/me/favorites/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cardIds, userIds: [] }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.cards) {
+          setFavoriteStates(data.cards);
+        }
+      })
+      .catch(console.error);
+  }, [session?.user, latestItems]);
+
+  // お気に入りトグル
+  const toggleFavorite = useCallback(
+    async (cardId: string) => {
+      if (!session?.user) return;
+
+      const isFavorited = favoriteStates[cardId];
+      // 楽観的更新
+      setFavoriteStates((prev) => ({ ...prev, [cardId]: !isFavorited }));
+
+      try {
+        if (isFavorited) {
+          await fetch(`/api/me/favorites/cards?cardId=${cardId}`, { method: 'DELETE' });
+        } else {
+          await fetch('/api/me/favorites/cards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cardId }),
+          });
+        }
+      } catch {
+        // エラー時は元に戻す
+        setFavoriteStates((prev) => ({ ...prev, [cardId]: isFavorited }));
+      }
+    },
+    [session?.user, favoriteStates]
+  );
 
   // 広告スロット ID（環境変数から取得）
   const adSlot = process.env.NEXT_PUBLIC_ADSENSE_SLOT_FOOTER;
 
   if (isSessionPending) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4">
         <Skeleton className="h-8 w-48 mb-6" />
         <Skeleton className="h-10 w-full mb-4" />
         <div className="space-y-3">
@@ -88,11 +171,8 @@ export function HomePageClient() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">xtrade</h1>
-          <UserMenu />
-        </div>
+      <div className="container mx-auto px-4 py-4">
+        <Header />
         <div className="text-center py-12">
           <p className="text-destructive mb-4">エラーが発生しました: {error.message}</p>
           <Button onClick={() => refetch()}>再読み込み</Button>
@@ -103,246 +183,330 @@ export function HomePageClient() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="container mx-auto px-4 py-8 flex-1">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">xtrade</h1>
-          <UserMenu />
-        </div>
+      <div className="container mx-auto px-4 py-4 flex-1">
+        {/* ヘッダー */}
+        <Header />
 
-        {/* 未ログイン時のデフォルト表示 */}
-        {!isLoggedIn && (
-          <div className="mb-6 space-y-6">
-            <div>
-              <Button asChild className="gap-2" size="lg">
-                <Link href="/cards/search">
-                  <Search className="h-4 w-4" />
-                  カードを検索
-                </Link>
-              </Button>
-              <p className="mt-2 text-sm text-muted-foreground">
-                カードを追加・管理するにはログインが必要です
-              </p>
-            </div>
+        {/* 最近登録されたアイテム一覧 */}
+        <div className="mb-8">
+          <h2 className="text-lg font-medium mb-3">最近登録されたアイテム</h2>
 
-            {/* カード所有者一覧表示 */}
-            {selectedCardForOwners ? (
-              <CardOwnerList
-                cardId={selectedCardForOwners}
-                onBack={() => setSelectedCardForOwners(null)}
-                isLoggedIn={false}
+          {/* インライン検索フォーム + ビュー切り替え */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="アイテム名で検索..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="pl-9 pr-9"
               />
-            ) : (
-              <div>
-                <h2 className="text-lg font-medium mb-3">最近登録されたカード</h2>
-                {isLatestLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((key) => (
-                      <Skeleton key={key} className="h-32 w-full" />
-                    ))}
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {isHydrated && <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />}
+          </div>
+          {isLatestLoading ? (
+            <div
+              className={
+                !isHydrated || viewMode === 'grid'
+                  ? 'columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-0.5'
+                  : 'space-y-2'
+              }
+            >
+              {Array.from({ length: 8 }, (_, i) => `skeleton-${i}`).map((key) => (
+                <Skeleton
+                  key={key}
+                  className={
+                    !isHydrated || viewMode === 'grid'
+                      ? 'aspect-[3/4] w-full mb-0.5 rounded-sm'
+                      : 'h-20 w-full'
+                  }
+                />
+              ))}
+            </div>
+          ) : latestItems.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              {searchInput
+                ? `「${searchInput}」に一致するアイテムが見つかりませんでした`
+                : 'まだアイテムが登録されていません'}
+            </p>
+          ) : !isHydrated || viewMode === 'grid' ? (
+            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-0.5">
+              {latestItems.map((card) => (
+                <Link
+                  key={card.id}
+                  href={`/items/${card.id}`}
+                  className="relative w-full mb-0.5 rounded-sm overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110 block"
+                  onMouseEnter={() => setHoveredCardId(card.id)}
+                  onMouseLeave={() => setHoveredCardId(null)}
+                >
+                  <div className="relative w-full">
+                    {card.imageUrl ? (
+                      <img
+                        src={card.imageUrl}
+                        alt={card.name}
+                        className="w-full h-auto object-cover"
+                      />
+                    ) : (
+                      <div className="aspect-[3/4] flex items-center justify-center bg-zinc-800">
+                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
                   </div>
-                ) : latestCards.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    まだカードが登録されていません
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {latestCards.map((card) => (
-                      <Card
-                        key={card.id}
-                        className="cursor-pointer transition-colors hover:bg-accent"
-                        onClick={() => setSelectedCardForOwners(card.id)}
-                      >
-                        <CardContent className="p-3">
-                          <div className="aspect-square overflow-hidden rounded-lg bg-muted mb-2">
-                            {card.imageUrl ? (
-                              <img
-                                src={card.imageUrl}
-                                alt={card.name}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                              </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+
+                  {/* ホバー時の欲しいものオーバーレイ */}
+                  {hoveredCardId === card.id &&
+                    card.creator?.wantCards &&
+                    card.creator.wantCards.length > 0 && (
+                      <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center p-2 pointer-events-none">
+                        <div className="flex items-center gap-1 text-white text-xs mb-2">
+                          <Gift className="h-3.5 w-3.5 text-pink-400" />
+                          <span>欲しいもの</span>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-1">
+                          {card.creator.wantCards.slice(0, 3).map((wantCard) => (
+                            <div
+                              key={wantCard.cardId}
+                              className="w-10 h-10 rounded overflow-hidden bg-zinc-700"
+                            >
+                              {wantCard.cardImageUrl ? (
+                                <img
+                                  src={wantCard.cardImageUrl}
+                                  alt={wantCard.cardName}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <ImageIcon className="h-4 w-4 text-zinc-500" />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        {card.creator.wantCards.length > 0 && (
+                          <p className="text-white text-[10px] mt-1.5 text-center truncate max-w-full px-1">
+                            {card.creator.wantCards[0].cardName}
+                            {card.creator.wantCards.length > 1 &&
+                              ` 他${card.creator.wantCards.length - 1}件`}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                  {/* 作成者の信頼性スコア（左上） */}
+                  {card.creator && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="absolute top-1 left-1 flex items-center gap-1 bg-black/60 rounded-full pl-0.5 pr-1.5 py-0.5 backdrop-blur-sm">
+                            <div className="h-4 w-4 rounded-full overflow-hidden bg-zinc-700 flex items-center justify-center">
+                              {card.creator.image ? (
+                                <img
+                                  src={card.creator.image}
+                                  alt={card.creator.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-2.5 w-2.5 text-zinc-400" />
+                              )}
+                            </div>
+                            <TrustBadge grade={card.creator.trustGrade as TrustGrade} size="sm" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="max-w-[200px]">
+                          <p className="font-medium">
+                            {card.creator.twitterUsername
+                              ? `@${card.creator.twitterUsername}`
+                              : card.creator.name}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {/* お気に入りボタン（右上） */}
+                  {session?.user && (
+                    <div className="absolute top-1 right-1">
+                      <FavoriteButton
+                        isFavorited={favoriteStates[card.id] ?? false}
+                        onToggle={() => toggleFavorite(card.id)}
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-2">
+                    <p className="font-medium text-white text-xs truncate drop-shadow-lg">
+                      {card.name}
+                    </p>
+                    {card.category && (
+                      <span className="text-[10px] text-zinc-300 bg-black/40 px-1.5 py-0.5 rounded">
+                        {card.category}
+                      </span>
+                    )}
+                    {card.description && (
+                      <p className="text-[10px] text-zinc-300 mt-1 line-clamp-2">
+                        {card.description.length > 80
+                          ? `${card.description.slice(0, 80)}...`
+                          : card.description}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {latestItems.map((card) => (
+                <Link key={card.id} href={`/items/${card.id}`}>
+                  <Card className="cursor-pointer transition-colors hover:bg-accent rounded-none border-x-0 first:border-t-0">
+                    <CardContent className="p-2">
+                      <div className="flex items-start gap-2">
+                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden bg-muted">
+                          {card.imageUrl ? (
+                            <img
+                              src={card.imageUrl}
+                              alt={card.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium truncate text-sm">{card.name}</p>
+                            {card.category && (
+                              <Badge variant="secondary" className="text-xs shrink-0">
+                                {card.category}
+                              </Badge>
                             )}
                           </div>
-                          <p className="font-medium text-sm truncate">{card.name}</p>
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            {card.category}
-                          </Badge>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        <Tabs defaultValue="have" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="have">
-              持っている {isLoggedIn && `(${haveCards.length})`}
-            </TabsTrigger>
-            <TabsTrigger value="want">欲しい {isLoggedIn && `(${wantCards.length})`}</TabsTrigger>
-            <TabsTrigger value="sets">セット {isLoggedIn && `(${sets.length})`}</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="have" className="mt-4">
-            <div className="mb-4">
-              <Button asChild className="gap-2">
-                <Link href={isLoggedIn ? '/cards/search?mode=have&returnTo=/' : '/cards/search'}>
-                  {isLoggedIn ? (
-                    <>
-                      <Plus className="h-4 w-4" />
-                      カードを追加
-                    </>
-                  ) : (
-                    <>
-                      <Search className="h-4 w-4" />
-                      カードを検索
-                    </>
-                  )}
+                          {/* 出品者の欲しいもの */}
+                          {card.creator &&
+                            (card.creator.wantText ||
+                              (card.creator.wantCards && card.creator.wantCards.length > 0)) && (
+                              <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                                <Gift className="h-3 w-3 shrink-0 text-pink-500" />
+                                <span className="truncate">
+                                  {card.creator.wantText ||
+                                    card.creator.wantCards
+                                      ?.slice(0, 2)
+                                      .map((wc) => wc.cardName)
+                                      .join('、')}
+                                </span>
+                              </div>
+                            )}
+                        </div>
+                        {/* 作成者の信頼性スコア */}
+                        {card.creator && (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="h-6 w-6 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                              {card.creator.image ? (
+                                <img
+                                  src={card.creator.image}
+                                  alt={card.creator.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-3 w-3 text-muted-foreground" />
+                              )}
+                            </div>
+                            <TrustBadge
+                              grade={card.creator.trustGrade as TrustGrade}
+                              size="sm"
+                              showScore
+                              score={card.creator.trustScore}
+                            />
+                          </div>
+                        )}
+                        {/* お気に入りボタン */}
+                        {session?.user && (
+                          <FavoriteButton
+                            isFavorited={favoriteStates[card.id] ?? false}
+                            onToggle={() => toggleFavorite(card.id)}
+                            size="sm"
+                          />
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
-              </Button>
+              ))}
             </div>
-            {!isLoggedIn ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
-                  ログインすると、持っているカードを登録・管理できます
-                </p>
-                <LoginButton />
-              </div>
-            ) : isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-            ) : haveCards.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                まだカードを登録していません
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {haveCards.map((item) => (
-                  <CardListItem key={item.id} item={item} type="have" />
-                ))}
-              </div>
-            )}
-          </TabsContent>
+          )}
 
-          <TabsContent value="want" className="mt-4">
-            <div className="mb-4">
-              <Button asChild className="gap-2">
-                <Link href={isLoggedIn ? '/cards/search?mode=want&returnTo=/' : '/cards/search'}>
-                  {isLoggedIn ? (
-                    <>
-                      <Plus className="h-4 w-4" />
-                      カードを追加
-                    </>
-                  ) : (
-                    <>
-                      <Search className="h-4 w-4" />
-                      カードを検索
-                    </>
-                  )}
-                </Link>
+          {/* ページネーション */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1 mt-4">
+              {/* 最初へ << */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(1)}
+                disabled={page <= 1}
+                className="h-8 w-8"
+              >
+                <ChevronsLeft className="h-4 w-4" />
               </Button>
-            </div>
-            {!isLoggedIn ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
-                  ログインすると、欲しいカードを登録・管理できます
-                </p>
-                <LoginButton />
-              </div>
-            ) : isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-            ) : wantCards.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                まだ欲しいカードを登録していません
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {wantCards.map((item) => (
-                  <CardListItem key={item.id} item={item} type="want" />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="sets" className="mt-4">
-            {!isLoggedIn ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
-                  ログインすると、セットを作成・管理できます
-                </p>
-                <LoginButton />
-              </div>
-            ) : (
-              <>
-                <div className="mb-4 flex gap-2">
-                  <Input
-                    placeholder="新しいセット名"
-                    value={newSetName}
-                    onChange={(e) => setNewSetName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateSet()}
-                    className="max-w-xs"
-                  />
+              {/* 前へ < */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page <= 1}
+                className="h-8 w-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              {/* ページ番号ボタン（現在ページ ±2） */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => p >= Math.max(1, page - 2) && p <= Math.min(totalPages, page + 2))
+                .map((p) => (
                   <Button
-                    onClick={handleCreateSet}
-                    disabled={!newSetName.trim() || isCreatingSet}
-                    className="gap-2"
+                    key={p}
+                    variant={p === page ? 'default' : 'outline'}
+                    size="icon"
+                    onClick={() => handlePageChange(p)}
+                    disabled={p === page}
+                    className="h-8 w-8"
                   >
-                    <Plus className="h-4 w-4" />
-                    作成
+                    {p}
                   </Button>
-                </div>
-                {isSetsLoading ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-20 w-full" />
-                    <Skeleton className="h-20 w-full" />
-                  </div>
-                ) : setsError ? (
-                  <div className="text-center py-8">
-                    <p className="text-destructive mb-4">エラー: {setsError.message}</p>
-                    <Button onClick={() => refetchSets()}>再読み込み</Button>
-                  </div>
-                ) : sets.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    まだセットを作成していません
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {sets.map((set) => (
-                      <SetListItem
-                        key={set.id}
-                        set={set}
-                        onSelect={handleSelectSet}
-                        onDelete={deleteSet}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
-
-        <SetDetailModal
-          key={setDetailKey}
-          open={isSetDetailOpen}
-          onOpenChange={setIsSetDetailOpen}
-          setId={selectedSetId}
-          getSetDetail={getSetDetail}
-          updateSet={updateSet}
-          removeCardFromSet={removeCardFromSet}
-          onAddCard={handleAddCardToSet}
-        />
+                ))}
+              {/* 次へ > */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page >= totalPages}
+                className="h-8 w-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              {/* 最後へ >> */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={page >= totalPages}
+                className="h-8 w-8"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* フッター（ゲストユーザーにのみ広告表示） */}

@@ -1,13 +1,16 @@
 'use client';
 
+import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { signOut, useSession } from '@/lib/auth-client';
+import { useSession } from '@/lib/auth-client';
+import { XIcon } from '../icons/x-icon';
 import { LoginButton } from './login-button';
 
 interface UserData {
   role: string;
+  twitterUsername?: string;
 }
 
 /**
@@ -40,29 +43,37 @@ export function UserMenu() {
   }
 
   const isAdmin = userData?.role === 'admin';
+  const twitterUsername = userData?.twitterUsername;
 
   return (
-    <div className="flex items-center gap-3">
-      {session.user.image && (
-        <img
-          src={session.user.image}
-          alt={session.user.name || 'User'}
-          className="w-10 h-10 rounded-full"
-        />
-      )}
-      <div>
-        <div className="font-semibold">{session.user.name}</div>
-        <div className="flex gap-2 mt-1">
-          {isAdmin && (
-            <Button variant="default" size="sm" asChild className="text-xs">
-              <Link href="/admin/users">管理画面</Link>
-            </Button>
+    <div className="flex items-center gap-2">
+      <Link href={`/users/${session.user.id}`} className="flex items-center gap-2 hover:opacity-80">
+        {session.user.image && (
+          <img
+            src={session.user.image}
+            alt={session.user.name || 'User'}
+            className="w-8 h-8 rounded-full"
+          />
+        )}
+        <div className="flex flex-col items-start">
+          <span className="text-sm">{session.user.name}</span>
+          {twitterUsername && (
+            <span className="text-xs text-muted-foreground flex items-center gap-0.5">
+              <XIcon className="h-3 w-3" />@{twitterUsername}
+            </span>
           )}
-          <Button variant="outline" size="sm" onClick={() => signOut()} className="text-xs">
-            ログアウト
-          </Button>
         </div>
-      </div>
+      </Link>
+      {isAdmin && (
+        <Button variant="default" size="sm" asChild className="text-xs">
+          <Link href="/admin/users">管理画面</Link>
+        </Button>
+      )}
+      <Link href="/settings" title="設定">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Settings className="h-4 w-4" />
+        </Button>
+      </Link>
     </div>
   );
 }

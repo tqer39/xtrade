@@ -117,45 +117,68 @@ export async function findMatches(
       )
     );
 
+  // 候補ユーザーIDの配列
+  const candidateIds = candidateUsers.map((u) => u.id);
+
+  // 相手が持っていて自分が欲しいカードを一括取得
+  const allTheyHaveIWant =
+    myWantCardIds.length > 0 && candidateIds.length > 0
+      ? await db
+          .select({
+            userId: schema.userHaveCard.userId,
+            cardId: schema.userHaveCard.cardId,
+            cardName: schema.card.name,
+          })
+          .from(schema.userHaveCard)
+          .innerJoin(schema.card, eq(schema.userHaveCard.cardId, schema.card.id))
+          .where(
+            and(
+              inArray(schema.userHaveCard.userId, candidateIds),
+              inArray(schema.userHaveCard.cardId, myWantCardIds)
+            )
+          )
+      : [];
+
+  // 自分が持っていて相手が欲しいカードを一括取得
+  const allIHaveTheyWant =
+    myHaveCardIds.length > 0 && candidateIds.length > 0
+      ? await db
+          .select({
+            userId: schema.userWantCard.userId,
+            cardId: schema.userWantCard.cardId,
+            cardName: schema.card.name,
+          })
+          .from(schema.userWantCard)
+          .innerJoin(schema.card, eq(schema.userWantCard.cardId, schema.card.id))
+          .where(
+            and(
+              inArray(schema.userWantCard.userId, candidateIds),
+              inArray(schema.userWantCard.cardId, myHaveCardIds)
+            )
+          )
+      : [];
+
+  // ユーザーIDごとにグルーピング
+  const theyHaveIWantMap = new Map<string, { cardId: string; cardName: string }[]>();
+  for (const item of allTheyHaveIWant) {
+    const existing = theyHaveIWantMap.get(item.userId) ?? [];
+    existing.push({ cardId: item.cardId, cardName: item.cardName });
+    theyHaveIWantMap.set(item.userId, existing);
+  }
+
+  const iHaveTheyWantMap = new Map<string, { cardId: string; cardName: string }[]>();
+  for (const item of allIHaveTheyWant) {
+    const existing = iHaveTheyWantMap.get(item.userId) ?? [];
+    existing.push({ cardId: item.cardId, cardName: item.cardName });
+    iHaveTheyWantMap.set(item.userId, existing);
+  }
+
   // 各候補ユーザーについてマッチング詳細を計算
   const matches: Match[] = [];
 
   for (const candidateUser of candidateUsers) {
-    // 相手が持っていて自分が欲しいカード
-    const theyHaveIWant =
-      myWantCardIds.length > 0
-        ? await db
-            .select({
-              cardId: schema.userHaveCard.cardId,
-              cardName: schema.card.name,
-            })
-            .from(schema.userHaveCard)
-            .innerJoin(schema.card, eq(schema.userHaveCard.cardId, schema.card.id))
-            .where(
-              and(
-                eq(schema.userHaveCard.userId, candidateUser.id),
-                inArray(schema.userHaveCard.cardId, myWantCardIds)
-              )
-            )
-        : [];
-
-    // 自分が持っていて相手が欲しいカード
-    const iHaveTheyWant =
-      myHaveCardIds.length > 0
-        ? await db
-            .select({
-              cardId: schema.userWantCard.cardId,
-              cardName: schema.card.name,
-            })
-            .from(schema.userWantCard)
-            .innerJoin(schema.card, eq(schema.userWantCard.cardId, schema.card.id))
-            .where(
-              and(
-                eq(schema.userWantCard.userId, candidateUser.id),
-                inArray(schema.userWantCard.cardId, myHaveCardIds)
-              )
-            )
-        : [];
+    const theyHaveIWant = theyHaveIWantMap.get(candidateUser.id) ?? [];
+    const iHaveTheyWant = iHaveTheyWantMap.get(candidateUser.id) ?? [];
 
     // どちらも空の場合はスキップ
     if (theyHaveIWant.length === 0 && iHaveTheyWant.length === 0) {

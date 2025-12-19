@@ -35,7 +35,7 @@ vi.mock('@/db/schema', () => ({
     id: 'card.id',
     name: 'card.name',
     category: 'card.category',
-    rarity: 'card.rarity',
+    description: 'card.description',
     imageUrl: 'card.imageUrl',
     createdByUserId: 'card.createdByUserId',
     createdAt: 'card.createdAt',
@@ -53,7 +53,6 @@ vi.mock('@/db/schema', () => ({
     id: 'userHaveCard.id',
     userId: 'userHaveCard.userId',
     cardId: 'userHaveCard.cardId',
-    quantity: 'userHaveCard.quantity',
     createdAt: 'userHaveCard.createdAt',
     updatedAt: 'userHaveCard.updatedAt',
   },
@@ -88,6 +87,7 @@ const {
   removeWantCard,
   getLatestCards,
   getCardOwners,
+  getUserCategories,
 } = await import('../service');
 
 describe('cards/service', () => {
@@ -173,7 +173,7 @@ describe('cards/service', () => {
       const input = {
         name: 'New Card',
         category: 'common',
-        rarity: 'R',
+        description: 'テスト用の説明',
         imageUrl: 'https://example.com/image.png',
       };
 
@@ -181,7 +181,7 @@ describe('cards/service', () => {
 
       expect(result.name).toBe('New Card');
       expect(result.category).toBe('common');
-      expect(result.rarity).toBe('R');
+      expect(result.description).toBe('テスト用の説明');
       expect(result.imageUrl).toBe('https://example.com/image.png');
       expect(result.createdByUserId).toBe('user-1');
       expect(result.id).toBeDefined();
@@ -197,7 +197,7 @@ describe('cards/service', () => {
       const result = await createCard(input, 'user-1');
 
       expect(result.name).toBe('Simple Card');
-      expect(result.rarity).toBeNull();
+      expect(result.description).toBeNull();
       expect(result.imageUrl).toBeNull();
     });
   });
@@ -228,7 +228,6 @@ describe('cards/service', () => {
           id: 'have-1',
           userId: 'user-1',
           cardId: 'card-1',
-          quantity: 2,
           card: { id: 'card-1', name: 'Card A', category: 'common' },
         },
       ];
@@ -266,22 +265,9 @@ describe('cards/service', () => {
       // getCardById が null を返すようにモック
       mockLimit.mockResolvedValue([]);
 
-      await expect(
-        upsertHaveCard('user-1', { cardId: 'non-existent', quantity: 1 })
-      ).rejects.toThrow('Card not found');
-    });
-
-    it('quantity が 0 の場合は削除', async () => {
-      // getCardById がカードを返すようにモック
-      mockLimit.mockResolvedValueOnce([{ id: 'card-1', name: 'Test' }]);
-
-      const result = await upsertHaveCard('user-1', {
-        cardId: 'card-1',
-        quantity: 0,
-      });
-
-      expect(result).toBeNull();
-      expect(mockDelete).toHaveBeenCalled();
+      await expect(upsertHaveCard('user-1', { cardId: 'non-existent' })).rejects.toThrow(
+        'Card not found'
+      );
     });
 
     it('新規レコードを作成', async () => {
@@ -292,30 +278,24 @@ describe('cards/service', () => {
 
       const result = await upsertHaveCard('user-1', {
         cardId: 'card-1',
-        quantity: 2,
       });
 
       expect(result).not.toBeNull();
-      expect(result?.quantity).toBe(2);
       expect(mockValues).toHaveBeenCalled();
     });
 
-    it('既存レコードを更新', async () => {
+    it('既存レコードがある場合はそのまま返す', async () => {
       // getCardById がカードを返す
       mockLimit.mockResolvedValueOnce([{ id: 'card-1', name: 'Test' }]);
       // 既存レコードあり
-      mockLimit.mockResolvedValueOnce([
-        { id: 'have-1', userId: 'user-1', cardId: 'card-1', quantity: 1 },
-      ]);
+      mockLimit.mockResolvedValueOnce([{ id: 'have-1', userId: 'user-1', cardId: 'card-1' }]);
 
       const result = await upsertHaveCard('user-1', {
         cardId: 'card-1',
-        quantity: 5,
       });
 
       expect(result).not.toBeNull();
-      expect(result?.quantity).toBe(5);
-      expect(mockSet).toHaveBeenCalled();
+      expect(result?.id).toBe('have-1');
     });
   });
 
@@ -417,9 +397,7 @@ describe('cards/service', () => {
 
   describe('getCardOwners', () => {
     it('カード所有者一覧を取得', async () => {
-      const mockOwners = [
-        { userId: 'user-1', name: 'User 1', quantity: 2, trustGrade: 'A', trustScore: 80 },
-      ];
+      const mockOwners = [{ userId: 'user-1', name: 'User 1', trustGrade: 'A', trustScore: 80 }];
       mockWhere.mockReturnValue({
         orderBy: vi.fn().mockResolvedValueOnce(mockOwners),
       });
@@ -438,6 +416,70 @@ describe('cards/service', () => {
       const result = await getCardOwners('card-1');
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('getUserCategories', () => {
+    it('ユーザーのカテゴリ一覧を取得', async () => {
+      const mockSelectDistinct = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi
+              .fn()
+              .mockResolvedValueOnce([{ category: 'カテゴリA' }, { category: 'カテゴリB' }])
+              .mockResolvedValueOnce([{ category: 'カテゴリB' }, { category: 'カテゴリC' }]),
+          }),
+        }),
+      });
+
+      // db.selectDistinct をモック
+      const db = await import('@/db/drizzle');
+      (db.db as unknown as { selectDistinct: typeof mockSelectDistinct }).selectDistinct =
+        mockSelectDistinct;
+
+      const result = await getUserCategories('user-1');
+
+      // 重複を排除してソートされた配列を期待
+      expect(result).toEqual(['カテゴリA', 'カテゴリB', 'カテゴリC']);
+    });
+
+    it('カテゴリがない場合は空配列を返す', async () => {
+      const mockSelectDistinct = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([]),
+          }),
+        }),
+      });
+
+      const db = await import('@/db/drizzle');
+      (db.db as unknown as { selectDistinct: typeof mockSelectDistinct }).selectDistinct =
+        mockSelectDistinct;
+
+      const result = await getUserCategories('user-1');
+
+      expect(result).toEqual([]);
+    });
+
+    it('null カテゴリは除外される', async () => {
+      const mockSelectDistinct = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi
+              .fn()
+              .mockResolvedValueOnce([{ category: 'カテゴリA' }, { category: null }])
+              .mockResolvedValueOnce([{ category: null }]),
+          }),
+        }),
+      });
+
+      const db = await import('@/db/drizzle');
+      (db.db as unknown as { selectDistinct: typeof mockSelectDistinct }).selectDistinct =
+        mockSelectDistinct;
+
+      const result = await getUserCategories('user-1');
+
+      expect(result).toEqual(['カテゴリA']);
     });
   });
 });

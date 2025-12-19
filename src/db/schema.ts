@@ -12,6 +12,7 @@ export const user = pgTable('user', {
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
   twitterUsername: text('twitter_username'), // X ユーザー名（@なし）
+  wantText: text('want_text'), // 欲しいもの自由記述（フリーテキスト）
   role: text('role').default('user').notNull(), // 'admin' | 'user'
   banned: boolean('banned').default(false),
   banReason: text('ban_reason'),
@@ -21,11 +22,15 @@ export const user = pgTable('user', {
   subscriptionPlan: text('subscription_plan').default('free'), // free|basic|premium
   // 信頼スコア関連
   trustScore: integer('trust_score'), // 0〜100（3要素の合計）
-  trustGrade: text('trust_grade'), // S/A/B/C/D/U
-  // スコア内訳
-  xProfileScore: integer('x_profile_score'), // 0〜40（Xプロフィールスコア）
-  behaviorScore: integer('behavior_score'), // 0〜40（xtrade行動スコア）
-  reviewScore: integer('review_score'), // 0〜20（レビュースコア）
+  trustGrade: text('trust_grade'), // S/A/B/C/D/E
+  // スコア内訳（新3軸）
+  twitterScore: integer('twitter_score'), // 0〜40（Twitterアカウント信頼性）
+  totalTradeScore: integer('total_trade_score'), // 0〜40（トータル取引信頼性）
+  recentTradeScore: integer('recent_trade_score'), // 0〜20（直近取引信頼性）
+  // 旧スコア（後方互換性のため一時残す）
+  xProfileScore: integer('x_profile_score'), // 0〜40（Xプロフィールスコア）- 廃止予定
+  behaviorScore: integer('behavior_score'), // 0〜40（xtrade行動スコア）- 廃止予定
+  reviewScore: integer('review_score'), // 0〜20（レビュースコア）- 廃止予定
   trustScoreUpdatedAt: timestamp('trust_score_updated_at'),
   trustScoreRefreshRequestedAt: timestamp('trust_score_refresh_requested_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -213,6 +218,43 @@ export const userTrustJobRelations = relations(userTrustJob, ({ one }) => ({
 }));
 
 // =====================================
+// 信頼スコア履歴
+// =====================================
+
+/**
+ * 信頼スコア履歴テーブル
+ * スコアの推移を記録し、折れ線グラフで可視化
+ */
+export const trustScoreHistory = pgTable(
+  'trust_score_history',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // スコア記録
+    trustScore: integer('trust_score').notNull(),
+    twitterScore: integer('twitter_score').notNull(),
+    totalTradeScore: integer('total_trade_score').notNull(),
+    recentTradeScore: integer('recent_trade_score').notNull(),
+    // 記録理由
+    reason: text('reason'), // "trade_completed", "monthly_update" など
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('trust_score_history_user_id_idx').on(table.userId),
+    index('trust_score_history_created_at_idx').on(table.createdAt),
+  ]
+);
+
+export const trustScoreHistoryRelations = relations(trustScoreHistory, ({ one }) => ({
+  user: one(user, {
+    fields: [trustScoreHistory.userId],
+    references: [user.id],
+  }),
+}));
+
+// =====================================
 // フォトカードマスターデータ
 // =====================================
 
@@ -286,7 +328,7 @@ export const photocardMaster = pgTable(
     releaseDate: text('release_date'), // リリース日
     rarity: text('rarity'), // レアリティ
     imageUrl: text('image_url'),
-    source: text('source').default('seed'), // seed/user/scrape
+    source: text('source').default('seed'), // seed/user
     sourceUrl: text('source_url'), // 参照元URL
     verified: boolean('verified').default(false), // 検証済みフラグ
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -312,24 +354,25 @@ export const seriesMasterRelations = relations(seriesMaster, ({ many }) => ({
 }));
 
 export const photocardMasterRelations = relations(photocardMaster, ({ many }) => ({
-  cards: many(card),
+  items: many(item),
 }));
 
 // =====================================
-// カード関連テーブル
+// アイテム関連テーブル
 // =====================================
 
 /**
- * カードマスターテーブル
+ * アイテムマスターテーブル
  * ユーザーがマニュアルで登録可能、他ユーザーも検索・選択可能
+ * フリーフォーマットでカードに限らず何でも交換可能
  */
-export const card = pgTable(
-  'card',
+export const item = pgTable(
+  'item',
   {
     id: text('id').primaryKey(),
     name: text('name').notNull(),
-    category: text('category').notNull(),
-    rarity: text('rarity'),
+    category: text('category'), // カテゴリは任意
+    description: text('description'), // アイテムの説明
     imageUrl: text('image_url'),
     createdByUserId: text('created_by_user_id').references(() => user.id, {
       onDelete: 'set null',
@@ -345,29 +388,35 @@ export const card = pgTable(
       .notNull(),
   },
   (table) => [
-    index('card_name_idx').on(table.name),
-    index('card_category_idx').on(table.category),
-    index('card_photocard_master_id_idx').on(table.photocardMasterId),
+    index('item_name_idx').on(table.name),
+    index('item_category_idx').on(table.category),
+    index('item_photocard_master_id_idx').on(table.photocardMasterId),
   ]
 );
 
-export const cardRelations = relations(card, ({ one, many }) => ({
+// 後方互換性のためのエイリアス（既存コードで card を使用している場合）
+export const card = item;
+
+export const itemRelations = relations(item, ({ one, many }) => ({
   createdBy: one(user, {
-    fields: [card.createdByUserId],
+    fields: [item.createdByUserId],
     references: [user.id],
   }),
   photocardMaster: one(photocardMaster, {
-    fields: [card.photocardMasterId],
+    fields: [item.photocardMasterId],
     references: [photocardMaster.id],
   }),
-  haveCards: many(userHaveCard),
-  wantCards: many(userWantCard),
+  haveItems: many(userHaveCard),
+  wantItems: many(userWantCard),
   cardSetItems: many(cardSetItem),
   tradeItems: many(tradeItem),
 }));
 
+// 後方互換性のためのエイリアス
+export const cardRelations = itemRelations;
+
 /**
- * ユーザーが持っているカードテーブル
+ * ユーザーが持っているアイテムテーブル
  */
 export const userHaveCard = pgTable(
   'user_have_card',
@@ -376,10 +425,9 @@ export const userHaveCard = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
-    cardId: text('card_id')
+    cardId: text('card_id') // TODO: itemId に変更予定
       .notNull()
-      .references(() => card.id, { onDelete: 'cascade' }),
-    quantity: integer('quantity').default(1).notNull(),
+      .references(() => item.id, { onDelete: 'cascade' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
       .defaultNow()
@@ -405,7 +453,7 @@ export const userHaveCardRelations = relations(userHaveCard, ({ one }) => ({
 }));
 
 /**
- * ユーザーが欲しいカードテーブル
+ * ユーザーが欲しいアイテムテーブル
  */
 export const userWantCard = pgTable(
   'user_want_card',
@@ -414,9 +462,9 @@ export const userWantCard = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
-    cardId: text('card_id')
+    cardId: text('card_id') // TODO: itemId に変更予定
       .notNull()
-      .references(() => card.id, { onDelete: 'cascade' }),
+      .references(() => item.id, { onDelete: 'cascade' }),
     priority: integer('priority').default(0),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
@@ -491,7 +539,6 @@ export const cardSetItem = pgTable(
     cardId: text('card_id')
       .notNull()
       .references(() => card.id, { onDelete: 'cascade' }),
-    quantity: integer('quantity').default(1).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
@@ -531,6 +578,7 @@ export const trade = pgTable(
       onDelete: 'set null',
     }),
     status: text('status').notNull().default('draft'), // draft|proposed|agreed|completed|disputed|canceled|expired
+    statusBeforeCancel: text('status_before_cancel'), // キャンセル前のステータス（取り消し用）
     proposedExpiredAt: timestamp('proposed_expired_at'), // 出品者が仮設定する期限
     agreedExpiredAt: timestamp('agreed_expired_at'), // 合意後の確定期限
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -580,7 +628,6 @@ export const tradeItem = pgTable(
     cardId: text('card_id')
       .notNull()
       .references(() => card.id, { onDelete: 'cascade' }),
-    quantity: integer('quantity').default(1).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
@@ -642,7 +689,7 @@ export const tradeHistoryRelations = relations(tradeHistory, ({ one }) => ({
 // =====================================
 
 /**
- * ユーザーがお気に入りにしたカードテーブル
+ * ユーザーがお気に入りにしたアイテムテーブル
  */
 export const userFavoriteCard = pgTable(
   'user_favorite_card',
@@ -816,76 +863,6 @@ export const userReviewStatsRelations = relations(userReviewStats, ({ one }) => 
   user: one(user, {
     fields: [userReviewStats.userId],
     references: [user.id],
-  }),
-}));
-
-// =====================================
-// スクレイピング関連テーブル
-// =====================================
-
-/**
- * スクレイピングソース定義テーブル
- * 画像収集対象のサイト・API設定を管理
- */
-export const scrapeSource = pgTable(
-  'scrape_source',
-  {
-    id: text('id').primaryKey(),
-    name: text('name').notNull(), // ソース名（例: "pokemon-card-db"）
-    type: text('type').notNull(), // "static" | "llm" | "api"
-    baseUrl: text('base_url').notNull(), // ベースURL
-    category: text('category'), // 対象カテゴリ（例: "ポケモンカード"）
-    groupName: text('group_name'), // 対象グループ（例: "INI"）
-    config: text('config'), // JSON: パーサー設定やプロンプト
-    isActive: boolean('is_active').default(true).notNull(),
-    lastScrapedAt: timestamp('last_scraped_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
-      .defaultNow()
-      .$onUpdate(() => new Date())
-      .notNull(),
-  },
-  (table) => [
-    index('scrape_source_type_idx').on(table.type),
-    index('scrape_source_category_idx').on(table.category),
-    index('scrape_source_is_active_idx').on(table.isActive),
-  ]
-);
-
-/**
- * スクレイピング実行ログテーブル
- * 各実行の結果とエラーを記録
- */
-export const scrapeLog = pgTable(
-  'scrape_log',
-  {
-    id: text('id').primaryKey(),
-    sourceId: text('source_id')
-      .notNull()
-      .references(() => scrapeSource.id, { onDelete: 'cascade' }),
-    status: text('status').notNull(), // "running" | "success" | "failed"
-    itemsFound: integer('items_found'),
-    itemsCreated: integer('items_created'),
-    itemsUpdated: integer('items_updated'),
-    errorMessage: text('error_message'),
-    startedAt: timestamp('started_at').notNull(),
-    finishedAt: timestamp('finished_at'),
-  },
-  (table) => [
-    index('scrape_log_source_id_idx').on(table.sourceId),
-    index('scrape_log_status_idx').on(table.status),
-    index('scrape_log_started_at_idx').on(table.startedAt),
-  ]
-);
-
-export const scrapeSourceRelations = relations(scrapeSource, ({ many }) => ({
-  logs: many(scrapeLog),
-}));
-
-export const scrapeLogRelations = relations(scrapeLog, ({ one }) => ({
-  source: one(scrapeSource, {
-    fields: [scrapeLog.sourceId],
-    references: [scrapeSource.id],
   }),
 }));
 
