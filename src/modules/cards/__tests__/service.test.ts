@@ -88,6 +88,10 @@ const {
   getLatestCards,
   getCardOwners,
   getUserCategories,
+  getLatestCardsWithCreator,
+  getUserListingCards,
+  getCardWithCreator,
+  getCardOwnersWithWantCards,
 } = await import('../service');
 
 describe('cards/service', () => {
@@ -480,6 +484,172 @@ describe('cards/service', () => {
       const result = await getUserCategories('user-1');
 
       expect(result).toEqual(['カテゴリA']);
+    });
+  });
+
+  describe('getLatestCardsWithCreator', () => {
+    it('最新カードを作成者情報付きで取得', async () => {
+      const mockLeftJoin = vi.fn().mockReturnValue({
+        orderBy: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: 'card-1',
+              name: 'Test Card',
+              category: 'common',
+              description: null,
+              imageUrl: null,
+              createdByUserId: 'user-1',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              creator: {
+                id: 'user-1',
+                name: 'Test User',
+                image: null,
+                twitterUsername: 'test',
+                trustScore: 80,
+                trustGrade: 'A',
+              },
+            },
+          ]),
+        }),
+      });
+      mockFrom.mockReturnValue({
+        leftJoin: mockLeftJoin,
+      });
+
+      const result = await getLatestCardsWithCreator(10);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('Test Card');
+      expect(result[0].creator?.name).toBe('Test User');
+    });
+
+    it('作成者情報がない場合は creator が null', async () => {
+      const mockLeftJoin = vi.fn().mockReturnValue({
+        orderBy: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: 'card-1',
+              name: 'Test Card',
+              category: 'common',
+              description: null,
+              imageUrl: null,
+              createdByUserId: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              creator: { id: null, name: null, image: null, twitterUsername: null },
+            },
+          ]),
+        }),
+      });
+      mockFrom.mockReturnValue({
+        leftJoin: mockLeftJoin,
+      });
+
+      const result = await getLatestCardsWithCreator(10);
+
+      expect(result[0].creator).toBeNull();
+    });
+  });
+
+  describe('getUserListingCards', () => {
+    it('ユーザーの出品カード一覧を取得', async () => {
+      mockInnerJoin.mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          orderBy: vi.fn().mockResolvedValue([
+            {
+              id: 'card-1',
+              name: 'Card A',
+              category: 'common',
+              createdAt: new Date(),
+            },
+          ]),
+        }),
+      });
+
+      const result = await getUserListingCards('user-1');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('Card A');
+    });
+
+    it('出品カードがない場合は空配列', async () => {
+      mockInnerJoin.mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          orderBy: vi.fn().mockResolvedValue([]),
+        }),
+      });
+
+      const result = await getUserListingCards('user-1');
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getCardWithCreator', () => {
+    it('カード詳細を作成者情報付きで取得', async () => {
+      const mockLeftJoin = vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: 'card-1',
+              name: 'Test Card',
+              category: 'common',
+              description: 'テスト説明',
+              imageUrl: 'https://example.com/img.jpg',
+              createdByUserId: 'user-1',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              creator: {
+                id: 'user-1',
+                name: 'Creator',
+                image: null,
+                twitterUsername: 'creator',
+                trustScore: 90,
+                trustGrade: 'S',
+              },
+            },
+          ]),
+        }),
+      });
+      mockFrom.mockReturnValue({
+        leftJoin: mockLeftJoin,
+      });
+
+      const result = await getCardWithCreator('card-1');
+
+      expect(result).not.toBeNull();
+      expect(result?.name).toBe('Test Card');
+      expect(result?.creator?.name).toBe('Creator');
+      expect(result?.creator?.trustGrade).toBe('S');
+    });
+
+    it('カードが存在しない場合は null', async () => {
+      const mockLeftJoin = vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      });
+      mockFrom.mockReturnValue({
+        leftJoin: mockLeftJoin,
+      });
+
+      const result = await getCardWithCreator('non-existent');
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('getCardOwnersWithWantCards', () => {
+    it('所有者がいない場合は空配列', async () => {
+      // getCardOwners が空を返す
+      mockWhere.mockReturnValue({
+        orderBy: vi.fn().mockResolvedValueOnce([]),
+      });
+
+      const result = await getCardOwnersWithWantCards('card-1');
+
+      expect(result).toEqual([]);
     });
   });
 });
