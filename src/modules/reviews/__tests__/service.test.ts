@@ -257,6 +257,9 @@ describe('reviews/service', () => {
       );
     });
   });
+
+  // getTradeReviews と getPendingReviewTrades の詳細テストは
+  // 複雑なDBクエリチェーンのため、統合テストでカバー
 });
 
 describe('ReviewError', () => {

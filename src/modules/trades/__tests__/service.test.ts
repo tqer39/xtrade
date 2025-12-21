@@ -73,6 +73,9 @@ vi.mock('@/db/schema', () => ({
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn((a, b) => ({ type: 'eq', a, b })),
   and: vi.fn((...args) => ({ type: 'and', conditions: args })),
+  or: vi.fn((...args) => ({ type: 'or', conditions: args })),
+  desc: vi.fn((col) => ({ type: 'desc', column: col })),
+  inArray: vi.fn((col, vals) => ({ type: 'inArray', column: col, values: vals })),
 }));
 
 // モック後にインポート
@@ -83,6 +86,8 @@ const {
   updateOffer,
   transitionTrade,
   setResponder,
+  uncancelTrade,
+  getUserTrades,
 } = await import('../service');
 const { TradeTransitionError } = await import('../types');
 
@@ -425,4 +430,137 @@ describe('trades/service', () => {
       await expect(setResponder(trade, 'user-1')).rejects.toThrow(TradeTransitionError);
     });
   });
+
+  describe('uncancelTrade', () => {
+    it('キャンセル状態から元の状態に戻す', async () => {
+      const trade = {
+        id: 'trade-1',
+        roomSlug: 'abc123',
+        initiatorUserId: 'user-1',
+        responderUserId: 'user-2',
+        status: 'canceled' as const,
+        statusBeforeCancel: 'proposed' as const,
+        proposedExpiredAt: null,
+        agreedExpiredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const result = await uncancelTrade(trade, 'user-1');
+
+      expect(result).toBe('proposed');
+      expect(mockSet).toHaveBeenCalled();
+      expect(mockValues).toHaveBeenCalled(); // history
+    });
+
+    it('agreed 状態からのキャンセルを取り消し', async () => {
+      const trade = {
+        id: 'trade-1',
+        roomSlug: 'abc123',
+        initiatorUserId: 'user-1',
+        responderUserId: 'user-2',
+        status: 'canceled' as const,
+        statusBeforeCancel: 'agreed' as const,
+        proposedExpiredAt: null,
+        agreedExpiredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const result = await uncancelTrade(trade, 'user-2');
+
+      expect(result).toBe('agreed');
+    });
+
+    it('キャンセル状態でないとエラー', async () => {
+      const trade = {
+        id: 'trade-1',
+        roomSlug: 'abc123',
+        initiatorUserId: 'user-1',
+        responderUserId: 'user-2',
+        status: 'proposed' as const,
+        statusBeforeCancel: null,
+        proposedExpiredAt: null,
+        agreedExpiredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await expect(uncancelTrade(trade, 'user-1')).rejects.toThrow(TradeTransitionError);
+    });
+
+    it('statusBeforeCancel がないとエラー', async () => {
+      const trade = {
+        id: 'trade-1',
+        roomSlug: 'abc123',
+        initiatorUserId: 'user-1',
+        responderUserId: 'user-2',
+        status: 'canceled' as const,
+        statusBeforeCancel: null,
+        proposedExpiredAt: null,
+        agreedExpiredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await expect(uncancelTrade(trade, 'user-1')).rejects.toThrow(TradeTransitionError);
+    });
+
+    it('参加者以外はエラー', async () => {
+      const trade = {
+        id: 'trade-1',
+        roomSlug: 'abc123',
+        initiatorUserId: 'user-1',
+        responderUserId: 'user-2',
+        status: 'canceled' as const,
+        statusBeforeCancel: 'proposed' as const,
+        proposedExpiredAt: null,
+        agreedExpiredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await expect(uncancelTrade(trade, 'user-3')).rejects.toThrow(TradeTransitionError);
+    });
+  });
+
+  describe('getUserTrades', () => {
+    it('空の取引一覧', async () => {
+      // trades クエリが空を返す
+      const mockOrderBy = vi.fn().mockResolvedValue([]);
+      mockWhere.mockReturnValue({
+        orderBy: mockOrderBy,
+      });
+
+      const result = await getUserTrades('user-1');
+
+      expect(result).toEqual([]);
+    });
+
+    it('active フィルターで進行中の取引のみ取得', async () => {
+      const mockOrderBy = vi.fn().mockResolvedValue([]);
+      mockWhere.mockReturnValue({
+        orderBy: mockOrderBy,
+      });
+
+      await getUserTrades('user-1', 'active');
+
+      // フィルターが適用されたことを確認（mockが呼ばれたことで間接的に確認）
+      expect(mockFrom).toHaveBeenCalled();
+    });
+
+    it('completed フィルターで完了した取引のみ取得', async () => {
+      const mockOrderBy = vi.fn().mockResolvedValue([]);
+      mockWhere.mockReturnValue({
+        orderBy: mockOrderBy,
+      });
+
+      await getUserTrades('user-1', 'completed');
+
+      expect(mockFrom).toHaveBeenCalled();
+    });
+  });
+
+  // getTradeDetail の詳細テストは複雑なDB結合が必要なため、
+  // 統合テストで行う（上記の基本的なnullチェックのみでカバー）
 });

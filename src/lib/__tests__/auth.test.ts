@@ -64,4 +64,40 @@ describe('auth utilities', () => {
       expect(ADMIN_TWITTER_USERNAME).toBe('');
     });
   });
+
+  describe('isAllowedUser', () => {
+    it('管理者ユーザーは常に許可される', async () => {
+      vi.stubEnv('ADMIN_TWITTER_USERNAME', 'adminuser');
+      vi.stubEnv('DATABASE_URL', 'postgres://localhost/test');
+      vi.stubEnv('TWITTER_CLIENT_ID', 'test-id');
+      vi.stubEnv('TWITTER_CLIENT_SECRET', 'test-secret');
+
+      const { isAllowedUser } = await import('../auth');
+      const result = await isAllowedUser('adminuser');
+      expect(result).toBe(true);
+    });
+
+    it('管理者ユーザーは大文字小文字を区別しない', async () => {
+      vi.stubEnv('ADMIN_TWITTER_USERNAME', 'AdminUser');
+      vi.stubEnv('DATABASE_URL', 'postgres://localhost/test');
+      vi.stubEnv('TWITTER_CLIENT_ID', 'test-id');
+      vi.stubEnv('TWITTER_CLIENT_SECRET', 'test-secret');
+
+      const { isAllowedUser } = await import('../auth');
+      const result = await isAllowedUser('adminuser');
+      expect(result).toBe(true);
+    });
+
+    it('DBに登録されていないユーザーは許可されない', async () => {
+      vi.stubEnv('ADMIN_TWITTER_USERNAME', 'testadmin');
+      vi.stubEnv('DATABASE_URL', 'postgres://localhost/test');
+      vi.stubEnv('TWITTER_CLIENT_ID', 'test-id');
+      vi.stubEnv('TWITTER_CLIENT_SECRET', 'test-secret');
+
+      // DBモックは空配列を返すので許可されない
+      const { isAllowedUser } = await import('../auth');
+      const result = await isAllowedUser('testuser');
+      expect(result).toBe(false);
+    });
+  });
 });

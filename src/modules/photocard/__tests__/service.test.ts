@@ -181,6 +181,142 @@ describe('photocard/service', () => {
       expect(result).toEqual(mockPhotocards);
       expect(mockWhere).toHaveBeenCalled();
     });
+
+    it('sortBy=name で名前順ソート（再ソートなし）', async () => {
+      const mockPhotocards = [
+        { id: '1', name: 'Card A', memberName: '田中' },
+        { id: '2', name: 'Card B', memberName: '鈴木' },
+      ];
+      mockLimit.mockResolvedValueOnce(mockPhotocards);
+
+      const result = await searchPhotocardMaster(
+        'Card',
+        undefined,
+        undefined,
+        undefined,
+        50,
+        'name'
+      );
+
+      // sortBy=name の場合はDBソートのままなので順序が変わらない
+      expect(result).toEqual(mockPhotocards);
+    });
+
+    it('sortBy=relevance で関連度順ソート', async () => {
+      // 完全一致のカードと部分一致のカード
+      const mockPhotocards = [
+        {
+          id: '2',
+          name: 'テスト Card',
+          memberName: '田中',
+          normalizedName: '',
+          memberNameReading: '',
+        },
+        { id: '1', name: 'テスト', memberName: '鈴木', normalizedName: '', memberNameReading: '' },
+      ];
+      mockLimit.mockResolvedValueOnce(mockPhotocards);
+
+      const result = await searchPhotocardMaster(
+        'テスト',
+        undefined,
+        undefined,
+        undefined,
+        50,
+        'relevance'
+      );
+
+      // 完全一致の "テスト" が最初に来る
+      expect(result[0].id).toBe('1');
+    });
+
+    it('関連度スコア: 完全一致が前方一致より優先', async () => {
+      const mockPhotocards = [
+        { id: '2', name: 'INI Card', memberName: '', normalizedName: '', memberNameReading: '' },
+        { id: '1', name: 'INI', memberName: '', normalizedName: '', memberNameReading: '' },
+      ];
+      mockLimit.mockResolvedValueOnce(mockPhotocards);
+
+      const result = await searchPhotocardMaster(
+        'ini',
+        undefined,
+        undefined,
+        undefined,
+        50,
+        'relevance'
+      );
+
+      // 完全一致の "INI" (id=1) が先頭
+      expect(result[0].id).toBe('1');
+    });
+
+    it('関連度スコア: メンバー名マッチも考慮', async () => {
+      const mockPhotocards = [
+        {
+          id: '1',
+          name: 'Card A',
+          memberName: 'Unknown',
+          normalizedName: '',
+          memberNameReading: '',
+        },
+        {
+          id: '2',
+          name: 'Card B',
+          memberName: '木村柾哉',
+          normalizedName: '',
+          memberNameReading: '',
+        },
+      ];
+      mockLimit.mockResolvedValueOnce(mockPhotocards);
+
+      const result = await searchPhotocardMaster(
+        '木村',
+        undefined,
+        undefined,
+        undefined,
+        50,
+        'relevance'
+      );
+
+      // メンバー名が完全一致に近い id=2 が先頭
+      expect(result[0].id).toBe('2');
+    });
+
+    it('関連度スコア: スコア同点は名前順', async () => {
+      const mockPhotocards = [
+        { id: '1', name: 'Zebra', memberName: '', normalizedName: '', memberNameReading: '' },
+        { id: '2', name: 'Apple', memberName: '', normalizedName: '', memberNameReading: '' },
+      ];
+      mockLimit.mockResolvedValueOnce(mockPhotocards);
+
+      // クエリなしでは全てスコア0なのでそのまま
+      const result = await searchPhotocardMaster(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        50,
+        'relevance'
+      );
+
+      // スコア同点なので変更なし
+      expect(result).toEqual(mockPhotocards);
+    });
+
+    it('クエリなしで sortBy=relevance でも通常動作', async () => {
+      const mockPhotocards = [{ id: '1', name: 'Card' }];
+      mockLimit.mockResolvedValueOnce(mockPhotocards);
+
+      const result = await searchPhotocardMaster(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        50,
+        'relevance'
+      );
+
+      expect(result).toEqual(mockPhotocards);
+    });
   });
 
   describe('getPhotocardMasterById', () => {

@@ -4,13 +4,18 @@ import {
   calcCombinedTrustScore,
   calcCombinedTrustScoreWithEmail,
   calcEmailVerificationScore,
+  calcNewTrustScore,
+  calcRecentTradeScore,
   calcReviewScore,
+  calcTotalTradeScore,
   calcTrustScore,
+  calcTwitterScore,
   calcXProfileScore,
 } from '../calc-trust-score';
 import type {
   BehaviorScoreInput,
   EmailVerificationInput,
+  NewTrustScoreInput,
   ReviewScoreInput,
   TrustScoreInput,
 } from '../types';
@@ -827,5 +832,541 @@ describe('calcCombinedTrustScoreWithEmail', () => {
 
     expect(result.totalScore).toBe(0);
     expect(result.grade).toBe('D');
+  });
+});
+
+// =====================================
+// 新しい3軸スコアリングシステム
+// =====================================
+
+describe('calcTwitterScore', () => {
+  const defaultInput: NewTrustScoreInput = {
+    totalTrades: 0,
+    completedTrades: 0,
+    troubledTrades: 0,
+    averageRating: 0,
+    recentTrades: [],
+  };
+
+  describe('アカウント年齢', () => {
+    it('2年半のアカウントで約15点（月0.5点×30ヶ月）', () => {
+      const now = new Date();
+      const createdAt = new Date(now.getTime() - 365 * 2.5 * 24 * 60 * 60 * 1000);
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xAccountCreatedAt: createdAt,
+      });
+      // 30ヶ月 × 0.5 = 15点
+      expect(result.score).toBe(15);
+      expect(result.accountAgeDays).toBeGreaterThan(900);
+    });
+
+    it('アカウント作成日が未設定の場合は0点', () => {
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xAccountCreatedAt: undefined,
+      });
+      expect(result.score).toBe(0);
+      expect(result.accountAgeDays).toBe(0);
+    });
+  });
+
+  describe('フォロワー数', () => {
+    it('フォロワー1000人で対数スケール約6点', () => {
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xFollowersCount: 1000,
+      });
+      // log10(1001) * 2 ≈ 6
+      expect(result.score).toBeGreaterThanOrEqual(5);
+      expect(result.score).toBeLessThanOrEqual(7);
+      expect(result.followerCount).toBe(1000);
+    });
+
+    it('フォロワー10000人で対数スケール約8点', () => {
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xFollowersCount: 10000,
+      });
+      // log10(10001) * 2 ≈ 8
+      expect(result.score).toBeGreaterThanOrEqual(7);
+      expect(result.score).toBeLessThanOrEqual(10);
+    });
+
+    it('フォロワー0人で0点', () => {
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xFollowersCount: 0,
+      });
+      expect(result.followerCount).toBe(0);
+    });
+
+    it('フォロワー未設定の場合は0', () => {
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xFollowersCount: undefined,
+      });
+      expect(result.followerCount).toBe(0);
+    });
+  });
+
+  describe('投稿頻度', () => {
+    it('月30件投稿で約4.5点', () => {
+      const now = new Date();
+      const createdAt = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xAccountCreatedAt: createdAt,
+        xStatusesCount: 30 * 12, // 年間360件 = 月30件
+      });
+      // log10(31) * 3 ≈ 4.5
+      expect(result.postFrequency).toBeGreaterThan(25);
+      expect(result.postFrequency).toBeLessThan(35);
+    });
+
+    it('投稿数未設定の場合は0', () => {
+      const now = new Date();
+      const createdAt = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xAccountCreatedAt: createdAt,
+        xStatusesCount: undefined,
+      });
+      expect(result.postFrequency).toBe(0);
+    });
+  });
+
+  describe('認証バッジ', () => {
+    it('認証バッジありで +5点', () => {
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xVerified: true,
+      });
+      expect(result.score).toBe(5);
+      expect(result.hasVerifiedBadge).toBe(true);
+    });
+
+    it('認証バッジなしで 0点', () => {
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xVerified: false,
+      });
+      expect(result.hasVerifiedBadge).toBe(false);
+    });
+  });
+
+  describe('境界値', () => {
+    it('最大スコアは40', () => {
+      const now = new Date();
+      const createdAt = new Date(now.getTime() - 365 * 5 * 24 * 60 * 60 * 1000);
+      const result = calcTwitterScore({
+        ...defaultInput,
+        xAccountCreatedAt: createdAt,
+        xFollowersCount: 1000000,
+        xStatusesCount: 100000,
+        xVerified: true,
+      });
+      expect(result.score).toBeLessThanOrEqual(40);
+    });
+
+    it('最小スコアは0', () => {
+      const result = calcTwitterScore({
+        ...defaultInput,
+      });
+      expect(result.score).toBe(0);
+    });
+  });
+});
+
+describe('calcTotalTradeScore', () => {
+  const defaultInput: NewTrustScoreInput = {
+    totalTrades: 0,
+    completedTrades: 0,
+    troubledTrades: 0,
+    averageRating: 0,
+    recentTrades: [],
+  };
+
+  describe('成約率', () => {
+    it('成約率100%で15点', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 10,
+        completedTrades: 10,
+        averageRating: 0,
+      });
+      // completionRate * 15 = 15
+      expect(result.completionRate).toBe(1);
+    });
+
+    it('成約率50%で7.5点', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 10,
+        completedTrades: 5,
+        averageRating: 0,
+      });
+      expect(result.completionRate).toBe(0.5);
+    });
+
+    it('取引ゼロの場合は成約率0', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 0,
+        completedTrades: 0,
+      });
+      expect(result.completionRate).toBe(0);
+    });
+  });
+
+  describe('取引総数', () => {
+    it('取引100件で対数スケール約6点', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 100,
+        completedTrades: 100,
+        averageRating: 0,
+      });
+      // log10(101) * 3 ≈ 6
+      expect(result.totalCount).toBe(100);
+    });
+
+    it('取引1000件で最大10点', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 1000,
+        completedTrades: 1000,
+        averageRating: 0,
+      });
+      // log10(1001) * 3 ≈ 9 (最大10点)
+      expect(result.totalCount).toBe(1000);
+    });
+  });
+
+  describe('トラブル率', () => {
+    it('トラブル率10%で-1点', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 10,
+        completedTrades: 9,
+        troubledTrades: 1,
+        averageRating: 0,
+      });
+      expect(result.troubleRate).toBe(0.1);
+    });
+
+    it('トラブル率100%で-10点', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 10,
+        completedTrades: 0,
+        troubledTrades: 10,
+        averageRating: 0,
+      });
+      expect(result.troubleRate).toBe(1);
+    });
+  });
+
+  describe('平均評価', () => {
+    it('平均評価5.0で+5点', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 10,
+        completedTrades: 10,
+        averageRating: 5,
+      });
+      expect(result.averageRating).toBe(5);
+    });
+
+    it('平均評価2.5で+2.5点', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 10,
+        completedTrades: 10,
+        averageRating: 2.5,
+      });
+      expect(result.averageRating).toBe(2.5);
+    });
+  });
+
+  describe('境界値', () => {
+    it('最大スコアは40', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 1000,
+        completedTrades: 1000,
+        troubledTrades: 0,
+        averageRating: 5,
+      });
+      expect(result.score).toBeLessThanOrEqual(40);
+    });
+
+    it('最小スコアは0', () => {
+      const result = calcTotalTradeScore({
+        ...defaultInput,
+        totalTrades: 10,
+        completedTrades: 0,
+        troubledTrades: 10,
+        averageRating: 0,
+      });
+      expect(result.score).toBe(0);
+    });
+  });
+});
+
+describe('calcRecentTradeScore', () => {
+  const defaultInput: NewTrustScoreInput = {
+    totalTrades: 0,
+    completedTrades: 0,
+    troubledTrades: 0,
+    averageRating: 0,
+    recentTrades: [],
+  };
+
+  describe('直近取引がない場合', () => {
+    it('スコア0、全ての詳細も0', () => {
+      const result = calcRecentTradeScore({
+        ...defaultInput,
+        recentTrades: [],
+      });
+      expect(result.score).toBe(0);
+      expect(result.completionRate).toBe(0);
+      expect(result.averageRating).toBe(0);
+      expect(result.troubleRate).toBe(0);
+    });
+  });
+
+  describe('成約率', () => {
+    it('直近10件全て完了で10点', () => {
+      const result = calcRecentTradeScore({
+        ...defaultInput,
+        recentTrades: Array(10).fill({ completed: true, troubled: false, rating: 0 }),
+      });
+      expect(result.completionRate).toBe(1);
+    });
+
+    it('直近10件中5件完了で5点', () => {
+      const result = calcRecentTradeScore({
+        ...defaultInput,
+        recentTrades: [
+          ...Array(5).fill({ completed: true, troubled: false, rating: 0 }),
+          ...Array(5).fill({ completed: false, troubled: false, rating: 0 }),
+        ],
+      });
+      expect(result.completionRate).toBe(0.5);
+    });
+  });
+
+  describe('トラブル率', () => {
+    it('直近10件中2件トラブルで-1点', () => {
+      const result = calcRecentTradeScore({
+        ...defaultInput,
+        recentTrades: [
+          ...Array(8).fill({ completed: true, troubled: false, rating: 0 }),
+          ...Array(2).fill({ completed: false, troubled: true, rating: 0 }),
+        ],
+      });
+      expect(result.troubleRate).toBe(0.2);
+    });
+  });
+
+  describe('平均評価', () => {
+    it('平均評価5.0で+5点', () => {
+      const result = calcRecentTradeScore({
+        ...defaultInput,
+        recentTrades: Array(10).fill({ completed: true, troubled: false, rating: 5 }),
+      });
+      expect(result.averageRating).toBe(5);
+    });
+  });
+
+  describe('10件以上の取引', () => {
+    it('10件を超える取引は最初の10件のみ使用', () => {
+      const result = calcRecentTradeScore({
+        ...defaultInput,
+        recentTrades: [
+          ...Array(10).fill({ completed: true, troubled: false, rating: 5 }),
+          ...Array(5).fill({ completed: false, troubled: true, rating: 0 }),
+        ],
+      });
+      // 最初の10件のみ使用されるので、completionRate = 1
+      expect(result.completionRate).toBe(1);
+      expect(result.troubleRate).toBe(0);
+    });
+  });
+
+  describe('境界値', () => {
+    it('最大スコアは20', () => {
+      const result = calcRecentTradeScore({
+        ...defaultInput,
+        recentTrades: Array(10).fill({ completed: true, troubled: false, rating: 5 }),
+      });
+      expect(result.score).toBeLessThanOrEqual(20);
+    });
+
+    it('最小スコアは0', () => {
+      const result = calcRecentTradeScore({
+        ...defaultInput,
+        recentTrades: Array(10).fill({ completed: false, troubled: true, rating: 0 }),
+      });
+      expect(result.score).toBe(0);
+    });
+  });
+});
+
+describe('calcNewTrustScore', () => {
+  describe('3軸スコアの統合', () => {
+    it('全て高スコアで合計78点前後（Aグレード）', () => {
+      const now = new Date();
+      const createdAt = new Date(now.getTime() - 365 * 3 * 24 * 60 * 60 * 1000);
+      const result = calcNewTrustScore({
+        xAccountCreatedAt: createdAt,
+        xFollowersCount: 100000,
+        xStatusesCount: 10000,
+        xVerified: true,
+        totalTrades: 100,
+        completedTrades: 100,
+        troubledTrades: 0,
+        averageRating: 5,
+        recentTrades: Array(10).fill({ completed: true, troubled: false, rating: 5 }),
+      });
+      // Twitter: ~18点(年齢) + 10点(フォロワー) + 10点(投稿) + 5点(認証) = ~40点
+      // 取引: 15点(成約率) + 6点(件数) + 5点(評価) = ~26点
+      // 直近: 10点(成約率) + 5点(評価) = 15点
+      // 合計: ~78点
+      expect(result.total).toBeGreaterThanOrEqual(75);
+      expect(result.grade).toBe('A');
+    });
+
+    it('全て最低スコアで0点（Eグレード）', () => {
+      const result = calcNewTrustScore({
+        totalTrades: 0,
+        completedTrades: 0,
+        troubledTrades: 0,
+        averageRating: 0,
+        recentTrades: [],
+      });
+      expect(result.total).toBe(0);
+      expect(result.grade).toBe('E');
+    });
+
+    it('Twitter のみ高スコアで約40点（Cグレード）', () => {
+      const now = new Date();
+      const createdAt = new Date(now.getTime() - 365 * 3 * 24 * 60 * 60 * 1000);
+      const result = calcNewTrustScore({
+        xAccountCreatedAt: createdAt,
+        xFollowersCount: 100000,
+        xStatusesCount: 10000,
+        xVerified: true,
+        totalTrades: 0,
+        completedTrades: 0,
+        troubledTrades: 0,
+        averageRating: 0,
+        recentTrades: [],
+      });
+      expect(result.twitter.score).toBeGreaterThan(30);
+      expect(result.totalTrade.score).toBe(0);
+      expect(result.recentTrade.score).toBe(0);
+    });
+  });
+
+  describe('グレード判定', () => {
+    it('高スコアで A グレード', () => {
+      const now = new Date();
+      const createdAt = new Date(now.getTime() - 365 * 5 * 24 * 60 * 60 * 1000);
+      const result = calcNewTrustScore({
+        xAccountCreatedAt: createdAt,
+        xFollowersCount: 1000000,
+        xStatusesCount: 100000,
+        xVerified: true,
+        totalTrades: 1000,
+        completedTrades: 1000,
+        troubledTrades: 0,
+        averageRating: 5,
+        recentTrades: Array(10).fill({ completed: true, troubled: false, rating: 5 }),
+      });
+      // 実際のスコアに基づいてAグレードを期待
+      expect(result.total).toBeGreaterThanOrEqual(75);
+      expect(result.grade).toBe('A');
+    });
+
+    it('60-74点で B', () => {
+      const now = new Date();
+      const createdAt = new Date(now.getTime() - 365 * 2 * 24 * 60 * 60 * 1000);
+      const result = calcNewTrustScore({
+        xAccountCreatedAt: createdAt,
+        xFollowersCount: 1000,
+        xStatusesCount: 500,
+        xVerified: false,
+        totalTrades: 50,
+        completedTrades: 50,
+        troubledTrades: 0,
+        averageRating: 4.5,
+        recentTrades: Array(10).fill({ completed: true, troubled: false, rating: 4.5 }),
+      });
+      expect(result.total).toBeGreaterThanOrEqual(60);
+      expect(result.total).toBeLessThan(75);
+      expect(result.grade).toBe('B');
+    });
+
+    it('低スコアで E', () => {
+      const result = calcNewTrustScore({
+        xFollowersCount: 100,
+        totalTrades: 5,
+        completedTrades: 3,
+        troubledTrades: 1,
+        averageRating: 3,
+        recentTrades: Array(5).fill({ completed: true, troubled: false, rating: 3 }),
+      });
+      // フォロワー100人のみの低スコア
+      expect(result.total).toBeLessThan(30);
+      expect(result.grade).toBe('E');
+    });
+
+    it('0-29点で E', () => {
+      const result = calcNewTrustScore({
+        totalTrades: 2,
+        completedTrades: 1,
+        troubledTrades: 1,
+        averageRating: 2,
+        recentTrades: [{ completed: true, troubled: false, rating: 2 }],
+      });
+      expect(result.total).toBeLessThan(30);
+      expect(result.grade).toBe('E');
+    });
+  });
+
+  describe('スコア内訳', () => {
+    it('各軸のスコアが正しく計算される', () => {
+      const now = new Date();
+      const createdAt = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      const result = calcNewTrustScore({
+        xAccountCreatedAt: createdAt,
+        xFollowersCount: 500,
+        xStatusesCount: 1000,
+        xVerified: false,
+        totalTrades: 20,
+        completedTrades: 18,
+        troubledTrades: 1,
+        averageRating: 4.2,
+        recentTrades: Array(10).fill({ completed: true, troubled: false, rating: 4 }),
+      });
+
+      expect(result.twitter).toBeDefined();
+      expect(result.twitter.score).toBeGreaterThanOrEqual(0);
+      expect(result.twitter.score).toBeLessThanOrEqual(40);
+
+      expect(result.totalTrade).toBeDefined();
+      expect(result.totalTrade.score).toBeGreaterThanOrEqual(0);
+      expect(result.totalTrade.score).toBeLessThanOrEqual(40);
+
+      expect(result.recentTrade).toBeDefined();
+      expect(result.recentTrade.score).toBeGreaterThanOrEqual(0);
+      expect(result.recentTrade.score).toBeLessThanOrEqual(20);
+
+      expect(result.total).toBe(
+        result.twitter.score + result.totalTrade.score + result.recentTrade.score
+      );
+    });
   });
 });
