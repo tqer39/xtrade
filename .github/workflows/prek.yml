@@ -24,8 +24,10 @@ jobs:
         with:
           version: 2025.9.13
           cache: true
+          install: false
 
-      - run: mise install
+      - name: Install tools with mise
+        run: mise install
         env:
           MISE_NODE_VERIFY: none
 
