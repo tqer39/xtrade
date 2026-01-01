@@ -22,10 +22,12 @@ jobs:
       # prek の terraform-fmt 用
       - uses: jdx/mise-action@v3.5.1
         with:
-          version: 2025.9.13
+          version: 2025.12.13
           cache: true
+          install: false
 
-      - run: mise install
+      - name: Install tools with mise
+        run: mise install
 
       # Install pnpm dependencies
       - name: Install dependencies

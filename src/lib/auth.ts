@@ -108,7 +108,7 @@ export const auth = betterAuth({
 
   // 信頼する Origin（CSRF 対策）
   trustedOrigins: (request) => {
-    const origin = request.headers.get('origin') || '';
+    const origin = request?.headers?.get('origin') || '';
     const baseOrigins = [
       process.env.BETTER_AUTH_URL,
       process.env.NEXT_PUBLIC_APP_URL,
