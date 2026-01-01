@@ -26,6 +26,8 @@ jobs:
           cache: true
 
       - run: mise install
+        env:
+          MISE_NODE_VERIFY: none
 
       # Install pnpm dependencies
       - name: Install dependencies
