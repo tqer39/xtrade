@@ -34,7 +34,7 @@
     "@radix-ui/react-tooltip": "1.2.8",
     "@react-email/components": "1.0.4",
     "@tailwindcss/postcss": "4.1.18",
-    "@types/node": "24.10.4",
+    "@types/node": "24.10.7",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "better-auth": "1.4.10",
