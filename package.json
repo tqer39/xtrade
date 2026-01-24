@@ -75,7 +75,7 @@
     "@vitest/coverage-v8": "4.0.18",
     "drizzle-kit": "0.31.8",
     "jsdom": "27.4.0",
-    "textlint": "15.5.0",
+    "textlint": "15.5.1",
     "textlint-filter-rule-comments": "1.3.0",
     "textlint-rule-preset-ja-technical-writing": "12.0.2",
     "textlint-rule-preset-smarthr": "1.36.1",
