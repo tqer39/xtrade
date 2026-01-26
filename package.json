@@ -22,7 +22,7 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.971.0",
+    "@aws-sdk/client-s3": "3.975.0",
     "@neondatabase/serverless": "1.0.2",
     "@radix-ui/react-alert-dialog": "1.1.15",
     "@radix-ui/react-dialog": "1.1.15",
