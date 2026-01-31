@@ -1,4 +1,4 @@
 nodejs 24
 pnpm 10.25.0
-terraform 1.14.3
+terraform 1.14.4
 trivy 0.68.2
